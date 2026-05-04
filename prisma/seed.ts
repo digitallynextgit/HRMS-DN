@@ -65,18 +65,15 @@ async function main() {
   // ===========================================================================
   console.log("Step 2: Creating permissions...")
 
-  const permissionRecords = await Promise.all(
-    PERMISSION_DEFINITIONS.map((def) =>
-      prisma.permission.create({
-        data: {
-          scope: def.scope,
-          module: def.module,
-          action: def.action,
-          description: def.description,
-        },
-      })
-    )
-  )
+  await prisma.permission.createMany({
+    data: PERMISSION_DEFINITIONS.map((def) => ({
+      scope: def.scope,
+      module: def.module,
+      action: def.action,
+      description: def.description,
+    })),
+  })
+  const permissionRecords = await prisma.permission.findMany()
 
   // Build a map: scope → permission record
   const permissionMap = new Map(permissionRecords.map((p) => [p.scope, p]))
@@ -196,9 +193,8 @@ async function main() {
     { name: "Human Resources", code: "HR" },
   ]
 
-  const departmentRecords = await Promise.all(
-    departmentsData.map((d) => prisma.department.create({ data: d }))
-  )
+  await prisma.department.createMany({ data: departmentsData })
+  const departmentRecords = await prisma.department.findMany()
 
   const departmentMap = new Map(departmentRecords.map((d) => [d.name, d.id]))
   console.log(`  ✓ Created ${departmentRecords.length} departments`)
@@ -218,9 +214,8 @@ async function main() {
     { title: "Intern", level: 7 },
   ]
 
-  const designationRecords = await Promise.all(
-    designationsData.map((d) => prisma.designation.create({ data: d }))
-  )
+  await prisma.designation.createMany({ data: designationsData })
+  const designationRecords = await prisma.designation.findMany()
 
   const designationMap = new Map(designationRecords.map((d) => [d.title, d.id]))
   console.log(`  ✓ Created ${designationRecords.length} designations`)
@@ -979,14 +974,28 @@ async function main() {
     const { role, managerEmployeeNo, department, designation, ...empFields } = emp
 
     const employee = await prisma.employee.create({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
-        ...empFields,
+        employeeNo: emp.employeeNo,
+        firstName: emp.firstName,
+        lastName: emp.lastName,
+        email: emp.email,
+        phone: emp.phone ?? null,
+        workLocation: emp.workLocation ?? null,
+        dateOfJoining: emp.dateOfJoining ?? null,
+        dateOfBirth: emp.dateOfBirth ?? null,
+        status: emp.status as any,
+        isActive: emp.isActive,
+        lastWorkingDate: emp.lastWorkingDate ?? null,
+        permanentAddress: emp.permanentAddress ?? null,
+        currentAddress: emp.currentAddress ?? null,
+        emergencyContact: emp.emergencyContact ?? null,
         departmentId: departmentMap.get(emp.department) ?? null,
         designationId: designationMap.get(emp.designation) ?? null,
         passwordHash,
-        emailVerified: empFields.isActive ? new Date() : null,
+        emailVerified: emp.isActive ? new Date() : null,
         // managerId will be set in pass 2
-      },
+      } as any,
     })
 
     createdEmployees.push({ id: employee.id, employeeNo: employee.employeeNo })
@@ -1259,9 +1268,8 @@ async function main() {
     { name: "Loss of Pay", code: "LOP", description: "Unpaid leave when all balances exhausted", isPaid: false, maxDaysPerYear: 0, carryForward: false, maxCarryDays: 0, requiresApproval: true },
   ]
 
-  const leaveTypeRecords = await Promise.all(
-    leaveTypesData.map((lt) => prisma.leaveType.create({ data: lt }))
-  )
+  await prisma.leaveType.createMany({ data: leaveTypesData })
+  const leaveTypeRecords = await prisma.leaveType.findMany()
   const leaveTypeMap = new Map(leaveTypeRecords.map((lt) => [lt.code, lt.id]))
 
   console.log(`  ✓ Created ${leaveTypeRecords.length} leave types`)

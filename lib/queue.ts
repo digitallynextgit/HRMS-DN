@@ -1,22 +1,4 @@
-import { Queue } from "bullmq"
-import IORedis from "ioredis"
-
-export const redisConnection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
-  maxRetriesPerRequest: null,
-})
-
-export const emailQueue = new Queue("email", {
-  connection: redisConnection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: {
-      type: "exponential",
-      delay: 1000,
-    },
-    removeOnComplete: 100,
-    removeOnFail: 50,
-  },
-})
+import { sendEmail } from "@/lib/mailer"
 
 export interface EmailJobData {
   to: string
@@ -26,6 +8,10 @@ export interface EmailJobData {
   logId?: string
 }
 
+// Sends email directly without a queue (no Redis/BullMQ dependency).
+// Fire-and-forget: errors are logged but do not fail the calling request.
 export async function addEmailJob(data: EmailJobData): Promise<void> {
-  await emailQueue.add("send-email", data)
+  sendEmail({ to: data.to, subject: data.subject, html: data.html, text: data.text }).catch(
+    (err) => console.error("[email] Failed to send to", data.to, ":", err)
+  )
 }

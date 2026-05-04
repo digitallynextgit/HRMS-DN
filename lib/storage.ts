@@ -1,24 +1,22 @@
-import { Client } from "minio"
+import { createClient } from "@supabase/supabase-js"
 
-const minioClient = new Client({
-  endPoint: process.env.MINIO_ENDPOINT || "localhost",
-  port: parseInt(process.env.MINIO_PORT || "9000"),
-  useSSL: process.env.MINIO_USE_SSL === "true",
-  accessKey: process.env.MINIO_ACCESS_KEY || "hrms_minio",
-  secretKey: process.env.MINIO_SECRET_KEY || "hrms_minio_secret",
-})
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
-const BUCKET = process.env.MINIO_BUCKET || "hrms-documents"
+const BUCKET = process.env.SUPABASE_STORAGE_BUCKET || "hrms-documents"
 
 export async function ensureBucket(): Promise<void> {
   try {
-    const exists = await minioClient.bucketExists(BUCKET)
-    if (!exists) {
-      await minioClient.makeBucket(BUCKET)
-      console.log(`Created MinIO bucket: ${BUCKET}`)
+    const { data } = await supabase.storage.getBucket(BUCKET)
+    if (!data) {
+      const { error } = await supabase.storage.createBucket(BUCKET, { public: false })
+      if (error) console.error("Failed to create Supabase bucket:", error.message)
+      else console.log(`Created Supabase storage bucket: ${BUCKET}`)
     }
   } catch (error) {
-    console.error("Failed to ensure MinIO bucket:", error)
+    console.error("Failed to ensure Supabase bucket:", error)
   }
 }
 
@@ -26,23 +24,28 @@ export async function uploadFile(
   objectKey: string,
   buffer: Buffer,
   contentType: string,
-  size: number
+  _size: number
 ): Promise<void> {
-  await ensureBucket()
-  await minioClient.putObject(BUCKET, objectKey, buffer, size, {
-    "Content-Type": contentType,
-  })
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(objectKey, buffer, { contentType, upsert: true })
+  if (error) throw new Error(`Storage upload failed: ${error.message}`)
 }
 
 export async function getSignedUrl(
   objectKey: string,
   expirySeconds = 900
 ): Promise<string> {
-  return minioClient.presignedGetObject(BUCKET, objectKey, expirySeconds)
+  const { data, error } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUrl(objectKey, expirySeconds)
+  if (error || !data?.signedUrl) throw new Error(`Failed to get signed URL: ${error?.message}`)
+  return data.signedUrl
 }
 
 export async function deleteFile(objectKey: string): Promise<void> {
-  await minioClient.removeObject(BUCKET, objectKey)
+  const { error } = await supabase.storage.from(BUCKET).remove([objectKey])
+  if (error) throw new Error(`Storage delete failed: ${error.message}`)
 }
 
 export function getObjectKey(prefix: string, originalFileName: string, id: string): string {
