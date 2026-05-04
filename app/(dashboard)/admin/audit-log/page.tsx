@@ -122,6 +122,7 @@ export default function AuditLogPage() {
     setPage(1)
   }
 
+
   function handleSearch() {
     setPage(1)
     fetchEntries()
