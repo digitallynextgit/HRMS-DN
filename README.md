@@ -1,115 +1,242 @@
 # HRMS — Human Resource Management System
 
-A full-featured HRMS built with Next.js 14 App Router, PostgreSQL, and modern tooling.
+A full-featured HRMS built for **Digitally Next** using Next.js 14, Prisma, Supabase, and Tailwind CSS. Covers the complete HR lifecycle from recruitment to payroll.
+
+---
 
 ## Tech Stack
 
-- **Framework:** Next.js 14 (App Router) — frontend + API routes in one project
-- **Database:** PostgreSQL 16 via Prisma ORM
-- **Auth:** NextAuth v5 (credentials + Google OAuth)
-- **Queue:** BullMQ + Redis (async email delivery)
-- **Storage:** MinIO (S3-compatible file storage)
-- **UI:** shadcn/ui + Tailwind CSS
-- **Package Manager:** pnpm
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Database | PostgreSQL via Supabase |
+| ORM | Prisma v5 |
+| Auth | NextAuth v5 (Credentials) |
+| Storage | Supabase Storage |
+| Styling | Tailwind CSS + shadcn/ui |
+| State | TanStack Query + Zustand |
+| Email | Nodemailer (SMTP/Gmail) |
+| Package Manager | pnpm |
+
+---
 
 ## Modules
 
-| Module | Status |
+| Module | Features |
 |---|---|
-| Auth & PBAC (roles, permissions, audit log) | ✅ Done |
-| Employee Management (directory, org chart, profiles) | ✅ Done |
-| Document Management (upload, signed URLs) | ✅ Done |
-| Email Engine (templates, queue, notifications) | ✅ Done |
-| Attendance (Hikvision integration) | 🔜 Phase 2 |
-| Leave Management | 🔜 Phase 2 |
-| Payroll | 🔜 Phase 2 |
-| Performance Evaluation | 🔜 Phase 3 |
-| Recruitment | 🔜 Phase 3 |
-| Projects | 🔜 Phase 4 |
-| Analytics | 🔜 Phase 4 |
+| **Auth & PBAC** | Login, forgot/reset password, role-based permissions, permission matrix |
+| **Employee Management** | Directory, profiles, add/edit, org chart, department & designation management |
+| **Attendance** | Manual entry, CSV import, QR kiosk, GPS check-in, Hikvision device sync, holiday management |
+| **Leave Management** | Apply for leave, approval workflow, leave balances, team calendar, leave types |
+| **Payroll** | Salary structures, payroll generation, payslips, PF/ESI/TDS calculations, pro-rata & LOP |
+| **Performance** | Review cycles, self-review, manager review, goals tracking |
+| **Recruitment** | Job postings, applicant pipeline (Kanban with drag-and-drop), interview scheduling |
+| **Projects & Tasks** | Project management, task assignment, my tasks view |
+| **Documents** | Employee document locker, company library, Supabase Storage upload |
+| **Notifications** | In-app notification inbox, email notifications |
+| **Analytics** | Dashboard KPIs, department headcount, hire trends, recruitment pipeline charts |
+| **Admin** | Roles & permissions, audit log, email template management |
 
-## Getting Started
+---
+
+## Automated Emails
+
+| Trigger | Email Sent |
+|---|---|
+| New employee created | Welcome / onboarding email |
+| Applicant moves to Screening | Shortlisting notification |
+| Leave approved or rejected | Leave status email to employee |
+| Employee birthday (daily cron) | Birthday greeting |
+
+---
+
+## Project Structure
+
+```
+HRMS/
+├── app/
+│   ├── (auth)/              # Login, forgot password, reset password
+│   ├── (dashboard)/         # All protected pages
+│   │   ├── dashboard/       # Main dashboard
+│   │   ├── employees/       # Employee management
+│   │   ├── attendance/      # Attendance tracking
+│   │   ├── leave/           # Leave management
+│   │   ├── payroll/         # Payroll & salary
+│   │   ├── performance/     # Reviews & goals
+│   │   ├── recruitment/     # Jobs & applicants
+│   │   ├── projects/        # Projects & tasks
+│   │   ├── documents/       # Document management
+│   │   ├── notifications/   # Notification inbox
+│   │   ├── analytics/       # Reports & charts
+│   │   └── admin/           # Roles, audit log, email templates
+│   └── api/                 # All API routes (REST)
+├── components/
+│   ├── ui/                  # shadcn/ui primitives
+│   ├── layout/              # Sidebar, topbar, breadcrumbs
+│   └── shared/              # Reusable components
+├── lib/
+│   ├── db.ts                # Prisma singleton
+│   ├── auth-options.ts      # NextAuth config
+│   ├── storage.ts           # Supabase Storage client
+│   ├── mailer.ts            # Nodemailer wrapper
+│   ├── queue.ts             # Email job dispatcher
+│   ├── permissions.ts       # PBAC helpers
+│   ├── constants.ts         # Permission definitions, roles
+│   └── utils.ts             # cn(), formatDate(), etc.
+├── prisma/
+│   ├── schema.prisma        # Full database schema
+│   ├── seed.ts              # Seed script (35 employees)
+│   └── migrations/          # All SQL migrations
+└── middleware.ts            # Edge auth + permission checks
+```
+
+---
+
+## Getting Started (Local Development)
 
 ### Prerequisites
 
 - Node.js 18+
-- pnpm
-- Docker (for PostgreSQL, Redis, MinIO)
+- pnpm (`npm install -g pnpm`)
+- A Supabase project (free tier works)
 
-### 1. Clone & install
+### 1. Clone and install
 
 ```bash
-git clone <repo-url>
-cd HRMS
+git clone https://github.com/digitallynextgit/HRMS-DN.git
+cd HRMS-DN
 pnpm install
 ```
 
-### 2. Environment variables
+### 2. Configure environment
 
-```bash
-cp .env.example .env
-# Fill in your values (see .env.example for reference)
+Create a `.env` file in the root:
+
+```env
+# Database — use Supabase session pooler URL
+DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-1-[region].pooler.supabase.com:5432/postgres"
+
+# Supabase Storage
+NEXT_PUBLIC_SUPABASE_URL="https://[ref].supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+SUPABASE_STORAGE_BUCKET="hrms-documents"
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+AUTH_SECRET="generate-with-openssl-rand-base64-32"
+
+# Email (Gmail SMTP)
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER="your-gmail@gmail.com"
+SMTP_PASS="your-gmail-app-password"
+SMTP_FROM="HRMS <noreply@yourcompany.com>"
+
+# App
+APP_NAME="HRMS"
+APP_URL="http://localhost:3000"
+NODE_ENV="development"
+CRON_SECRET="your-cron-secret"
 ```
 
-### 3. Start infrastructure
+> **Supabase connection:** Use the **Session pooler** URL from Supabase → Settings → Database → Connection pooling → Session mode. Direct port 5432 may be blocked by some ISPs.
+
+> **Gmail SMTP:** Enable 2FA on your Gmail account, then generate an App Password at myaccount.google.com/apppasswords.
+
+### 3. Run migrations and seed
 
 ```bash
-# Start all three services
-docker run -d --name hrms-postgres \
-  -e POSTGRES_DB=hrms \
-  -e POSTGRES_USER=hrms_user \
-  -e POSTGRES_PASSWORD=hrms_password_dev \
-  -p 5432:5432 postgres:16-alpine
-
-docker run -d --name hrms-redis -p 6379:6379 redis:7-alpine
-
-docker run -d --name hrms-minio \
-  -e MINIO_ROOT_USER=hrms_minio \
-  -e MINIO_ROOT_PASSWORD=hrms_minio_secret \
-  -p 9000:9000 -p 9001:9001 \
-  minio/minio server /data --console-address ":9001"
-
-# Or if you have docker compose working:
-docker compose up -d
-```
-
-### 4. Database setup
-
-```bash
-pnpm prisma migrate dev --name init
+pnpm prisma migrate deploy
 pnpm prisma db seed
 ```
 
-### 5. Run the app
+This creates all tables and seeds:
+- 35 employees (34 real + 1 system admin)
+- Roles, permissions, departments, designations
+- Leave types, salary structures, attendance logs
+- Demo projects, performance reviews, job postings
+
+### 4. Create Supabase Storage bucket
+
+In your Supabase dashboard → Storage → Create bucket named `hrms-documents` (keep it **private**).
+
+### 5. Start the dev server
 
 ```bash
-# App
 pnpm dev
-
-# Email worker (separate terminal, optional)
-pnpm worker
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
 
-## Test Accounts
+**Default login:**
+```
+Email:    admin@hrms.dev
+Password: Admin@123
+```
 
-All accounts use password: `Admin@123`
+---
 
-| Role | Email |
-|---|---|
-| Super Admin | admin@hrms.dev |
-| HR Admin | priya.sharma@hrms.dev |
-| HR Manager | rahul.verma@hrms.dev |
-| Employee | neha.gupta@hrms.dev |
-| Viewer | viewer@hrms.dev |
+## Deployment (Vercel)
 
-## Daily Development
+### 1. Push to GitHub
 
 ```bash
-# Start containers (after PC restart)
-docker start hrms-postgres hrms-redis hrms-minio
+git push origin main
+```
 
-# Stop containers
-docker stop hrms-postgres hrms-redis hrms-minio
+### 2. Import on Vercel
+
+- Go to [vercel.com](https://vercel.com) → Add New → Project
+- Import `digitallynextgit/HRMS-DN`
+- Framework: **Next.js** (auto-detected)
+
+### 3. Set environment variables
+
+Add all variables from your `.env` in Vercel project settings. Update:
+- `NEXTAUTH_URL` → your Vercel URL (e.g. `https://hrms-dn.vercel.app`)
+- `APP_URL` → same Vercel URL
+- `NODE_ENV` → `production`
+
+### 4. Deploy
+
+Vercel builds and deploys automatically on every push to `main`.
+
+---
+
+## Birthday Email Cron
+
+The birthday cron is a protected API route — it does **not** run automatically on Vercel. Set up a free daily trigger at [cron-job.org](https://cron-job.org):
+
+- **URL:** `https://your-vercel-url.vercel.app/api/cron/birthdays`
+- **Method:** GET
+- **Header:** `Authorization: Bearer your-cron-secret`
+- **Schedule:** Daily at 9:00 AM
+
+---
+
+## Roles & Permissions
+
+| Role | Access |
+|---|---|
+| `super_admin` | Full access to everything |
+| `hr_admin` | Full HR module access |
+| `hr_manager` | HR management with limited admin |
+| `employee` | Self-service (own profile, leave, payslips) |
+| `viewer` | Read-only access |
+
+Custom roles can be created from Admin → Roles & Permissions.
+
+---
+
+## Scripts
+
+```bash
+pnpm dev                      # Start development server
+pnpm build                    # Production build
+pnpm start                    # Start production server
+pnpm prisma migrate deploy    # Apply migrations to database
+pnpm prisma db seed           # Seed database with demo data
+pnpm prisma studio            # Open Prisma Studio (DB GUI)
 ```
