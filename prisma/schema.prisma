@@ -323,12 +323,15 @@ model Department {
 }
 
 model Designation {
-  id        String   @id @default(uuid()) @map("id")
-  title     String   @unique @map("title")
-  level     Int      @map("level")
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid()) @map("id")
+  title            String   @unique @map("title")
+  level            Int      @map("level")                          // 1-13 (L1-L13)
+  code             String?  @map("code")                           // "L1", "L2", … "L13" (multiple titles can share a code, e.g. CCO + CHRO both L11)
+  phase            String?  @map("phase")                          // FOUNDATION | ELEVATE | PINNACLE
+  maxMonthlySalary Float?   @map("max_monthly_salary")             // null for L10+ (no cap)
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   employees Employee[]
 
@@ -441,6 +444,14 @@ model Employee {
 
   // Password reset
   passwordResets     PasswordReset[]
+
+  // Work From Home
+  wfhRequests           WfhRequest[]               @relation("WfhRequester")
+  wfhManagerApprovals   WfhRequest[]               @relation("WfhManagerApprover")
+  wfhHrApprovals        WfhRequest[]               @relation("WfhHrApprover")
+
+  // Floating holiday selections
+  floatingHolidays      FloatingHolidaySelection[]
 
   @@map("employees")
 }
@@ -587,11 +598,63 @@ model Holiday {
   name        String   @map("name")
   date        DateTime @db.Date @map("date")
   description String?  @map("description")
-  isOptional  Boolean  @default(false) @map("is_optional")
+  isOptional  Boolean  @default(false) @map("is_optional")          // true = floating holiday
   createdAt   DateTime @default(now()) @map("created_at")
+
+  floatingSelections FloatingHolidaySelection[]
 
   @@unique([date, name])
   @@map("holidays")
+}
+
+// =============================================================================
+// WORK FROM HOME (WFH)
+// =============================================================================
+
+model WfhRequest {
+  id                  String      @id @default(uuid()) @map("id")
+  employeeId          String      @map("employee_id")
+  date                DateTime    @db.Date @map("date")             // single day WFH
+  reason              String?     @map("reason")
+  status              LeaveStatus @default(PENDING) @map("status")
+  isEmergency         Boolean     @default(false) @map("is_emergency")  // tier 1/2 emergency override
+  managerApproverId   String?     @map("manager_approver_id")
+  managerApprovedAt   DateTime?   @map("manager_approved_at")
+  hrApproverId        String?     @map("hr_approver_id")
+  hrApprovedAt        DateTime?   @map("hr_approved_at")
+  rejectionReason     String?     @map("rejection_reason")
+  createdAt           DateTime    @default(now()) @map("created_at")
+  updatedAt           DateTime    @updatedAt @map("updated_at")
+
+  employee         Employee  @relation("WfhRequester",         fields: [employeeId],         references: [id], onDelete: Cascade)
+  managerApprover  Employee? @relation("WfhManagerApprover",  fields: [managerApproverId], references: [id], onDelete: SetNull)
+  hrApprover       Employee? @relation("WfhHrApprover",       fields: [hrApproverId],      references: [id], onDelete: SetNull)
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([date])
+  @@map("wfh_requests")
+}
+
+// =============================================================================
+// FLOATING HOLIDAY SELECTION
+// Employees pick any 3 of the 12 floating holidays each year.
+// =============================================================================
+
+model FloatingHolidaySelection {
+  id          String      @id @default(uuid()) @map("id")
+  employeeId  String      @map("employee_id")
+  holidayId   String      @map("holiday_id")
+  year        Int         @map("year")
+  status      LeaveStatus @default(PENDING) @map("status")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  holiday  Holiday  @relation(fields: [holidayId],  references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, holidayId, year])
+  @@index([employeeId, year])
+  @@map("floating_holiday_selections")
 }
 
 model AttendancePolicy {
@@ -659,12 +722,13 @@ model LeaveRequest {
   leaveTypeId     String      @map("leave_type_id")
   startDate       DateTime    @db.Date @map("start_date")
   endDate         DateTime    @db.Date @map("end_date")
-  totalDays       Float       @map("total_days")
-  reason          String?     @map("reason")
-  status          LeaveStatus @default(PENDING) @map("status")
-  approverId      String?     @map("approver_id")
-  approvedAt      DateTime?   @map("approved_at")
-  rejectionReason String?     @map("rejection_reason")
+  totalDays          Float       @map("total_days")
+  reason             String?     @map("reason")
+  status             LeaveStatus @default(PENDING) @map("status")
+  approverId         String?     @map("approver_id")
+  approvedAt         DateTime?   @map("approved_at")
+  rejectionReason    String?     @map("rejection_reason")
+  lateNoticePenalty  Boolean     @default(false) @map("late_notice_penalty")
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
 

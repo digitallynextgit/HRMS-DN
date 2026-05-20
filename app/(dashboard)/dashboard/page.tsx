@@ -260,6 +260,7 @@ export default function DashboardPage() {
                     width={32}
                   />
                   <RechartsTooltip
+                    cursor={false}
                     formatter={(value: number) => [
                       `${value} employee${value !== 1 ? "s" : ""}`,
                       "Count",

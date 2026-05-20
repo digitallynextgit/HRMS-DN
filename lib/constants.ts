@@ -24,6 +24,10 @@ export const PERMISSIONS = {
   LEAVE_READ: "leave:read",
   LEAVE_WRITE: "leave:write",
   LEAVE_APPROVE: "leave:approve",
+  // Work From Home
+  WFH_READ: "wfh:read",
+  WFH_WRITE: "wfh:write",
+  WFH_APPROVE: "wfh:approve",
   // Payroll
   PAYROLL_READ: "payroll:read",
   PAYROLL_WRITE: "payroll:write",
@@ -63,6 +67,7 @@ export const MODULES = [
   "auth",
   "attendance",
   "leave",
+  "wfh",
   "payroll",
   "project",
   "performance",
@@ -88,6 +93,9 @@ export const PERMISSION_DEFINITIONS = [
   { scope: "leave:read", module: "leave", action: "read", description: "View leave requests and balances" },
   { scope: "leave:write", module: "leave", action: "write", description: "Apply for leave" },
   { scope: "leave:approve", module: "leave", action: "approve", description: "Approve or reject leave requests" },
+  { scope: "wfh:read", module: "wfh", action: "read", description: "View work-from-home requests" },
+  { scope: "wfh:write", module: "wfh", action: "write", description: "Apply for work-from-home" },
+  { scope: "wfh:approve", module: "wfh", action: "approve", description: "Approve or reject WFH requests" },
   { scope: "payroll:read", module: "payroll", action: "read", description: "View payroll records and payslips" },
   { scope: "payroll:write", module: "payroll", action: "write", description: "Create and edit salary structures" },
   { scope: "payroll:process", module: "payroll", action: "process", description: "Process and approve payroll runs" },

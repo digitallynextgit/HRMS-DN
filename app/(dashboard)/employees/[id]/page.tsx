@@ -11,7 +11,11 @@ import {
   Users,
   FileText,
   ShieldCheck,
+  CalendarDays,
+  Wallet,
 } from "lucide-react"
+import { EmployeeLeaveTab } from "@/components/employees/employee-leave-tab"
+import { EmployeeSalaryTab } from "@/components/employees/employee-salary-tab"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -201,6 +205,14 @@ export default function EmployeeProfilePage({
             <FileText className="h-4 w-4" />
             Documents
           </TabsTrigger>
+          <TabsTrigger value="leave" className="flex items-center gap-1.5">
+            <CalendarDays className="h-4 w-4" />
+            Leave
+          </TabsTrigger>
+          <TabsTrigger value="salary" className="flex items-center gap-1.5">
+            <Wallet className="h-4 w-4" />
+            Salary
+          </TabsTrigger>
           <TabsTrigger value="roles" className="flex items-center gap-1.5">
             <ShieldCheck className="h-4 w-4" />
             Roles
@@ -320,6 +332,16 @@ export default function EmployeeProfilePage({
               </p>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── Leave Tab ─────────────────────────────────────────────────────── */}
+        <TabsContent value="leave">
+          <EmployeeLeaveTab employeeId={emp.id} />
+        </TabsContent>
+
+        {/* ── Salary Tab ────────────────────────────────────────────────────── */}
+        <TabsContent value="salary">
+          <EmployeeSalaryTab employeeId={emp.id} />
         </TabsContent>
 
         {/* ── Roles Tab ─────────────────────────────────────────────────────── */}

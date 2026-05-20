@@ -77,7 +77,7 @@ export default function AuditLogPage() {
   })
   const [loading, setLoading] = useState(true)
 
-  // Filters
+  // Filters  
   const [moduleFilter, setModuleFilter] = useState<string>("")
   const [actionFilter, setActionFilter] = useState<string>("")
   const [dateFrom, setDateFrom] = useState<string>("")

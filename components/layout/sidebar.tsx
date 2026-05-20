@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Users, FileText, Bell, Shield, ScrollText,
   Mail, ChevronDown, PanelLeftClose, PanelLeft,
   Building2, Clock, CalendarDays, DollarSign, HelpCircle,
-  FolderKanban, Star, Briefcase, BarChart3,
+  FolderKanban, Star, Briefcase, BarChart3, Home,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
@@ -25,13 +25,16 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard, permission: PERMISSIONS.DASHBOARD_READ },
-  {
-    label: "Employees", icon: Users, permission: PERMISSIONS.EMPLOYEE_READ,
-    children: [
-      { label: "Employee List", href: "/employees" },
-      { label: "Org Chart", href: "/employees/org-chart" },
-    ],
-  },
+  // Org Chart hidden for now — route /employees/org-chart still works by URL.
+  // To restore, swap this single item for the dropdown version below.
+  { label: "Employees", href: "/employees", icon: Users, permission: PERMISSIONS.EMPLOYEE_READ },
+  // {
+  //   label: "Employees", icon: Users, permission: PERMISSIONS.EMPLOYEE_READ,
+  //   children: [
+  //     { label: "Employee List", href: "/employees" },
+  //     { label: "Org Chart", href: "/employees/org-chart" },
+  //   ],
+  // },
   { label: "Documents", href: "/documents", icon: FileText, permission: PERMISSIONS.DOCUMENT_READ },
   {
     label: "Attendance", icon: Clock, permission: PERMISSIONS.ATTENDANCE_READ,
@@ -52,6 +55,14 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Apply Leave", href: "/leave/apply" },
       { label: "Team Leaves", href: "/leave/team" },
       { label: "Leave Types", href: "/leave/types" },
+    ],
+  },
+  {
+    label: "Work From Home", icon: Home, permission: PERMISSIONS.WFH_READ,
+    children: [
+      { label: "My WFH", href: "/wfh" },
+      { label: "Apply WFH", href: "/wfh/apply" },
+      { label: "Team WFH", href: "/wfh/team" },
     ],
   },
   {

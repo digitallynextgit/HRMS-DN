@@ -107,6 +107,7 @@ async function main() {
         "dashboard:read",
         "attendance:read", "attendance:write",
         "leave:read", "leave:write", "leave:approve",
+        "wfh:read", "wfh:write", "wfh:approve",
         "payroll:read", "payroll:write", "payroll:process",
       ],
     },
@@ -121,6 +122,7 @@ async function main() {
         "dashboard:read",
         "attendance:read", "attendance:write",
         "leave:read", "leave:write", "leave:approve",
+        "wfh:read", "wfh:write", "wfh:approve",
         "payroll:read",
       ],
     },
@@ -133,6 +135,7 @@ async function main() {
         "dashboard:read",
         "attendance:read",
         "leave:read", "leave:write",
+        "wfh:read", "wfh:write",
         "payroll:read",
         "document:read",
       ],
@@ -184,13 +187,27 @@ async function main() {
   // ===========================================================================
   console.log("Step 4: Creating departments...")
 
+  // 8 vertical teams from Digitally Next hierarchy + leadership departments
   const departmentsData = [
-    { name: "Management", code: "MGT" },
-    { name: "Operations", code: "OPS" },
-    { name: "Video Production & Editing", code: "VPE" },
-    { name: "Design & UX", code: "DUX" },
-    { name: "Technology", code: "TECH" },
-    { name: "Human Resources", code: "HR" },
+    // Leadership / Corporate
+    { name: "Business",           code: "BIZ"     },
+    { name: "Finance",            code: "FIN"     },
+    { name: "Human Resources",    code: "HR"      },
+    { name: "Product",            code: "PROD"    },
+    // Two-phase delivery structure
+    { name: "Create",             code: "CREATE"  },
+    { name: "Promote",            code: "PROMOTE" },
+    // 8 vertical teams
+    { name: "Video Production",   code: "VIDEO"   },
+    { name: "Web Development",    code: "WEB"     },
+    { name: "Content",            code: "CONTENT" },
+    { name: "Design",             code: "DESIGN"  },
+    { name: "Paid Ads",           code: "ADS"     },
+    { name: "SEO",                code: "SEO"     },
+    { name: "SMO",                code: "SMO"     },
+    { name: "Digital PR",         code: "PR"      },
+    // Legacy / operational
+    { name: "Operations",         code: "OPS"     },
   ]
 
   await prisma.department.createMany({ data: departmentsData })
@@ -204,14 +221,34 @@ async function main() {
   // ===========================================================================
   console.log("Step 5: Creating designations...")
 
+  // Digitally Next 13-level hierarchy + legacy titles for existing seed data
   const designationsData = [
-    { title: "Manager", level: 3 },
-    { title: "Senior Executive", level: 4 },
-    { title: "Executive", level: 5 },
-    { title: "Video Editor", level: 5 },
-    { title: "UI/UX Designer", level: 5 },
-    { title: "Team Member", level: 6 },
-    { title: "Intern", level: 7 },
+    // ─── Foundation Phase (L1–L5) ─── Operational / Individual Contributors
+    { title: "Trainee",          level: 1,  code: "L1",  phase: "FOUNDATION", maxMonthlySalary: 20000  },
+    { title: "Junior",           level: 2,  code: "L2",  phase: "FOUNDATION", maxMonthlySalary: 40000  },
+    { title: "Associate",        level: 3,  code: "L3",  phase: "FOUNDATION", maxMonthlySalary: 40000  },
+    { title: "Specialist",       level: 4,  code: "L4",  phase: "FOUNDATION", maxMonthlySalary: 40000  },
+    { title: "Senior Specialist",level: 5,  code: "L5",  phase: "FOUNDATION", maxMonthlySalary: 60000  },
+
+    // ─── Elevate Phase (L6–L9) ─── Functional / Team Management
+    { title: "Team Lead",        level: 6,  code: "L6",  phase: "ELEVATE",    maxMonthlySalary: 80000  },
+    { title: "Manager",          level: 7,  code: "L7",  phase: "ELEVATE",    maxMonthlySalary: 80000  },
+    { title: "Senior Manager",   level: 8,  code: "L8",  phase: "ELEVATE",    maxMonthlySalary: 100000 },
+    { title: "AVP",              level: 9,  code: "L9",  phase: "ELEVATE",    maxMonthlySalary: 300000 },
+
+    // ─── Pinnacle Phase (L10–L13) ─── Business Leadership (no salary cap)
+    { title: "VP",               level: 10, code: "L10", phase: "PINNACLE",   maxMonthlySalary: null   },
+    { title: "CCO",              level: 11, code: "L11", phase: "PINNACLE",   maxMonthlySalary: null   },
+    { title: "CHRO",             level: 11, code: "L11", phase: "PINNACLE",   maxMonthlySalary: null   },
+    { title: "CPO",              level: 12, code: "L12", phase: "PINNACLE",   maxMonthlySalary: null   },
+    { title: "CFO",              level: 12, code: "L12", phase: "PINNACLE",   maxMonthlySalary: null   },
+    { title: "COO",              level: 12, code: "L12", phase: "PINNACLE",   maxMonthlySalary: null   },
+    { title: "CBO",              level: 12, code: "L12", phase: "PINNACLE",   maxMonthlySalary: null   },
+    { title: "CEO",              level: 13, code: "L13", phase: "PINNACLE",   maxMonthlySalary: null   },
+
+    // ─── Legacy titles (kept so existing seeded employees still resolve) ───
+    { title: "Team Member",      level: 3,  code: null,  phase: null,         maxMonthlySalary: null   },
+    { title: "Senior Executive", level: 4,  code: null,  phase: null,         maxMonthlySalary: null   },
   ]
 
   await prisma.designation.createMany({ data: designationsData })
@@ -1222,20 +1259,31 @@ async function main() {
     },
   })
 
+  // Digitally Next 2026 Holiday Calendar — 8 fixed + 12 floating (employees pick any 3)
   const holidays2026 = [
-    { name: "Republic Day", date: new Date("2026-01-26"), isOptional: false },
-    { name: "Holi", date: new Date("2026-03-04"), isOptional: false },
-    { name: "Ram Navami", date: new Date("2026-03-28"), isOptional: true },
-    { name: "Good Friday", date: new Date("2026-04-03"), isOptional: false },
-    { name: "Eid ul-Fitr", date: new Date("2026-04-01"), isOptional: false },
-    { name: "Maharashtra Day", date: new Date("2026-05-01"), isOptional: false },
-    { name: "Independence Day", date: new Date("2026-08-15"), isOptional: false },
-    { name: "Ganesh Chaturthi", date: new Date("2026-08-22"), isOptional: false },
-    { name: "Gandhi Jayanti", date: new Date("2026-10-02"), isOptional: false },
-    { name: "Dussehra", date: new Date("2026-10-20"), isOptional: false },
-    { name: "Diwali", date: new Date("2026-11-08"), isOptional: false },
-    { name: "Diwali (Laxmi Puja)", date: new Date("2026-11-09"), isOptional: false },
-    { name: "Christmas", date: new Date("2026-12-25"), isOptional: false },
+    // ─── 8 Fixed holidays — auto-applied to everyone ───
+    { name: "Republic Day",           date: new Date("2026-01-26"), isOptional: false },
+    { name: "Holi",                   date: new Date("2026-03-04"), isOptional: false },
+    { name: "Bakrid (Eid-ul-Adha)",   date: new Date("2026-05-28"), isOptional: false },
+    { name: "Independence Day",       date: new Date("2026-08-15"), isOptional: false },
+    { name: "Mahatma Gandhi Jayanti", date: new Date("2026-10-02"), isOptional: false },
+    { name: "Dussehra",               date: new Date("2026-10-20"), isOptional: false },
+    { name: "Diwali",                 date: new Date("2026-11-08"), isOptional: false },
+    { name: "Christmas",              date: new Date("2026-12-25"), isOptional: false },
+
+    // ─── 12 Floating holidays — each employee may pick 3 ───
+    { name: "Makar Sankranti / Pongal", date: new Date("2026-01-14"), isOptional: true },
+    { name: "Maha Shivratri",           date: new Date("2026-02-15"), isOptional: true },
+    { name: "Eid-ul-Fitr",              date: new Date("2026-03-21"), isOptional: true },
+    { name: "Ram Navami",               date: new Date("2026-03-26"), isOptional: true },
+    { name: "Good Friday",              date: new Date("2026-04-03"), isOptional: true },
+    { name: "Buddha Purnima",           date: new Date("2026-05-01"), isOptional: true },
+    { name: "Muharram",                 date: new Date("2026-06-26"), isOptional: true },
+    { name: "Raksha Bandhan",           date: new Date("2026-08-28"), isOptional: true },
+    { name: "Janmashtami",              date: new Date("2026-09-04"), isOptional: true },
+    { name: "Ganesh Chaturthi",         date: new Date("2026-09-14"), isOptional: true },
+    { name: "Govardhan Puja",           date: new Date("2026-11-09"), isOptional: true },
+    { name: "Bhai Dooj",                date: new Date("2026-11-11"), isOptional: true },
   ]
 
   await prisma.holiday.createMany({ data: holidays2026 })
@@ -1253,7 +1301,7 @@ async function main() {
     },
   })
 
-  console.log("  ✓ Created attendance policy, 13 holidays, 1 device")
+  console.log(`  ✓ Created attendance policy, ${holidays2026.length} holidays (8 fixed + 12 floating), 1 device`)
 
   // ===========================================================================
   // STEP 9 — Leave types
@@ -1261,11 +1309,20 @@ async function main() {
   console.log("Step 9: Creating leave types...")
 
   const leaveTypesData = [
-    { name: "Annual Leave", code: "AL", description: "Paid annual leave", isPaid: true, maxDaysPerYear: 18, carryForward: true, maxCarryDays: 5, requiresApproval: true },
-    { name: "Sick Leave", code: "SL", description: "Medical/health related leave", isPaid: true, maxDaysPerYear: 12, carryForward: false, maxCarryDays: 0, requiresApproval: false },
-    { name: "Casual Leave", code: "CL", description: "Short personal leave", isPaid: true, maxDaysPerYear: 6, carryForward: false, maxCarryDays: 0, requiresApproval: true },
-    { name: "Maternity Leave", code: "ML", description: "Paid maternity leave", isPaid: true, maxDaysPerYear: 90, carryForward: false, maxCarryDays: 0, requiresApproval: true },
-    { name: "Loss of Pay", code: "LOP", description: "Unpaid leave when all balances exhausted", isPaid: false, maxDaysPerYear: 0, carryForward: false, maxCarryDays: 0, requiresApproval: true },
+    // CL: 7 days prorata, no carry, max 2/month, requires 2-day advance notice
+    { name: "Casual Leave", code: "CL", description: "Short personal leave. Max 2 days per month. Requires 2 days advance notice — late applications attract double salary deduction. Lapses Dec 31.", isPaid: true, maxDaysPerYear: 7, carryForward: false, maxCarryDays: 0, requiresApproval: true },
+    // SL: 7 days prorata, no carry, SL>2 days needs medical certificate
+    { name: "Sick Leave", code: "SL", description: "Medical/health leave. SL > 2 days requires medical certificate. Can be clubbed with CL but not with EL. Lapses Dec 31.", isPaid: true, maxDaysPerYear: 7, carryForward: false, maxCarryDays: 0, requiresApproval: false },
+    // EL: 14 days, 1.16/month accrual, max 22 carry, eligibility: probation + 6 months, 60-day advance notice, min 3 max 7 at a time
+    { name: "Earned Leave", code: "EL", description: "1.16 days earned per month. Requires 60 days advance notice. Min 3 days, max 7 days at a time. Max carry-forward 22 days. 7 days each in H1 (Jan–Jun) and H2 (Jul–Dec).", isPaid: true, maxDaysPerYear: 14, carryForward: true, maxCarryDays: 22, requiresApproval: true },
+    // PL: 2 days, after probation, for special events, no carry
+    { name: "Personal Leave", code: "PL", description: "For special events: birthday (self/spouse/children), marriage, anniversary, bereavement. Cannot be accumulated or encashed.", isPaid: true, maxDaysPerYear: 2, carryForward: false, maxCarryDays: 0, requiresApproval: true },
+    // LWP: Leave Without Pay — extraordinary circumstances
+    { name: "Leave Without Pay", code: "LWP", description: "Unpaid leave for extraordinary circumstances when all balances are exhausted. Requires 2 days advance notice. Salary deduction = monthly salary / month days × leave days.", isPaid: false, maxDaysPerYear: 0, carryForward: false, maxCarryDays: 0, requiresApproval: true },
+    // ML: 90 days, requires 2 years service
+    { name: "Maternity Leave", code: "ML", description: "Paid maternity leave. Only available after completing 2 years of service.", isPaid: true, maxDaysPerYear: 90, carryForward: false, maxCarryDays: 0, requiresApproval: true },
+    // Short Leave: 2 hours = 0.5 day unit, max 2 per month (3rd onwards = 0.5 day LWP)
+    { name: "Short Leave", code: "SHORT", description: "2-hour leave (arrive late or leave early). Each use counts as 0.5 day. Max 2 per month — 3rd onwards treated as half-day without pay.", isPaid: true, maxDaysPerYear: 12, carryForward: false, maxCarryDays: 0, requiresApproval: true },
   ]
 
   await prisma.leaveType.createMany({ data: leaveTypesData })
@@ -1294,11 +1351,12 @@ async function main() {
 
   for (const empId of allEmployeeIds) {
     leaveBalanceData.push(
-      { employeeId: empId, leaveTypeId: leaveTypeMap.get("AL")!, year: currentYear, allocated: 18, used: 3, pending: 0, carried: 2 },
-      { employeeId: empId, leaveTypeId: leaveTypeMap.get("SL")!, year: currentYear, allocated: 12, used: 1, pending: 0, carried: 0 },
-      { employeeId: empId, leaveTypeId: leaveTypeMap.get("CL")!, year: currentYear, allocated: 6, used: 1, pending: 0, carried: 0 },
-      { employeeId: empId, leaveTypeId: leaveTypeMap.get("ML")!, year: currentYear, allocated: 90, used: 0, pending: 0, carried: 0 },
-      { employeeId: empId, leaveTypeId: leaveTypeMap.get("LOP")!, year: currentYear, allocated: 0, used: 0, pending: 0, carried: 0 },
+      { employeeId: empId, leaveTypeId: leaveTypeMap.get("CL")!,  year: currentYear, allocated: 7,  used: 1, pending: 0, carried: 0 },
+      { employeeId: empId, leaveTypeId: leaveTypeMap.get("SL")!,  year: currentYear, allocated: 7,  used: 1, pending: 0, carried: 0 },
+      { employeeId: empId, leaveTypeId: leaveTypeMap.get("EL")!,  year: currentYear, allocated: 14, used: 3, pending: 0, carried: 2 },
+      { employeeId: empId, leaveTypeId: leaveTypeMap.get("PL")!,  year: currentYear, allocated: 2,  used: 0, pending: 0, carried: 0 },
+      { employeeId: empId, leaveTypeId: leaveTypeMap.get("LWP")!, year: currentYear, allocated: 0,  used: 0, pending: 0, carried: 0 },
+      { employeeId: empId, leaveTypeId: leaveTypeMap.get("ML")!,  year: currentYear, allocated: 90, used: 0, pending: 0, carried: 0 },
     )
   }
 
