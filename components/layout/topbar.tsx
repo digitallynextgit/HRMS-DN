@@ -2,18 +2,7 @@
 
 import { Session } from "next-auth"
 import { signOut } from "next-auth/react"
-import { useTheme } from "next-themes"
-import {
-  Bell,
-  LogOut,
-  User,
-  Sun,
-  Moon,
-  Monitor,
-  ChevronDown,
-  PanelLeft,
-  PanelLeftClose,
-} from "lucide-react"
+import { Bell, LogOut, User, ChevronDown, PanelLeft, PanelLeftClose } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -26,8 +15,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { getInitials } from "@/lib/utils"
-import { cn } from "@/lib/utils"
 import { useSidebarStore } from "@/stores/sidebar-store"
+import { ThemePicker } from "./theme-picker"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 
@@ -36,55 +25,6 @@ async function fetchUnreadCount() {
   if (!res.ok) return 0
   const data = await res.json()
   return data.unreadCount ?? 0
-}
-
-function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-muted-foreground hover:text-foreground h-8 w-8"
-          aria-label="Toggle theme"
-        >
-          <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-          <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-32 text-sm">
-        <DropdownMenuItem
-          onClick={() => setTheme("light")}
-          className={cn(
-            "cursor-pointer gap-2 text-xs",
-            theme === "light" && "text-foreground font-medium",
-          )}
-        >
-          <Sun className="h-3.5 w-3.5" /> Light
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme("dark")}
-          className={cn(
-            "cursor-pointer gap-2 text-xs",
-            theme === "dark" && "text-foreground font-medium",
-          )}
-        >
-          <Moon className="h-3.5 w-3.5" /> Dark
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => setTheme("system")}
-          className={cn(
-            "cursor-pointer gap-2 text-xs",
-            theme === "system" && "text-foreground font-medium",
-          )}
-        >
-          <Monitor className="h-3.5 w-3.5" /> System
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
 }
 
 export function Topbar({ session }: { session: Session }) {
@@ -128,7 +68,7 @@ export function Topbar({ session }: { session: Session }) {
       </div>
 
       <div className="flex items-center gap-1">
-        <ThemeToggle />
+        <ThemePicker />
 
         {/* Notifications */}
         <Link href="/notifications">
