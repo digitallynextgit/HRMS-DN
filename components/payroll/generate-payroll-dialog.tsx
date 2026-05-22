@@ -86,8 +86,11 @@ export function GeneratePayrollDialog({ open, onOpenChange }: GeneratePayrollDia
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground">
-                Selected period: <strong>{MONTHS[Number(month) - 1]} {year}</strong>
+              <p className="text-muted-foreground text-xs">
+                Selected period:{" "}
+                <strong>
+                  {MONTHS[Number(month) - 1]} {year}
+                </strong>
               </p>
             </div>
           </AlertDialogDescription>

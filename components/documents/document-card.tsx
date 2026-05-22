@@ -1,17 +1,7 @@
 "use client"
 
-import * as React from "react"
-import {
-  FileText,
-  Download,
-  Trash2,
-  FileImage,
-  File,
-  AlertCircle,
-} from "lucide-react"
-
-// lucide-react doesn't export FilePdf — use FileText for PDF files
-const FilePdf = FileText
+import { useState, type ElementType } from "react"
+import { FileText, Download, Trash2, FileImage, File, AlertCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,7 +31,7 @@ interface DocumentCardProps {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 interface FileIconMeta {
-  Icon: React.ElementType
+  Icon: ElementType
   colorClass: string
 }
 
@@ -82,11 +72,10 @@ function isExpired(expiresAt: Date | string): boolean {
 
 export function DocumentCard({ document, onDelete, canDelete }: DocumentCardProps) {
   const { Icon, colorClass } = getFileIcon(document.mimeType)
-  const categoryLabel =
-    DOCUMENT_CATEGORY_LABELS[document.category] ?? document.category
+  const categoryLabel = DOCUMENT_CATEGORY_LABELS[document.category] ?? document.category
 
-  const [confirmOpen, setConfirmOpen] = React.useState(false)
-  const [downloadLoading, setDownloadLoading] = React.useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [downloadLoading, setDownloadLoading] = useState(false)
 
   const handleDownload = async () => {
     setDownloadLoading(true)
@@ -99,7 +88,7 @@ export function DocumentCard({ document, onDelete, canDelete }: DocumentCardProp
         window.open(url, "_blank", "noopener,noreferrer")
       }
     } catch {
-      // Silent — toast handled higher up if needed
+      // Silent - toast handled higher up if needed
     } finally {
       setDownloadLoading(false)
     }
@@ -110,22 +99,21 @@ export function DocumentCard({ document, onDelete, canDelete }: DocumentCardProp
     setConfirmOpen(false)
   }
 
-  const expirySoon =
-    document.expiresAt ? isExpiringSoon(document.expiresAt) : false
+  const expirySoon = document.expiresAt ? isExpiringSoon(document.expiresAt) : false
   const expired = document.expiresAt ? isExpired(document.expiresAt) : false
 
   return (
     <>
-      <div className="flex items-start gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-muted/30">
+      <div className="bg-card hover:bg-muted/30 flex items-start gap-4 rounded border p-4 transition-colors">
         {/* File icon */}
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-muted">
+        <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded">
           <Icon className={cn("h-5 w-5", colorClass)} />
         </div>
 
         {/* Content */}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm font-medium text-foreground" title={document.title}>
+            <span className="text-foreground text-sm font-medium" title={document.title}>
               {truncate(document.title, 40)}
             </span>
             <Badge variant="secondary" className="shrink-0 text-xs">
@@ -133,11 +121,11 @@ export function DocumentCard({ document, onDelete, canDelete }: DocumentCardProp
             </Badge>
           </div>
 
-          <p className="mt-0.5 text-xs text-muted-foreground" title={document.fileName}>
+          <p className="text-muted-foreground mt-0.5 text-xs" title={document.fileName}>
             {document.fileName}
           </p>
 
-          <div className="mt-1.5 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1.5 flex flex-wrap items-center gap-3 text-xs">
             <span>{formatFileSize(document.fileSize)}</span>
             <span>·</span>
             <span>Uploaded {formatDate(document.createdAt)}</span>
@@ -149,15 +137,13 @@ export function DocumentCard({ document, onDelete, canDelete }: DocumentCardProp
                   className={cn(
                     "flex items-center gap-1",
                     expired
-                      ? "font-medium text-destructive"
+                      ? "text-destructive font-medium"
                       : expirySoon
-                      ? "font-medium text-amber-600"
-                      : "text-muted-foreground"
+                        ? "font-medium text-amber-600"
+                        : "text-muted-foreground",
                   )}
                 >
-                  {(expired || expirySoon) && (
-                    <AlertCircle className="h-3 w-3" />
-                  )}
+                  {(expired || expirySoon) && <AlertCircle className="h-3 w-3" />}
                   {expired
                     ? `Expired ${formatDate(document.expiresAt)}`
                     : `Expires ${formatDate(document.expiresAt)}`}
@@ -185,7 +171,7 @@ export function DocumentCard({ document, onDelete, canDelete }: DocumentCardProp
             <Button
               size="icon"
               variant="ghost"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              className="text-muted-foreground hover:text-destructive h-8 w-8"
               onClick={() => setConfirmOpen(true)}
               title="Delete"
               aria-label={`Delete ${document.title}`}

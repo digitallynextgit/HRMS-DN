@@ -26,9 +26,7 @@ export const GET = withAuth(PERMISSIONS.ROLE_READ, async () => {
   })
 
   // Group by module.
-  const grouped = permissions.reduce<
-    Record<string, typeof permissions>
-  >((acc, permission) => {
+  const grouped = permissions.reduce<Record<string, typeof permissions>>((acc, permission) => {
     if (!acc[permission.module]) {
       acc[permission.module] = []
     }

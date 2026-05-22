@@ -26,37 +26,31 @@ export function StatCard({
   const isPositive = trend ? trend.value >= 0 : true
 
   return (
-    <Card className={cn("border border-border bg-card rounded-[var(--radius)]", className)}>
+    <Card className={cn("border-border bg-card rounded-[var(--radius)] border", className)}>
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            <p className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
               {title}
             </p>
-            <p className="text-2xl font-semibold tracking-tight text-foreground">
-              {value}
-            </p>
-            {description && (
-              <p className="text-xs text-muted-foreground">{description}</p>
-            )}
+            <p className="text-foreground text-2xl font-semibold tracking-tight">{value}</p>
+            {description && <p className="text-muted-foreground text-xs">{description}</p>}
             {trend && (
               <div className="flex items-center gap-1">
                 {isPositive ? (
-                  <TrendingUp className="h-3 w-3 text-muted-foreground" />
+                  <TrendingUp className="text-muted-foreground h-3 w-3" />
                 ) : (
-                  <TrendingDown className="h-3 w-3 text-muted-foreground" />
+                  <TrendingDown className="text-muted-foreground h-3 w-3" />
                 )}
-                <span className="text-xs font-medium text-foreground">
+                <span className="text-foreground text-xs font-medium">
                   {isPositive ? "+" : ""}
                   {trend.value}%
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  {trend.label}
-                </span>
+                <span className="text-muted-foreground text-xs">{trend.label}</span>
               </div>
             )}
           </div>
-          <Icon className="h-4 w-4 text-muted-foreground" />
+          <Icon className="text-muted-foreground h-4 w-4" />
         </div>
       </CardContent>
     </Card>

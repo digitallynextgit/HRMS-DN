@@ -1,7 +1,10 @@
 import { z } from "zod"
 
 export const emailTemplateSchema = z.object({
-  slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens"),
+  slug: z
+    .string()
+    .min(1)
+    .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens"),
   name: z.string().min(1, "Template name is required"),
   subject: z.string().min(1, "Email subject is required"),
   bodyHtml: z.string().min(1, "Email body is required"),

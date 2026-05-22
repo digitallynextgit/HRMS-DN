@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth } from "@/lib/permissions"
-import { PERMISSIONS } from "@/lib/constants"
+import { PERMISSIONS, HIDDEN_ROLES } from "@/lib/constants"
 import { createEmployeeSchema, employeeFilterSchema } from "@/lib/schemas/employee"
 import { generateEmployeeNo } from "@/lib/utils"
 import { addEmailJob } from "@/lib/queue"
+import { createAuditLog } from "@/lib/audit"
 import bcrypt from "bcryptjs"
 import type { Session } from "next-auth"
 
@@ -19,7 +20,7 @@ export const GET = withAuth(
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Invalid query parameters", details: parsed.error.flatten().fieldErrors },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -69,7 +70,45 @@ export const GET = withAuth(
       console.error("[EMPLOYEES_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
+)
+
+export const DELETE = withAuth(
+  PERMISSIONS.EMPLOYEE_DELETE,
+  async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {
+    try {
+      const body = await req.json().catch(() => ({}))
+      const ids = Array.isArray(body?.ids) ? (body.ids as string[]) : []
+      if (ids.length === 0) {
+        return NextResponse.json({ error: "ids array is required" }, { status: 400 })
+      }
+
+      // Don't allow deleting yourself in a bulk operation.
+      const targets = ids.filter((id) => id !== session.user.id)
+      if (targets.length === 0) {
+        return NextResponse.json({ error: "Nothing to terminate" }, { status: 400 })
+      }
+
+      const result = await db.employee.updateMany({
+        where: { id: { in: targets } },
+        data: { status: "TERMINATED", isActive: false, lastWorkingDate: new Date() },
+      })
+
+      await createAuditLog(session, {
+        action: "BULK_TERMINATE",
+        module: "employee",
+        entityType: "Employee",
+        changes: { count: result.count, employeeIds: targets },
+        ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
+        userAgent: req.headers.get("user-agent"),
+      })
+
+      return NextResponse.json({ data: { count: result.count } })
+    } catch (error) {
+      console.error("[EMPLOYEES_BULK_DELETE]", error)
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    }
+  },
 )
 
 export const POST = withAuth(
@@ -82,7 +121,7 @@ export const POST = withAuth(
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-          { status: 422 }
+          { status: 422 },
         )
       }
 
@@ -126,6 +165,7 @@ export const POST = withAuth(
           departmentId: data.departmentId || null,
           designationId: data.designationId || null,
           managerId: data.managerId || null,
+          dottedManagerId: data.dottedManagerId || null,
           employmentType: data.employmentType,
           dateOfJoining: data.dateOfJoining ? new Date(data.dateOfJoining) : null,
           probationEndDate: data.probationEndDate ? new Date(data.probationEndDate) : null,
@@ -141,33 +181,40 @@ export const POST = withAuth(
         },
       })
 
-      // Assign default "employee" role
-      const defaultRole = await db.role.findFirst({
-        where: { name: "employee" },
-        select: { id: true },
-      })
-
-      if (defaultRole) {
+      // Resolve role to assign: prefer explicit roleId from caller, fall back
+      // to the default "employee" role. super_admin can never be assigned via
+      // this endpoint — that role is reserved for the CEO.
+      let roleToAssign: { id: string } | null = null
+      if (data.roleId) {
+        const candidate = await db.role.findUnique({
+          where: { id: data.roleId },
+          select: { id: true, name: true },
+        })
+        if (candidate && !HIDDEN_ROLES.includes(candidate.name as (typeof HIDDEN_ROLES)[number])) {
+          roleToAssign = { id: candidate.id }
+        }
+      }
+      if (!roleToAssign) {
+        roleToAssign = await db.role.findFirst({
+          where: { name: "employee" },
+          select: { id: true },
+        })
+      }
+      if (roleToAssign) {
         await db.employeeRole.create({
-          data: {
-            employeeId: employee.id,
-            roleId: defaultRole.id,
-          },
+          data: { employeeId: employee.id, roleId: roleToAssign.id },
         })
       }
 
-      // Create audit log
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "CREATE",
-          module: "employee",
-          entityType: "Employee",
-          entityId: employee.id,
-          changes: { created: { employeeNo, email: data.email } },
-          ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
-          userAgent: req.headers.get("user-agent") ?? undefined,
-        },
+      // Audit (skipped automatically when the actor is a super_admin).
+      await createAuditLog(session, {
+        action: "CREATE",
+        module: "employee",
+        entityType: "Employee",
+        entityId: employee.id,
+        changes: { created: { employeeNo, email: data.email } },
+        ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
+        userAgent: req.headers.get("user-agent"),
       })
 
       // Queue welcome email if template exists and is active
@@ -199,9 +246,12 @@ export const POST = withAuth(
         "code" in error &&
         (error as { code: string }).code === "P2002"
       ) {
-        return NextResponse.json({ error: "An employee with this email already exists" }, { status: 409 })
+        return NextResponse.json(
+          { error: "An employee with this email already exists" },
+          { status: 409 },
+        )
       }
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

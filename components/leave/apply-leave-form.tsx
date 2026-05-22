@@ -22,8 +22,10 @@ import { CalendarDays, Info, AlertTriangle, Clock } from "lucide-react"
 // Sandwich rule: count ALL calendar days (weekends between leave days are charged)
 function countSandwichDays(start: Date, end: Date): number {
   if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0
-  const s = new Date(start); s.setHours(0, 0, 0, 0)
-  const e = new Date(end);   e.setHours(0, 0, 0, 0)
+  const s = new Date(start)
+  s.setHours(0, 0, 0, 0)
+  const e = new Date(end)
+  e.setHours(0, 0, 0, 0)
   return Math.round((e.getTime() - s.getTime()) / 86400000) + 1
 }
 
@@ -31,8 +33,10 @@ function countSandwichDays(start: Date, end: Date): number {
 function countWorkingDays(start: Date, end: Date): number {
   if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0
   let count = 0
-  const current = new Date(start); current.setHours(0, 0, 0, 0)
-  const endNorm = new Date(end);   endNorm.setHours(0, 0, 0, 0)
+  const current = new Date(start)
+  current.setHours(0, 0, 0, 0)
+  const endNorm = new Date(end)
+  endNorm.setHours(0, 0, 0, 0)
   while (current <= endNorm) {
     const dow = current.getDay()
     if (dow !== 0 && dow !== 6) count++
@@ -43,8 +47,10 @@ function countWorkingDays(start: Date, end: Date): number {
 
 function daysFromToday(dateStr: string): number {
   if (!dateStr) return 999
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const d     = new Date(dateStr); d.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const d = new Date(dateStr)
+  d.setHours(0, 0, 0, 0)
   return Math.floor((d.getTime() - today.getTime()) / 86400000)
 }
 
@@ -54,7 +60,7 @@ const POLICY_NOTES: Record<string, { notice: string; rules: string[] }> = {
     rules: [
       "Max 2 days per month",
       "Can be combined with Sick Leave but NOT with Earned Leave",
-      "Lapses on Dec 31 — no carry-forward or encashment",
+      "Lapses on Dec 31 - no carry-forward or encashment",
     ],
   },
   SL: {
@@ -62,7 +68,7 @@ const POLICY_NOTES: Record<string, { notice: string; rules: string[] }> = {
     rules: [
       "Can be combined with CL but NOT with EL",
       "Minimum half-day per application",
-      "Lapses at year end — no carry-forward",
+      "Lapses at year end - no carry-forward",
     ],
   },
   EL: {
@@ -103,26 +109,26 @@ const POLICY_NOTES: Record<string, { notice: string; rules: string[] }> = {
 }
 
 export function ApplyLeaveForm() {
-  const router    = useRouter()
+  const router = useRouter()
   const applyLeave = useApplyLeave()
 
   const [leaveTypeId, setLeaveTypeId] = useState("")
-  const [startDate, setStartDate]     = useState("")
-  const [endDate, setEndDate]         = useState("")
-  const [reason, setReason]           = useState("")
-  const [isHalfDay, setIsHalfDay]     = useState(false)
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  const [reason, setReason] = useState("")
+  const [isHalfDay, setIsHalfDay] = useState(false)
 
   const { data: typesData, isLoading: typesLoading } = useLeaveTypes()
-  const { data: balancesData }                        = useLeaveBalances()
+  const { data: balancesData } = useLeaveBalances()
 
   const leaveTypes = typesData?.data ?? []
-  const balances   = balancesData?.data ?? []
+  const balances = balancesData?.data ?? []
 
-  const currentYear    = new Date().getFullYear()
-  const selectedType   = leaveTypes.find((t) => t.id === leaveTypeId)
+  const currentYear = new Date().getFullYear()
+  const selectedType = leaveTypes.find((t) => t.id === leaveTypeId)
   const selectedBalance = useMemo(
     () => balances.find((b) => b.leaveTypeId === leaveTypeId && b.year === currentYear),
-    [balances, leaveTypeId, currentYear]
+    [balances, leaveTypeId, currentYear],
   )
 
   const policyNote = selectedType ? POLICY_NOTES[selectedType.code] : null
@@ -139,18 +145,21 @@ export function ApplyLeaveForm() {
     return countWorkingDays(new Date(startDate), new Date(endDate))
   }, [startDate, endDate, isHalfDay, selectedType])
 
-  const sandwichExtra  = calendarDays - workingDays
-  const totalDays      = calendarDays
-  const available      = selectedBalance
-    ? selectedBalance.allocated + selectedBalance.carried - selectedBalance.used - selectedBalance.pending
+  const sandwichExtra = calendarDays - workingDays
+  const totalDays = calendarDays
+  const available = selectedBalance
+    ? selectedBalance.allocated +
+      selectedBalance.carried -
+      selectedBalance.used -
+      selectedBalance.pending
     : null
   const hasInsufficientBalance = available !== null && totalDays > 0 && available < totalDays
 
   // Notice warnings
-  const advanceDays   = startDate ? daysFromToday(startDate) : 999
-  const lateNoticeCL  = selectedType?.code === "CL"  && advanceDays < 2
+  const advanceDays = startDate ? daysFromToday(startDate) : 999
+  const lateNoticeCL = selectedType?.code === "CL" && advanceDays < 2
   const lateNoticeLWP = selectedType?.code === "LWP" && advanceDays < 2
-  const lateNoticeEL  = selectedType?.code === "EL"  && advanceDays < 60
+  const lateNoticeEL = selectedType?.code === "EL" && advanceDays < 60
 
   const today = new Date().toISOString().split("T")[0]
   const isShortLeave = selectedType?.code === "SHORT"
@@ -171,13 +180,16 @@ export function ApplyLeaveForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-xl">
+    <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
       {/* Leave Type */}
       <div className="space-y-2">
         <Label htmlFor="leave-type">Leave Type</Label>
         <Select
           value={leaveTypeId}
-          onValueChange={(v) => { setLeaveTypeId(v); setIsHalfDay(false) }}
+          onValueChange={(v) => {
+            setLeaveTypeId(v)
+            setIsHalfDay(false)
+          }}
           disabled={typesLoading}
         >
           <SelectTrigger id="leave-type">
@@ -197,35 +209,36 @@ export function ApplyLeaveForm() {
         {leaveTypeId && (
           <div
             className={cn(
-              "flex items-start gap-2 rounded-md px-3 py-2 text-sm border",
+              "flex items-start gap-2 rounded border px-3 py-2 text-sm",
               hasInsufficientBalance
                 ? "bg-destructive/5 border-destructive/20 text-destructive"
-                : "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300"
+                : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300",
             )}
           >
-            <Info className="h-4 w-4 shrink-0 mt-0.5" />
+            <Info className="mt-0.5 h-4 w-4 shrink-0" />
             {selectedBalance ? (
               <span>
-                Available balance:{" "}
-                <strong>{Math.max(0, available ?? 0)} day(s)</strong>
+                Available balance: <strong>{Math.max(0, available ?? 0)} day(s)</strong>
                 {selectedBalance.carried > 0 && (
                   <> · includes {selectedBalance.carried} carried forward</>
                 )}
               </span>
             ) : (
-              <span>No balance record found for {currentYear}. Your request will still be submitted.</span>
+              <span>
+                No balance record found for {currentYear}. Your request will still be submitted.
+              </span>
             )}
           </div>
         )}
 
         {/* Policy notes */}
         {policyNote && (
-          <div className="rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-3 py-2.5 text-xs space-y-1.5">
-            <p className="font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+          <div className="space-y-1.5 rounded border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs dark:border-amber-800 dark:bg-amber-950/20">
+            <p className="flex items-center gap-1.5 font-medium text-amber-800 dark:text-amber-300">
               <AlertTriangle className="h-3.5 w-3.5" />
               {policyNote.notice}
             </p>
-            <ul className="text-amber-700 dark:text-amber-400 space-y-0.5 list-disc list-inside">
+            <ul className="list-inside list-disc space-y-0.5 text-amber-700 dark:text-amber-400">
               {policyNote.rules.map((rule, i) => (
                 <li key={i}>{rule}</li>
               ))}
@@ -285,7 +298,7 @@ export function ApplyLeaveForm() {
             checked={isHalfDay}
             onCheckedChange={(v) => setIsHalfDay(v === true)}
           />
-          <Label htmlFor="half-day" className="font-normal cursor-pointer">
+          <Label htmlFor="half-day" className="cursor-pointer font-normal">
             Half day
           </Label>
         </div>
@@ -294,28 +307,32 @@ export function ApplyLeaveForm() {
       {/* Day summary */}
       {(totalDays > 0 || isShortLeave) && (
         <Card className="border-dashed">
-          <CardContent className="py-3 px-4 space-y-1.5">
+          <CardContent className="space-y-1.5 px-4 py-3">
             <div className="flex items-center gap-2 text-sm">
               {isShortLeave ? (
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="text-muted-foreground h-4 w-4" />
               ) : (
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                <CalendarDays className="text-muted-foreground h-4 w-4" />
               )}
               <span className="text-muted-foreground">Leave days charged:</span>
-              <span className="font-semibold">{totalDays} day{totalDays !== 1 ? "s" : ""}</span>
+              <span className="font-semibold">
+                {totalDays} day{totalDays !== 1 ? "s" : ""}
+              </span>
             </div>
 
             {/* Sandwich rule info */}
             {sandwichExtra > 0 && (
-              <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1">
+              <p className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
                 <AlertTriangle className="h-3 w-3" />
-                Sandwich rule applies: {sandwichExtra} weekend day{sandwichExtra !== 1 ? "s" : ""} between your leave dates are also counted.
+                Sandwich rule applies: {sandwichExtra} weekend day{sandwichExtra !== 1 ? "s" : ""}{" "}
+                between your leave dates are also counted.
               </p>
             )}
 
             {hasInsufficientBalance && (
-              <p className="text-xs text-destructive">
-                Insufficient balance — {Math.max(0, available ?? 0)} day(s) available, {totalDays} requested.
+              <p className="text-destructive text-xs">
+                Insufficient balance - {Math.max(0, available ?? 0)} day(s) available, {totalDays}{" "}
+                requested.
               </p>
             )}
           </CardContent>
@@ -324,19 +341,21 @@ export function ApplyLeaveForm() {
 
       {/* Late notice warnings */}
       {(lateNoticeCL || lateNoticeLWP) && (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 px-3 py-2 text-xs text-red-700 dark:text-red-400">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            <strong>Late notice:</strong> You are applying with less than 2 days advance notice. As per company policy, a double salary deduction will apply for this leave.
+            <strong>Late notice:</strong> You are applying with less than 2 days advance notice. As
+            per company policy, a double salary deduction will apply for this leave.
           </span>
         </div>
       )}
 
       {lateNoticeEL && (
-        <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 dark:bg-red-950/20 dark:border-red-800 px-3 py-2 text-xs text-red-700 dark:text-red-400">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/20 dark:text-red-400">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            <strong>Insufficient notice:</strong> Earned Leave requires 60 days advance notice. This request will be rejected.
+            <strong>Insufficient notice:</strong> Earned Leave requires 60 days advance notice. This
+            request will be rejected.
           </span>
         </div>
       )}
@@ -392,7 +411,9 @@ export function ApplyLeaveForm() {
           Cancel
         </Button>
         {lateNoticeCL && (
-          <p className="text-xs text-muted-foreground">Double deduction will be flagged for payroll.</p>
+          <p className="text-muted-foreground text-xs">
+            Double deduction will be flagged for payroll.
+          </p>
         )}
       </div>
     </form>

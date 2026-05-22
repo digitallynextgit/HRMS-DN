@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { cn, getInitials } from "@/lib/utils"
+import { getInitials } from "@/lib/utils"
 import { EMPLOYEE_STATUS_LABELS } from "@/lib/constants"
 
 export interface EmployeeCardProps {
@@ -39,23 +39,25 @@ export function EmployeeCard({ employee, onDelete, canEdit, canDelete }: Employe
   const statusLabel = EMPLOYEE_STATUS_LABELS[employee.status] ?? employee.status
 
   return (
-    <Card className="group relative overflow-hidden border border-border bg-card rounded-[var(--radius)]">
+    <Card className="group border-border bg-card relative overflow-hidden rounded-[var(--radius)] border">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="flex min-w-0 items-center gap-3">
             <Avatar className="h-9 w-9 shrink-0">
               {employee.profilePhoto ? (
                 <AvatarImage src={employee.profilePhoto} alt={fullName} />
               ) : null}
-              <AvatarFallback className="text-xs font-medium bg-accent text-foreground">
+              <AvatarFallback className="bg-accent text-foreground text-xs font-medium">
                 {initials}
               </AvatarFallback>
             </Avatar>
 
             <div className="min-w-0">
-              <p className="font-medium text-sm leading-tight truncate text-foreground">{fullName}</p>
+              <p className="text-foreground truncate text-sm leading-tight font-medium">
+                {fullName}
+              </p>
               {employee.designation?.title && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                <p className="text-muted-foreground mt-0.5 truncate text-xs">
                   {employee.designation.title}
                 </p>
               )}
@@ -68,7 +70,7 @@ export function EmployeeCard({ employee, onDelete, canEdit, canDelete }: Employe
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
                   <span className="sr-only">Actions</span>
@@ -76,14 +78,20 @@ export function EmployeeCard({ employee, onDelete, canEdit, canDelete }: Employe
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem asChild>
-                  <Link href={`/employees/${employee.id}`} className="flex items-center gap-2 cursor-pointer text-sm">
+                  <Link
+                    href={`/employees/${employee.id}`}
+                    className="flex cursor-pointer items-center gap-2 text-sm"
+                  >
                     <Eye className="h-3.5 w-3.5" />
                     View Profile
                   </Link>
                 </DropdownMenuItem>
                 {canEdit && (
                   <DropdownMenuItem asChild>
-                    <Link href={`/employees/${employee.id}/edit`} className="flex items-center gap-2 cursor-pointer text-sm">
+                    <Link
+                      href={`/employees/${employee.id}/edit`}
+                      className="flex cursor-pointer items-center gap-2 text-sm"
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                       Edit
                     </Link>
@@ -93,7 +101,7 @@ export function EmployeeCard({ employee, onDelete, canEdit, canDelete }: Employe
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="text-destructive focus:text-destructive flex items-center gap-2 cursor-pointer text-sm"
+                      className="text-destructive focus:text-destructive flex cursor-pointer items-center gap-2 text-sm"
                       onClick={() => onDelete?.(employee.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -108,22 +116,20 @@ export function EmployeeCard({ employee, onDelete, canEdit, canDelete }: Employe
 
         {employee.department?.name && (
           <div className="mt-3">
-            <span className="inline-flex items-center text-xs px-1.5 py-0.5 rounded font-medium bg-accent text-foreground">
+            <span className="bg-accent text-foreground inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium">
               {employee.department.name}
             </span>
           </div>
         )}
 
-        <p className="mt-2 text-xs text-muted-foreground truncate">{employee.email}</p>
+        <p className="text-muted-foreground mt-2 truncate text-xs">{employee.email}</p>
 
         <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="inline-flex items-center text-xs px-1.5 py-0.5 rounded font-medium border border-border text-muted-foreground">
+          <span className="border-border text-muted-foreground inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium">
             {statusLabel}
           </span>
-          <Button variant="outline" size="sm" className="h-7 text-xs px-2" asChild>
-            <Link href={`/employees/${employee.id}`}>
-              View
-            </Link>
+          <Button variant="outline" size="sm" className="h-7 px-2 text-xs" asChild>
+            <Link href={`/employees/${employee.id}`}>View</Link>
           </Button>
         </div>
       </CardContent>

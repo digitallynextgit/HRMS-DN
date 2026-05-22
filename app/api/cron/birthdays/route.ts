@@ -22,7 +22,7 @@ export const GET = async (req: NextRequest) => {
     const day = today.getDate()
 
     // Find all active employees whose birthday is today
-    // dateOfBirth is stored as a Date — match month and day regardless of year
+    // dateOfBirth is stored as a Date - match month and day regardless of year
     const employees = await db.employee.findMany({
       where: {
         status: "ACTIVE",
@@ -60,16 +60,20 @@ export const GET = async (req: NextRequest) => {
                 Thank you for being an amazing part of our team!
               </p>
               <p style="color: #888; font-size: 13px; margin-top: 32px;">
-                — The HR Team at ${process.env.APP_NAME ?? "HRMS"}
+                - The HR Team at ${process.env.APP_NAME ?? "HRMS"}
               </p>
             </div>
           `,
-          text: `Happy Birthday, ${emp.firstName}! Wishing you a wonderful day. — The HR Team`,
+          text: `Happy Birthday, ${emp.firstName}! Wishing you a wonderful day. - The HR Team`,
         })
         sent++
         results.push({ name: `${emp.firstName} ${emp.lastName}`, email: emp.email, status: "sent" })
       } catch (err) {
-        results.push({ name: `${emp.firstName} ${emp.lastName}`, email: emp.email, status: "failed" })
+        results.push({
+          name: `${emp.firstName} ${emp.lastName}`,
+          email: emp.email,
+          status: "failed",
+        })
       }
     }
 

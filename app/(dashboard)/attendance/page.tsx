@@ -9,10 +9,7 @@ import { AttendanceFilters } from "@/components/attendance/attendance-filters"
 import { AttendanceTable } from "@/components/attendance/attendance-table"
 import { ManualAttendanceDialog } from "@/components/attendance/manual-attendance-dialog"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
-import {
-  useAttendanceLogs,
-  useDeleteAttendanceLog,
-} from "@/hooks/use-attendance"
+import { useAttendanceLogs, useDeleteAttendanceLog } from "@/hooks/use-attendance"
 import type { AttendanceLog } from "@/hooks/use-attendance"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
@@ -93,7 +90,7 @@ export default function AttendancePage() {
       />
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Present (this page)"
           value={presentCount}
@@ -128,30 +125,37 @@ export default function AttendancePage() {
       {/* Filters */}
       <AttendanceFilters
         employeeSearch={employeeSearch}
-        onEmployeeSearchChange={(v) => { setEmployeeSearch(v); setPage(1) }}
+        onEmployeeSearchChange={(v) => {
+          setEmployeeSearch(v)
+          setPage(1)
+        }}
         dateFrom={dateFrom}
-        onDateFromChange={(v) => { setDateFrom(v); setPage(1) }}
+        onDateFromChange={(v) => {
+          setDateFrom(v)
+          setPage(1)
+        }}
         dateTo={dateTo}
-        onDateToChange={(v) => { setDateTo(v); setPage(1) }}
+        onDateToChange={(v) => {
+          setDateTo(v)
+          setPage(1)
+        }}
         status={status}
-        onStatusChange={(v) => { setStatus(v); setPage(1) }}
+        onStatusChange={(v) => {
+          setStatus(v)
+          setPage(1)
+        }}
         onClear={handleClearFilters}
       />
 
       {/* Table */}
-      <AttendanceTable
-        logs={logs}
-        isLoading={isLoading}
-        canEdit={canWrite}
-        onEdit={handleEdit}
-      />
+      <AttendanceTable logs={logs} isLoading={isLoading} canEdit={canWrite} onEdit={handleEdit} />
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {pagination.page} of {pagination.totalPages} &middot;{" "}
-            {pagination.total} total records
+          <p className="text-muted-foreground text-sm">
+            Page {pagination.page} of {pagination.totalPages} &middot; {pagination.total} total
+            records
           </p>
           <div className="flex items-center gap-2">
             <Button

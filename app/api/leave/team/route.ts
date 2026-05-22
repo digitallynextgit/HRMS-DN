@@ -68,5 +68,5 @@ export const GET = withAuth(
       console.error("[LEAVE_TEAM_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

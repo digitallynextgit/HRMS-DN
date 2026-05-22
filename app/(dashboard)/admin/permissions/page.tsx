@@ -44,8 +44,6 @@ export default function PermissionsPage() {
 
   const isLoading = loadingPerms || loadingRoles
 
-  const allPermissions = permissionsData?.flatMap((g) => g.permissions) ?? []
-
   const hasPermission = (role: Role, permId: string) =>
     role.rolePermissions.some((rp) => rp.permissionId === permId)
 
@@ -68,18 +66,18 @@ export default function PermissionsPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 pr-4 font-medium text-slate-600 min-w-[200px]">
+                    <th className="min-w-[200px] py-2 pr-4 text-left font-medium text-slate-600">
                       Permission
                     </th>
                     {rolesData?.map((role) => (
                       <th
                         key={role.id}
-                        className="text-center py-2 px-3 font-medium text-slate-600 min-w-[100px]"
+                        className="min-w-[100px] px-3 py-2 text-center font-medium text-slate-600"
                       >
                         <div className="flex flex-col items-center gap-1">
                           <span>{role.displayName}</span>
                           {role.isSystem && (
-                            <Badge variant="secondary" className="text-[10px] px-1 py-0">
+                            <Badge variant="secondary" className="px-1 py-0 text-[10px]">
                               System
                             </Badge>
                           )}
@@ -92,38 +90,30 @@ export default function PermissionsPage() {
                   {permissionsData?.map((group) => (
                     <>
                       <tr key={`group-${group.module}`}>
-                        <td
-                          colSpan={(rolesData?.length ?? 0) + 1}
-                          className="pt-4 pb-1 px-0"
-                        >
-                          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                        <td colSpan={(rolesData?.length ?? 0) + 1} className="px-0 pt-4 pb-1">
+                          <span className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
                             {group.module}
                           </span>
                         </td>
                       </tr>
                       {group.permissions.map((perm) => (
-                        <tr
-                          key={perm.id}
-                          className="border-b border-slate-50 hover:bg-slate-50/50"
-                        >
+                        <tr key={perm.id} className="border-b border-slate-50 hover:bg-slate-50/50">
                           <td className="py-2 pr-4">
                             <div>
-                              <code className="text-xs font-mono text-slate-700">
-                                {perm.scope}
-                              </code>
+                              <code className="font-mono text-xs text-slate-700">{perm.scope}</code>
                               {perm.description && (
-                                <p className="text-[11px] text-slate-400 mt-0.5">
+                                <p className="mt-0.5 text-[11px] text-slate-400">
                                   {perm.description}
                                 </p>
                               )}
                             </div>
                           </td>
                           {rolesData?.map((role) => (
-                            <td key={role.id} className="py-2 px-3 text-center">
+                            <td key={role.id} className="px-3 py-2 text-center">
                               {role.name === "super_admin" || hasPermission(role, perm.id) ? (
-                                <CheckCircle2 className="h-4 w-4 text-green-500 mx-auto" />
+                                <CheckCircle2 className="mx-auto h-4 w-4 text-green-500" />
                               ) : (
-                                <XCircle className="h-4 w-4 text-slate-200 mx-auto" />
+                                <XCircle className="mx-auto h-4 w-4 text-slate-200" />
                               )}
                             </td>
                           ))}

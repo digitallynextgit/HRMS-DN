@@ -38,7 +38,7 @@ export function FileUpload({
         (type) =>
           type === fileExtension ||
           type === fileMimeType ||
-          (type.endsWith("/*") && fileMimeType.startsWith(type.slice(0, -1)))
+          (type.endsWith("/*") && fileMimeType.startsWith(type.slice(0, -1))),
       )
       if (!isAccepted) {
         return `File type not allowed. Accepted: ${accept}`
@@ -113,12 +113,12 @@ export function FileUpload({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cn(
-          "relative flex min-h-[140px] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-6 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "focus-visible:ring-ring relative flex min-h-[140px] w-full cursor-pointer flex-col items-center justify-center gap-3 rounded border-2 border-dashed p-6 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
           isDragging
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/60 hover:bg-muted/30",
           isUploading && "pointer-events-none opacity-60",
-          error && "border-destructive/60"
+          error && "border-destructive/60",
         )}
       >
         <input
@@ -132,26 +132,20 @@ export function FileUpload({
 
         {isUploading ? (
           <>
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-            <p className="text-sm font-medium text-muted-foreground">
-              Uploading...
-            </p>
+            <Loader2 className="text-primary h-10 w-10 animate-spin" />
+            <p className="text-muted-foreground text-sm font-medium">Uploading...</p>
           </>
         ) : selectedFile ? (
-          <div className="flex w-full items-center gap-3 rounded-md border bg-muted/50 px-4 py-3">
-            <FileText className="h-8 w-8 shrink-0 text-primary" />
+          <div className="bg-muted/50 flex w-full items-center gap-3 rounded border px-4 py-3">
+            <FileText className="text-primary h-8 w-8 shrink-0" />
             <div className="min-w-0 flex-1 text-left">
-              <p className="truncate text-sm font-medium text-foreground">
-                {selectedFile.name}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {formatFileSize(selectedFile.size)}
-              </p>
+              <p className="text-foreground truncate text-sm font-medium">{selectedFile.name}</p>
+              <p className="text-muted-foreground text-xs">{formatFileSize(selectedFile.size)}</p>
             </div>
             <button
               type="button"
               onClick={handleRemove}
-              className="ml-auto shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+              className="text-muted-foreground hover:bg-background hover:text-foreground ml-auto shrink-0 rounded-full p-1 transition-colors"
               aria-label="Remove file"
             >
               <X className="h-4 w-4" />
@@ -159,30 +153,24 @@ export function FileUpload({
           </div>
         ) : (
           <>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-              <Upload className="h-6 w-6 text-muted-foreground" />
+            <div className="bg-muted flex h-12 w-12 items-center justify-center rounded-full">
+              <Upload className="text-muted-foreground h-6 w-6" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">
+              <p className="text-foreground text-sm font-medium">
                 Drag and drop or{" "}
-                <span className="text-primary underline underline-offset-2">
-                  browse
-                </span>
+                <span className="text-primary underline underline-offset-2">browse</span>
               </p>
-              <p className="text-xs text-muted-foreground">
-                {accept
-                  ? `Accepted: ${accept}`
-                  : "All file types accepted"}
-                {" "}— Max {formatFileSize(maxSize)}
+              <p className="text-muted-foreground text-xs">
+                {accept ? `Accepted: ${accept}` : "All file types accepted"} - Max{" "}
+                {formatFileSize(maxSize)}
               </p>
             </div>
           </>
         )}
       </div>
 
-      {error && (
-        <p className="mt-1.5 text-xs font-medium text-destructive">{error}</p>
-      )}
+      {error && <p className="text-destructive mt-1.5 text-xs font-medium">{error}</p>}
     </div>
   )
 }

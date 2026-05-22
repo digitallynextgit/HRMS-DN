@@ -20,7 +20,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { useCreateSalaryStructure, useUpdateSalaryStructure, type SalaryStructure } from "@/hooks/use-payroll"
+import {
+  useCreateSalaryStructure,
+  useUpdateSalaryStructure,
+  type SalaryStructure,
+} from "@/hooks/use-payroll"
 import { useEmployees } from "@/hooks/use-employees"
 
 interface SalaryStructureFormValues {
@@ -55,7 +59,14 @@ function fmt(amount: number): string {
 export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStructureFormProps) {
   const isEdit = !!editData
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<SalaryStructureFormValues>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<SalaryStructureFormValues>({
     defaultValues: {
       employeeId: "",
       basicSalary: "",
@@ -153,7 +164,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Salary Structure" : "Add Salary Structure"}</DialogTitle>
         </DialogHeader>
@@ -177,19 +188,19 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
                 <SelectContent>
                   {employees.map((emp) => (
                     <SelectItem key={emp.id} value={emp.id}>
-                      {emp.firstName} {emp.lastName} — {emp.employeeNo}
+                      {emp.firstName} {emp.lastName} - {emp.employeeNo}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {errors.employeeId && (
-                <p className="text-xs text-destructive">Employee is required</p>
+                <p className="text-destructive text-xs">Employee is required</p>
               )}
             </div>
           )}
 
           {isEdit && (
-            <div className="rounded-md bg-muted/50 px-3 py-2 text-sm">
+            <div className="bg-muted/50 rounded px-3 py-2 text-sm">
               <span className="font-medium">
                 {editData?.employee.firstName} {editData?.employee.lastName}
               </span>
@@ -199,8 +210,8 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
 
           {/* Earnings */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">Earnings</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <h3 className="text-foreground mb-3 text-sm font-semibold">Earnings</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="basicSalary">Basic Salary *</Label>
                 <Input
@@ -212,7 +223,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
                   {...register("basicSalary", { required: true })}
                 />
                 {errors.basicSalary && (
-                  <p className="text-xs text-destructive">Basic salary is required</p>
+                  <p className="text-destructive text-xs">Basic salary is required</p>
                 )}
               </div>
 
@@ -270,8 +281,8 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
 
           {/* Deductions */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3">Deductions</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <h3 className="text-foreground mb-3 text-sm font-semibold">Deductions</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="pfEmployee">PF (Employee)</Label>
                 <Input
@@ -333,25 +344,25 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
               {...register("effectiveFrom", { required: true })}
             />
             {errors.effectiveFrom && (
-              <p className="text-xs text-destructive">Effective from date is required</p>
+              <p className="text-destructive text-xs">Effective from date is required</p>
             )}
           </div>
 
           {/* Live Preview */}
-          <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
-            <h3 className="text-sm font-semibold text-foreground">Salary Preview</h3>
+          <div className="bg-muted/30 space-y-2 rounded border p-4">
+            <h3 className="text-foreground text-sm font-semibold">Salary Preview</h3>
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
                 <p className="text-muted-foreground">Gross Earnings</p>
-                <p className="font-semibold text-foreground">{fmt(grossEarnings)}</p>
+                <p className="text-foreground font-semibold">{fmt(grossEarnings)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Total Deductions</p>
-                <p className="font-semibold text-destructive">{fmt(totalDeductions)}</p>
+                <p className="text-destructive font-semibold">{fmt(totalDeductions)}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Net Salary</p>
-                <p className="font-bold text-emerald-600 text-base">{fmt(netSalary)}</p>
+                <p className="text-base font-bold text-emerald-600">{fmt(netSalary)}</p>
               </div>
             </div>
           </div>

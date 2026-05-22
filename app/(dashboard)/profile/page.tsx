@@ -22,7 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -55,8 +55,8 @@ interface InfoRowProps {
 function InfoRow({ label, value }: InfoRowProps) {
   return (
     <div className="space-y-0.5">
-      <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-      <p className="text-sm font-medium">{value || "—"}</p>
+      <p className="text-muted-foreground text-xs tracking-wide uppercase">{label}</p>
+      <p className="text-sm font-medium">{value || "-"}</p>
     </div>
   )
 }
@@ -64,7 +64,7 @@ function InfoRow({ label, value }: InfoRowProps) {
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider mb-3">
+      <h3 className="text-foreground/80 mb-3 text-sm font-semibold tracking-wider uppercase">
         {children}
       </h3>
       <Separator className="mb-4" />
@@ -78,26 +78,34 @@ export default function ProfilePage() {
 
   const { data, isLoading, error } = useEmployee(userId)
 
-  const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" })
+  const [pwForm, setPwForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
   const [showPw, setShowPw] = useState(false)
 
   const pwMut = useMutation({
-    mutationFn: () => changePassword({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword }),
-    onSuccess: () => { toast.success("Password changed"); setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" }) },
+    mutationFn: () =>
+      changePassword({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword }),
+    onSuccess: () => {
+      toast.success("Password changed")
+      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" })
+    },
     onError: (err: Error) => toast.error(err.message),
   })
 
   if (sessionStatus === "loading" || isLoading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
       </div>
     )
   }
 
   if (!data?.data || error) {
     return (
-      <div className="flex items-center justify-center py-24 text-muted-foreground text-sm">
+      <div className="text-muted-foreground flex items-center justify-center py-24 text-sm">
         Could not load your profile. Please try again later.
       </div>
     )
@@ -115,7 +123,7 @@ export default function ProfilePage() {
   const ec = (emp.emergencyContact ?? {}) as Record<string, string>
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="max-w-5xl space-y-6">
       <PageHeader
         title="My Profile"
         description="View and manage your personal profile"
@@ -132,23 +140,23 @@ export default function ProfilePage() {
       {/* Top card */}
       <Card>
         <CardContent className="pt-6 pb-6">
-          <div className="flex flex-col sm:flex-row items-start gap-6">
+          <div className="flex flex-col items-start gap-6 sm:flex-row">
             <Avatar className="h-24 w-24 shrink-0">
               {emp.profilePhoto ? (
-                <AvatarFallback className={cn("text-white text-2xl font-bold", avatarBg)}>
+                <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
                   {initials}
                 </AvatarFallback>
               ) : (
-                <AvatarFallback className={cn("text-white text-2xl font-bold", avatarBg)}>
+                <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
                   {initials}
                 </AvatarFallback>
               )}
             </Avatar>
 
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <h2 className="text-2xl font-bold tracking-tight">{fullName}</h2>
 
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
+              <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-sm">
                 {emp.designation?.title && (
                   <span className="flex items-center gap-1">
                     <Briefcase className="h-3.5 w-3.5" />
@@ -170,17 +178,17 @@ export default function ProfilePage() {
                 <span
                   className={cn(
                     "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    statusColor
+                    statusColor,
                   )}
                 >
                   {statusLabel}
                 </span>
               </div>
 
-              <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+              <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-4 text-sm">
                 <a
                   href={`mailto:${emp.email}`}
-                  className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                  className="hover:text-foreground flex items-center gap-1.5 transition-colors"
                 >
                   <Mail className="h-3.5 w-3.5 shrink-0" />
                   {emp.email}
@@ -188,7 +196,7 @@ export default function ProfilePage() {
                 {emp.phone && (
                   <a
                     href={`tel:${emp.phone}`}
-                    className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+                    className="hover:text-foreground flex items-center gap-1.5 transition-colors"
                   >
                     <Phone className="h-3.5 w-3.5 shrink-0" />
                     {emp.phone}
@@ -226,7 +234,7 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="pt-6">
               <SectionHeader>Personal Information</SectionHeader>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <InfoRow label="First Name" value={emp.firstName} />
                 <InfoRow label="Last Name" value={emp.lastName} />
                 <InfoRow label="Work Email" value={emp.email} />
@@ -244,7 +252,7 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="pt-6">
               <SectionHeader>Employment Details</SectionHeader>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <InfoRow label="Employee No" value={emp.employeeNo} />
                 <InfoRow label="Department" value={emp.department?.name} />
                 <InfoRow label="Designation" value={emp.designation?.title} />
@@ -258,9 +266,7 @@ export default function ProfilePage() {
                 <InfoRow
                   label="Manager"
                   value={
-                    emp.manager
-                      ? `${emp.manager.firstName} ${emp.manager.lastName}`
-                      : undefined
+                    emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : undefined
                   }
                 />
               </div>
@@ -271,10 +277,12 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="pt-6">
                 <SectionHeader>Address</SectionHeader>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {ca.line1 && (
                     <div className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Current Address</p>
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Current Address
+                      </p>
                       <p className="text-sm font-medium">
                         {[ca.line1, ca.line2, ca.city, ca.state, ca.zip].filter(Boolean).join(", ")}
                       </p>
@@ -282,7 +290,9 @@ export default function ProfilePage() {
                   )}
                   {pa.line1 && (
                     <div className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Permanent Address</p>
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Permanent Address
+                      </p>
                       <p className="text-sm font-medium">
                         {[pa.line1, pa.line2, pa.city, pa.state, pa.zip].filter(Boolean).join(", ")}
                       </p>
@@ -297,7 +307,7 @@ export default function ProfilePage() {
             <Card>
               <CardContent className="pt-6">
                 <SectionHeader>Emergency Contact</SectionHeader>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <InfoRow label="Name" value={ec.name} />
                   <InfoRow label="Relation" value={ec.relation} />
                   <InfoRow label="Phone" value={ec.phone} />
@@ -311,13 +321,13 @@ export default function ProfilePage() {
         <TabsContent value="documents">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <FileText className="h-4 w-4" />
                 My Documents
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Documents will load here once the Documents module is available.
               </p>
             </CardContent>
@@ -328,7 +338,7 @@ export default function ProfilePage() {
         <TabsContent value="roles">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <ShieldCheck className="h-4 w-4" />
                 My Roles
               </CardTitle>
@@ -337,13 +347,13 @@ export default function ProfilePage() {
               {emp.employeeRoles && emp.employeeRoles.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {emp.employeeRoles.map((er) => (
-                    <Badge key={er.id} variant="secondary" className="text-sm px-3 py-1">
+                    <Badge key={er.id} variant="secondary" className="px-3 py-1 text-sm">
                       {er.role.displayName}
                     </Badge>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No roles assigned.</p>
+                <p className="text-muted-foreground text-sm">No roles assigned.</p>
               )}
             </CardContent>
           </Card>
@@ -353,7 +363,7 @@ export default function ProfilePage() {
         <TabsContent value="security">
           <Card className="max-w-md">
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <Shield className="h-4 w-4" />
                 Change Password
               </CardTitle>
@@ -365,10 +375,14 @@ export default function ProfilePage() {
                   <Input
                     type={showPw ? "text" : "password"}
                     value={pwForm.currentPassword}
-                    onChange={e => setPwForm(f => ({ ...f, currentPassword: e.target.value }))}
+                    onChange={(e) => setPwForm((f) => ({ ...f, currentPassword: e.target.value }))}
                     placeholder="••••••••"
                   />
-                  <button type="button" onClick={() => setShowPw(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setShowPw((s) => !s)}
+                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+                  >
                     {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
@@ -378,7 +392,7 @@ export default function ProfilePage() {
                 <Input
                   type={showPw ? "text" : "password"}
                   value={pwForm.newPassword}
-                  onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))}
+                  onChange={(e) => setPwForm((f) => ({ ...f, newPassword: e.target.value }))}
                   placeholder="Min. 8 characters"
                 />
               </div>
@@ -387,18 +401,23 @@ export default function ProfilePage() {
                 <Input
                   type={showPw ? "text" : "password"}
                   value={pwForm.confirmPassword}
-                  onChange={e => setPwForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                  onChange={(e) => setPwForm((f) => ({ ...f, confirmPassword: e.target.value }))}
                   placeholder="Repeat new password"
                 />
                 {pwForm.confirmPassword && pwForm.newPassword !== pwForm.confirmPassword && (
-                  <p className="text-xs text-destructive">Passwords do not match</p>
+                  <p className="text-destructive text-xs">Passwords do not match</p>
                 )}
               </div>
               <Button
                 onClick={() => pwMut.mutate()}
-                disabled={pwMut.isPending || !pwForm.currentPassword || !pwForm.newPassword || pwForm.newPassword !== pwForm.confirmPassword}
+                disabled={
+                  pwMut.isPending ||
+                  !pwForm.currentPassword ||
+                  !pwForm.newPassword ||
+                  pwForm.newPassword !== pwForm.confirmPassword
+                }
               >
-                {pwMut.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                {pwMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Change Password
               </Button>
             </CardContent>

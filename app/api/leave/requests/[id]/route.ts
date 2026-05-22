@@ -15,7 +15,13 @@ export const GET = withSession(
         where: { id },
         include: {
           employee: {
-            select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              employeeNo: true,
+              profilePhoto: true,
+            },
           },
           leaveType: { select: { id: true, name: true, code: true, isPaid: true } },
           approver: { select: { id: true, firstName: true, lastName: true } },
@@ -39,7 +45,7 @@ export const GET = withSession(
       console.error("[LEAVE_REQUEST_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const PATCH = withSession(
@@ -52,7 +58,7 @@ export const PATCH = withSession(
       if (!action || !["CANCEL", "APPROVE", "REJECT"].includes(action)) {
         return NextResponse.json(
           { error: "Action must be one of: CANCEL, APPROVE, REJECT" },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -63,8 +69,10 @@ export const PATCH = withSession(
 
       if (request.status !== "PENDING") {
         return NextResponse.json(
-          { error: `Cannot ${action.toLowerCase()} a request that is already ${request.status.toLowerCase()}` },
-          { status: 409 }
+          {
+            error: `Cannot ${action.toLowerCase()} a request that is already ${request.status.toLowerCase()}`,
+          },
+          { status: 409 },
         )
       }
 
@@ -75,13 +83,16 @@ export const PATCH = withSession(
         if (request.employeeId !== session.user.id) {
           return NextResponse.json(
             { error: "You can only cancel your own leave requests" },
-            { status: 403 }
+            { status: 403 },
           )
         }
       } else {
         // APPROVE or REJECT
         if (!canApprove) {
-          return NextResponse.json({ error: "Forbidden: requires leave:approve permission" }, { status: 403 })
+          return NextResponse.json(
+            { error: "Forbidden: requires leave:approve permission" },
+            { status: 403 },
+          )
         }
         if (action === "REJECT" && !rejectionReason?.trim()) {
           return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 })
@@ -106,7 +117,13 @@ export const PATCH = withSession(
             data: { status: "CANCELLED" },
             include: {
               employee: {
-                select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true },
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  employeeNo: true,
+                  profilePhoto: true,
+                },
               },
               leaveType: { select: { id: true, name: true, code: true, isPaid: true } },
               approver: { select: { id: true, firstName: true, lastName: true } },
@@ -131,7 +148,13 @@ export const PATCH = withSession(
             },
             include: {
               employee: {
-                select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true },
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  employeeNo: true,
+                  profilePhoto: true,
+                },
               },
               leaveType: { select: { id: true, name: true, code: true, isPaid: true } },
               approver: { select: { id: true, firstName: true, lastName: true } },
@@ -165,7 +188,13 @@ export const PATCH = withSession(
             },
             include: {
               employee: {
-                select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true },
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  employeeNo: true,
+                  profilePhoto: true,
+                },
               },
               leaveType: { select: { id: true, name: true, code: true, isPaid: true } },
               approver: { select: { id: true, firstName: true, lastName: true } },
@@ -187,8 +216,14 @@ export const PATCH = withSession(
 
       // Send email + in-app notification to the employee
       try {
-        const emp = await db.employee.findUnique({ where: { id: request.employeeId }, select: { firstName: true, email: true } })
-        const leaveType = await db.leaveType.findUnique({ where: { id: request.leaveTypeId }, select: { name: true } })
+        const emp = await db.employee.findUnique({
+          where: { id: request.employeeId },
+          select: { firstName: true, email: true },
+        })
+        const leaveType = await db.leaveType.findUnique({
+          where: { id: request.leaveTypeId },
+          select: { name: true },
+        })
         if (emp && action !== "CANCEL") {
           const isApproved = action === "APPROVE"
           const startDate = new Date(request.startDate).toDateString()
@@ -222,7 +257,7 @@ export const PATCH = withSession(
           })
         }
       } catch (_emailErr) {
-        // Non-blocking — don't fail the request if email fails
+        // Non-blocking - don't fail the request if email fails
       }
 
       return NextResponse.json({ data: updatedRequest })
@@ -230,5 +265,5 @@ export const PATCH = withSession(
       console.error("[LEAVE_REQUEST_PATCH]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

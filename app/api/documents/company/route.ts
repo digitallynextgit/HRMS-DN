@@ -32,9 +32,7 @@ export const GET = withAuth(
         where: { id: { in: uploaderIds } },
         select: { id: true, firstName: true, lastName: true },
       })
-      const uploaderMap = new Map(
-        uploaders.map((u) => [u.id, `${u.firstName} ${u.lastName}`])
-      )
+      const uploaderMap = new Map(uploaders.map((u) => [u.id, `${u.firstName} ${u.lastName}`]))
 
       const enriched = documents.map((doc) => ({
         ...doc,
@@ -46,5 +44,5 @@ export const GET = withAuth(
       console.error("[documents/company] GET error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

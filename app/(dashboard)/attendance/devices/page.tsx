@@ -7,12 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/page-header"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { DeviceFormDialog } from "@/components/attendance/device-form-dialog"
-import {
-  useDevices,
-  useDeleteDevice,
-  useSyncDevice,
-  useTestDevice,
-} from "@/hooks/use-attendance"
+import { useDevices, useDeleteDevice, useSyncDevice, useTestDevice } from "@/hooks/use-attendance"
 import type { HikvisionDevice } from "@/hooks/use-attendance"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
@@ -87,37 +82,53 @@ export default function DevicesPage() {
       />
 
       {isLoading ? (
-        <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="bg-card rounded border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Serial</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">IP Address</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Location</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Last Sync</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+              <tr className="bg-muted/40 border-b">
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Name</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Serial</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  IP Address
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Location</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Last Sync</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {Array.from({ length: 4 }).map((_, i) => (
                 <tr key={i}>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-32" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-28" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-20" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-4 w-32" /></td>
-                  <td className="px-4 py-3"><Skeleton className="h-8 w-20 ml-auto" /></td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-32" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-24" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-28" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-20" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="h-4 w-32" />
+                  </td>
+                  <td className="px-4 py-3">
+                    <Skeleton className="ml-auto h-8 w-20" />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       ) : devices.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border bg-card">
-          <WifiOff className="h-10 w-10 text-muted-foreground/40 mb-3" />
+        <div className="bg-card flex flex-col items-center justify-center rounded border py-20 text-center">
+          <WifiOff className="text-muted-foreground/40 mb-3 h-10 w-10" />
           <p className="text-muted-foreground text-sm">No devices configured yet.</p>
           {canWrite && (
             <Button
@@ -133,18 +144,20 @@ export default function DevicesPage() {
           )}
         </div>
       ) : (
-        <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="bg-card rounded border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Serial</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">IP Address</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Location</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Last Sync</th>
+              <tr className="bg-muted/40 border-b">
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Name</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Serial</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  IP Address
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Location</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Last Sync</th>
                 {canWrite && (
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">
                     Actions
                   </th>
                 )}
@@ -157,22 +170,20 @@ export default function DevicesPage() {
                 return (
                   <tr key={device.id} className="hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3 font-medium">{device.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground font-mono text-xs">
+                    <td className="text-muted-foreground px-4 py-3 font-mono text-xs">
                       {device.deviceSerial}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="text-muted-foreground px-4 py-3">
                       {device.ipAddress}:{device.port}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {device.location ?? "—"}
-                    </td>
+                    <td className="text-muted-foreground px-4 py-3">{device.location ?? "-"}</td>
                     <td className="px-4 py-3">
                       <span
                         className={cn(
                           "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
                           device.isActive
                             ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                            : "bg-muted text-muted-foreground"
+                            : "bg-muted text-muted-foreground",
                         )}
                       >
                         {device.isActive ? (
@@ -183,7 +194,7 @@ export default function DevicesPage() {
                         {device.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs">
+                    <td className="text-muted-foreground px-4 py-3 text-xs">
                       {device.lastSyncAt ? formatDateTime(device.lastSyncAt) : "Never"}
                     </td>
                     {canWrite && (
@@ -231,7 +242,7 @@ export default function DevicesPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive h-8 w-8"
                             onClick={() => setDeleteId(device.id)}
                             title="Delete device"
                           >

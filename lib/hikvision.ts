@@ -1,11 +1,11 @@
 /**
  * Hikvision ISAPI client using HTTP Digest Authentication.
  *
- * No external packages needed — uses Node.js built-in `crypto` and `fetch`.
+ * No external packages needed - uses Node.js built-in `crypto` and `fetch`.
  *
  * Relevant ISAPI endpoints used:
- *   GET  /ISAPI/System/deviceInfo          — ping / device info
- *   POST /ISAPI/AccessControl/AcsEvent?format=json — fetch access-control events
+ *   GET  /ISAPI/System/deviceInfo          - ping / device info
+ *   POST /ISAPI/AccessControl/AcsEvent?format=json - fetch access-control events
  */
 
 import { createHash } from "crypto"
@@ -70,7 +70,7 @@ function buildDigestHeader(
   uri: string,
   username: string,
   password: string,
-  challenge: Record<string, string>
+  challenge: Record<string, string>,
 ): string {
   const { realm = "", nonce = "", qop, opaque } = challenge
 
@@ -107,7 +107,7 @@ async function hikvisionRequest(
   method: "GET" | "POST",
   path: string,
   body?: unknown,
-  timeoutMs = 8000
+  timeoutMs = 8000,
 ): Promise<{ ok: boolean; status: number; text: string }> {
   const baseUrl = `http://${device.ipAddress}:${device.port}`
   const url = `${baseUrl}${path}`
@@ -123,7 +123,7 @@ async function hikvisionRequest(
   const timer = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    // ── Step 1: probe — expect 401 with Digest challenge ──────────────────────
+    // ── Step 1: probe - expect 401 with Digest challenge ──────────────────────
     let probe: Response
     try {
       probe = await fetch(url, {
@@ -149,13 +149,7 @@ async function hikvisionRequest(
     }
 
     const challenge = parseDigestChallenge(wwwAuth)
-    const authHeader = buildDigestHeader(
-      method,
-      path,
-      device.username,
-      device.password,
-      challenge
-    )
+    const authHeader = buildDigestHeader(method, path, device.username, device.password, challenge)
 
     // ── Step 2: authenticated request ─────────────────────────────────────────
     let authRes: Response
@@ -185,7 +179,7 @@ async function hikvisionRequest(
  * Returns success flag and a human-readable message.
  */
 export async function testDeviceConnection(
-  device: HikvisionDeviceConfig
+  device: HikvisionDeviceConfig,
 ): Promise<{ success: boolean; message: string; info?: DeviceInfo }> {
   const result = await hikvisionRequest(device, "GET", "/ISAPI/System/deviceInfo")
 
@@ -194,10 +188,10 @@ export async function testDeviceConnection(
       success: false,
       message:
         result.status === 401
-          ? "Authentication failed — check username/password"
+          ? "Authentication failed - check username/password"
           : result.status === 0
-          ? result.text
-          : `Device returned HTTP ${result.status}`,
+            ? result.text
+            : `Device returned HTTP ${result.status}`,
     }
   }
 
@@ -206,13 +200,12 @@ export async function testDeviceConnection(
     const info: DeviceInfo = {
       deviceName: json.DeviceInfo?.deviceName ?? json.deviceName ?? "Unknown",
       deviceID: json.DeviceInfo?.deviceID ?? json.deviceID ?? "Unknown",
-      firmwareVersion:
-        json.DeviceInfo?.firmwareVersion ?? json.firmwareVersion ?? "Unknown",
+      firmwareVersion: json.DeviceInfo?.firmwareVersion ?? json.firmwareVersion ?? "Unknown",
       model: json.DeviceInfo?.model ?? json.model ?? "Unknown",
     }
     return { success: true, message: "Connection successful", info }
   } catch {
-    // Non-JSON but 200 — still a success
+    // Non-JSON but 200 - still a success
     return { success: true, message: "Connected (non-JSON response)" }
   }
 }
@@ -228,7 +221,7 @@ export async function fetchAttendanceEvents(
   device: HikvisionDeviceConfig,
   startDate: Date,
   endDate: Date,
-  major = 0 // 0 = all events, 5 = Access Control only
+  major = 0, // 0 = all events, 5 = Access Control only
 ): Promise<{ events: AttendanceEvent[]; error?: string }> {
   const formatISOLocal = (d: Date) => d.toISOString().replace(/\.\d{3}Z$/, "+00:00")
 
@@ -255,7 +248,7 @@ export async function fetchAttendanceEvents(
       device,
       "POST",
       "/ISAPI/AccessControl/AcsEvent?format=json",
-      searchCondition
+      searchCondition,
     )
 
     if (!result.ok) {

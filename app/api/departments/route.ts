@@ -31,7 +31,7 @@ export const GET = withSession(
       console.error("[DEPARTMENTS_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withAuth(
@@ -44,7 +44,7 @@ export const POST = withAuth(
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-          { status: 422 }
+          { status: 422 },
         )
       }
 
@@ -65,9 +65,12 @@ export const POST = withAuth(
         "code" in error &&
         (error as { code: string }).code === "P2002"
       ) {
-        return NextResponse.json({ error: "Department name or code already exists" }, { status: 409 })
+        return NextResponse.json(
+          { error: "Department name or code already exists" },
+          { status: 409 },
+        )
       }
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

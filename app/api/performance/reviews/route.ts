@@ -20,7 +20,17 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
       orderBy: { createdAt: "desc" },
       include: {
         cycle: true,
-        reviewee: { select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true, department: { select: { name: true } }, designation: { select: { title: true } } } },
+        reviewee: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            employeeNo: true,
+            profilePhoto: true,
+            department: { select: { name: true } },
+            designation: { select: { title: true } },
+          },
+        },
         reviewer: { select: { id: true, firstName: true, lastName: true } },
       },
     })

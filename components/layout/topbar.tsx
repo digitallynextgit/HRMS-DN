@@ -3,15 +3,31 @@
 import { Session } from "next-auth"
 import { signOut } from "next-auth/react"
 import { useTheme } from "next-themes"
-import { Bell, LogOut, User, Sun, Moon, Monitor, ChevronDown } from "lucide-react"
+import {
+  Bell,
+  LogOut,
+  User,
+  Sun,
+  Moon,
+  Monitor,
+  ChevronDown,
+  PanelLeft,
+  PanelLeftClose,
+} from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { getInitials } from "@/lib/utils"
 import { cn } from "@/lib/utils"
+import { useSidebarStore } from "@/stores/sidebar-store"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
 
@@ -28,19 +44,42 @@ function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground" aria-label="Toggle theme">
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-muted-foreground hover:text-foreground h-8 w-8"
+          aria-label="Toggle theme"
+        >
+          <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+          <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-32 text-sm">
-        <DropdownMenuItem onClick={() => setTheme("light")} className={cn("gap-2 cursor-pointer text-xs", theme === "light" && "font-medium text-foreground")}>
+        <DropdownMenuItem
+          onClick={() => setTheme("light")}
+          className={cn(
+            "cursor-pointer gap-2 text-xs",
+            theme === "light" && "text-foreground font-medium",
+          )}
+        >
           <Sun className="h-3.5 w-3.5" /> Light
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")} className={cn("gap-2 cursor-pointer text-xs", theme === "dark" && "font-medium text-foreground")}>
+        <DropdownMenuItem
+          onClick={() => setTheme("dark")}
+          className={cn(
+            "cursor-pointer gap-2 text-xs",
+            theme === "dark" && "text-foreground font-medium",
+          )}
+        >
           <Moon className="h-3.5 w-3.5" /> Dark
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")} className={cn("gap-2 cursor-pointer text-xs", theme === "system" && "font-medium text-foreground")}>
+        <DropdownMenuItem
+          onClick={() => setTheme("system")}
+          className={cn(
+            "cursor-pointer gap-2 text-xs",
+            theme === "system" && "text-foreground font-medium",
+          )}
+        >
           <Monitor className="h-3.5 w-3.5" /> System
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -50,6 +89,7 @@ function ThemeToggle() {
 
 export function Topbar({ session }: { session: Session }) {
   const { firstName, lastName, email, profilePhoto } = session.user
+  const { isCollapsed, toggle } = useSidebarStore()
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["notifications", "unread-count"],
@@ -58,43 +98,76 @@ export function Topbar({ session }: { session: Session }) {
   })
 
   return (
-    <header className="h-[57px] bg-background border-b border-border flex items-center justify-between px-4 shrink-0 sticky top-0 z-30">
-      <div className="flex-1" />
+    <header className="bg-background border-border flex h-[57px] shrink-0 items-center justify-between border-b px-4">
+      <div className="flex flex-1 items-center">
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggle}
+                className="text-muted-foreground hover:text-foreground h-8 w-8"
+                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {isCollapsed ? (
+                  <PanelLeft className="h-4 w-4" />
+                ) : (
+                  <PanelLeftClose className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              <span className="border-border/60 text-muted-foreground ml-1.5 rounded border px-1 py-px text-[10px]">
+                Ctrl B
+              </span>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
       <div className="flex items-center gap-1">
         <ThemeToggle />
 
         {/* Notifications */}
         <Link href="/notifications">
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground relative" aria-label="Notifications">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-muted-foreground hover:text-foreground relative h-8 w-8"
+            aria-label="Notifications"
+          >
             <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
               <span className="absolute top-1.5 right-1.5 flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-foreground opacity-60" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-foreground" />
+                <span className="bg-foreground absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" />
+                <span className="bg-foreground relative inline-flex h-1.5 w-1.5 rounded-full" />
               </span>
             )}
           </Button>
         </Link>
 
-        <div className="w-px h-4 bg-border mx-1" />
+        <div className="bg-border mx-1 h-4 w-px" />
 
         {/* User menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <button className="hover:bg-accent focus-visible:ring-ring flex items-center gap-2 rounded px-2 py-1.5 transition-colors focus-visible:ring-2 focus-visible:outline-none">
               <Avatar className="h-6 w-6">
                 <AvatarImage src={profilePhoto ?? undefined} />
                 <AvatarFallback className="bg-foreground text-background text-[10px] font-semibold">
                   {getInitials(firstName, lastName)}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm font-medium hidden md:block">{firstName} {lastName}</span>
-              <ChevronDown className="h-3 w-3 text-muted-foreground hidden md:block" />
+              <span className="hidden text-sm font-medium md:block">
+                {firstName} {lastName}
+              </span>
+              <ChevronDown className="text-muted-foreground hidden h-3 w-3 md:block" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel className="font-normal py-2">
+            <DropdownMenuLabel className="py-2 font-normal">
               <div className="flex items-center gap-2.5">
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={profilePhoto ?? undefined} />
@@ -103,8 +176,10 @@ export function Topbar({ session }: { session: Session }) {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium leading-tight">{firstName} {lastName}</p>
-                  <p className="text-xs text-muted-foreground truncate max-w-[150px]">{email}</p>
+                  <p className="text-sm leading-tight font-medium">
+                    {firstName} {lastName}
+                  </p>
+                  <p className="text-muted-foreground max-w-[150px] truncate text-xs">{email}</p>
                 </div>
               </div>
             </DropdownMenuLabel>

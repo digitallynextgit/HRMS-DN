@@ -34,7 +34,7 @@ export const GET = withSession(
       console.error("[ATTENDANCE_ID_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const PATCH = withAuth(
@@ -61,12 +61,18 @@ export const PATCH = withAuth(
       if (body.notes !== undefined) updateData.notes = body.notes ?? null
 
       // Recalculate work hours
-      const resolvedCheckIn = body.checkIn !== undefined
-        ? (body.checkIn ? new Date(body.checkIn) : null)
-        : existing.checkIn
-      const resolvedCheckOut = body.checkOut !== undefined
-        ? (body.checkOut ? new Date(body.checkOut) : null)
-        : existing.checkOut
+      const resolvedCheckIn =
+        body.checkIn !== undefined
+          ? body.checkIn
+            ? new Date(body.checkIn)
+            : null
+          : existing.checkIn
+      const resolvedCheckOut =
+        body.checkOut !== undefined
+          ? body.checkOut
+            ? new Date(body.checkOut)
+            : null
+          : existing.checkOut
 
       if (resolvedCheckIn && resolvedCheckOut) {
         const diff = resolvedCheckOut.getTime() - resolvedCheckIn.getTime()
@@ -97,7 +103,7 @@ export const PATCH = withAuth(
       console.error("[ATTENDANCE_ID_PATCH]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const DELETE = withAuth(
@@ -114,7 +120,7 @@ export const DELETE = withAuth(
       if (!existing.isManual) {
         return NextResponse.json(
           { error: "Only manually created attendance logs can be deleted" },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -125,5 +131,5 @@ export const DELETE = withAuth(
       console.error("[ATTENDANCE_ID_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

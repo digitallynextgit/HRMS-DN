@@ -44,7 +44,7 @@ export const GET = withAuth(
       console.error("[PAYROLL_RECORD_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const PATCH = withAuth(
@@ -74,7 +74,7 @@ export const PATCH = withAuth(
           {
             error: `Invalid status transition from ${existing.status} to ${status}. Allowed: ${validTransitions[existing.status]?.join(", ") || "none"}`,
           },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -105,7 +105,7 @@ export const PATCH = withAuth(
       console.error("[PAYROLL_RECORD_PATCH]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const DELETE = withAuth(
@@ -122,7 +122,7 @@ export const DELETE = withAuth(
       if (existing.status !== "DRAFT") {
         return NextResponse.json(
           { error: "Only DRAFT payroll records can be deleted" },
-          { status: 409 }
+          { status: 409 },
         )
       }
 
@@ -133,5 +133,5 @@ export const DELETE = withAuth(
       console.error("[PAYROLL_RECORD_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

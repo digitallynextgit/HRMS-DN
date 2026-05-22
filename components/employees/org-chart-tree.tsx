@@ -19,33 +19,24 @@ function OrgNodeCard({ node }: { node: OrgNode }) {
   const avatarBg = getAvatarColor(fullName)
 
   return (
-    <Link
-      href={`/employees/${node.id}`}
-      className="flex flex-col items-center gap-1.5 group"
-    >
-      <div className="bg-card border border-border rounded-lg px-3 py-2.5 shadow-sm w-36 text-center transition-all group-hover:shadow-md group-hover:border-primary/40">
-        <div className="flex justify-center mb-1.5">
+    <Link href={`/employees/${node.id}`} className="group flex flex-col items-center gap-1.5">
+      <div className="bg-card border-border group-hover:border-primary/40 w-36 rounded border px-3 py-2.5 text-center shadow-sm transition-all group-hover:shadow-md">
+        <div className="mb-1.5 flex justify-center">
           <Avatar className="h-8 w-8">
-            {node.profilePhoto ? (
-              <AvatarImage src={node.profilePhoto} alt={fullName} />
-            ) : null}
-            <AvatarFallback className={cn("text-white text-xs font-semibold", avatarBg)}>
+            {node.profilePhoto ? <AvatarImage src={node.profilePhoto} alt={fullName} /> : null}
+            <AvatarFallback className={cn("text-xs font-semibold text-white", avatarBg)}>
               {initials}
             </AvatarFallback>
           </Avatar>
         </div>
-        <p className="text-xs font-semibold text-foreground leading-tight truncate">
-          {fullName}
-        </p>
+        <p className="text-foreground truncate text-xs leading-tight font-semibold">{fullName}</p>
         {node.designation?.title && (
-          <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+          <p className="text-muted-foreground mt-0.5 truncate text-[10px]">
             {node.designation.title}
           </p>
         )}
         {node.department?.name && (
-          <p className="text-[10px] text-muted-foreground/70 truncate">
-            {node.department.name}
-          </p>
+          <p className="text-muted-foreground/70 truncate text-[10px]">{node.department.name}</p>
         )}
       </div>
     </Link>
@@ -67,14 +58,10 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
         {hasChildren && (
           <button
             onClick={() => setExpanded((p) => !p)}
-            className="mt-1 flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+            className="text-muted-foreground hover:text-foreground mt-1 flex items-center gap-0.5 text-[10px] transition-colors"
             aria-label={expanded ? "Collapse" : "Expand"}
           >
-            {expanded ? (
-              <ChevronDown className="h-3 w-3" />
-            ) : (
-              <ChevronRight className="h-3 w-3" />
-            )}
+            {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
             {node.children.length} {node.children.length === 1 ? "report" : "reports"}
           </button>
         )}
@@ -84,7 +71,7 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
       {hasChildren && expanded && (
         <div className="flex flex-col items-center">
           {/* Vertical line from parent down */}
-          <div className="w-px h-6 bg-border" />
+          <div className="bg-border h-6 w-px" />
 
           {node.children.length === 1 ? (
             /* Single child: straight line */
@@ -94,14 +81,14 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
             <div className="flex flex-col items-center">
               {/* Horizontal line */}
               <div
-                className="h-px bg-border"
+                className="bg-border h-px"
                 style={{ width: `${Math.max(node.children.length * 160, 160)}px` }}
               />
               <div className="flex items-start gap-4">
                 {node.children.map((child) => (
                   <div key={child.id} className="flex flex-col items-center">
                     {/* Vertical drop per child */}
-                    <div className="w-px h-6 bg-border" />
+                    <div className="bg-border h-6 w-px" />
                     <TreeNode node={child} depth={depth + 1} />
                   </div>
                 ))}
@@ -119,7 +106,7 @@ function TreeNode({ node, depth = 0 }: { node: OrgNode; depth?: number }) {
 export function OrgChartTree({ nodes }: OrgChartTreeProps) {
   if (nodes.length === 0) {
     return (
-      <div className="flex items-center justify-center py-20 text-muted-foreground text-sm">
+      <div className="text-muted-foreground flex items-center justify-center py-20 text-sm">
         No employees found in the org chart.
       </div>
     )
@@ -127,7 +114,7 @@ export function OrgChartTree({ nodes }: OrgChartTreeProps) {
 
   return (
     <div className="overflow-x-auto">
-      <div className="flex flex-col items-center gap-12 p-8 min-w-max">
+      <div className="flex min-w-max flex-col items-center gap-12 p-8">
         {nodes.map((root) => (
           <TreeNode key={root.id} node={root} depth={0} />
         ))}

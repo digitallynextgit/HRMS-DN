@@ -35,13 +35,12 @@ export function PayrollFilters({
   onEmployeeSearchChange,
   onClear,
 }: PayrollFiltersProps) {
-  const hasActiveFilters =
-    month !== "" || year !== "" || status !== "" || employeeSearch !== ""
+  const hasActiveFilters = month !== "" || year !== "" || status !== "" || employeeSearch !== ""
 
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* Employee search */}
-      <div className="relative min-w-[180px] max-w-xs flex-1">
+      <div className="relative max-w-xs min-w-[180px] flex-1">
         <Input
           placeholder="Search employee..."
           value={employeeSearch}
@@ -51,11 +50,8 @@ export function PayrollFilters({
       </div>
 
       {/* Month filter */}
-      <Select
-        value={month || "all"}
-        onValueChange={(v) => onMonthChange(v === "all" ? "" : v)}
-      >
-        <SelectTrigger className="w-[150px] h-9">
+      <Select value={month || "all"} onValueChange={(v) => onMonthChange(v === "all" ? "" : v)}>
+        <SelectTrigger className="h-9 w-[150px]">
           <SelectValue placeholder="All Months" />
         </SelectTrigger>
         <SelectContent>
@@ -80,11 +76,8 @@ export function PayrollFilters({
       />
 
       {/* Status filter */}
-      <Select
-        value={status || "all"}
-        onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}
-      >
-        <SelectTrigger className="w-[150px] h-9">
+      <Select value={status || "all"} onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}>
+        <SelectTrigger className="h-9 w-[150px]">
           <SelectValue placeholder="All Statuses" />
         </SelectTrigger>
         <SelectContent>

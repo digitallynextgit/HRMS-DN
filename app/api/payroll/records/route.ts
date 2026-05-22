@@ -57,7 +57,7 @@ export const GET = withAuth(
       console.error("[PAYROLL_RECORDS_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withAuth(
@@ -99,7 +99,7 @@ export const POST = withAuth(
       if (employees.length === 0) {
         return NextResponse.json(
           { error: "No active employees with a salary structure found" },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -146,9 +146,7 @@ export const POST = withAuth(
             where: {
               employeeId: employee.id,
               status: "APPROVED",
-              OR: [
-                { startDate: { lte: monthEnd }, endDate: { gte: monthStart } },
-              ],
+              OR: [{ startDate: { lte: monthEnd }, endDate: { gte: monthStart } }],
             },
           })
 
@@ -178,12 +176,20 @@ export const POST = withAuth(
 
           // LOP = absent days not covered by approved leave
           const absentDays = attendanceLogs.filter((l) => l.status === "ABSENT").length
-          const lopDays = Math.max(0, absentDays - Math.max(0, leaveDaysInMonth - (attendanceLogs.filter(l => l.status === "ON_LEAVE").length)))
+          const lopDays = Math.max(
+            0,
+            absentDays -
+              Math.max(
+                0,
+                leaveDaysInMonth - attendanceLogs.filter((l) => l.status === "ON_LEAVE").length,
+              ),
+          )
 
           // If no attendance data at all, assume full attendance
-          const effectivePresentDays = attendanceLogs.length === 0
-            ? workingDays
-            : Math.min(presentDays + leaveDaysInMonth, workingDays)
+          const effectivePresentDays =
+            attendanceLogs.length === 0
+              ? workingDays
+              : Math.min(presentDays + leaveDaysInMonth, workingDays)
 
           const ratio = workingDays > 0 ? effectivePresentDays / workingDays : 1
 
@@ -195,7 +201,8 @@ export const POST = withAuth(
           const otherAllowances = Math.round(ss.otherAllowances * ratio * 100) / 100
           const overtime = 0
 
-          const grossSalary = basicSalary + hra + conveyance + medicalAllowance + otherAllowances + overtime
+          const grossSalary =
+            basicSalary + hra + conveyance + medicalAllowance + otherAllowances + overtime
 
           // Deductions are fixed (not prorated)
           const pfEmployee = ss.pfEmployee
@@ -238,7 +245,9 @@ export const POST = withAuth(
           created.push(record.id)
 
           // In-app notification: payslip ready
-          const monthName = new Date(yearNum, monthNum - 1).toLocaleString("default", { month: "long" })
+          const monthName = new Date(yearNum, monthNum - 1).toLocaleString("default", {
+            month: "long",
+          })
           await createNotification({
             employeeId: employee.id,
             title: "Payslip Ready",
@@ -259,11 +268,11 @@ export const POST = withAuth(
           skipped: skipped.length,
           errors: errors.length,
         },
-        { status: 201 }
+        { status: 201 },
       )
     } catch (error) {
       console.error("[PAYROLL_RECORDS_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

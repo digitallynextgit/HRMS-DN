@@ -16,7 +16,7 @@ export const GET = withSession(
       console.error("[LEAVE_TYPES_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withAuth(
@@ -74,10 +74,10 @@ export const POST = withAuth(
       ) {
         return NextResponse.json(
           { error: "A leave type with that name or code already exists" },
-          { status: 409 }
+          { status: 409 },
         )
       }
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

@@ -40,7 +40,7 @@ export function EmployeeFilters({
   return (
     <div className="flex flex-wrap items-center gap-3">
       {/* Search */}
-      <div className="relative flex-1 min-w-[200px] max-w-sm">
+      <div className="relative max-w-sm min-w-[200px] flex-1">
         <Input
           placeholder="Search by name, email, or ID..."
           value={search}
@@ -54,7 +54,7 @@ export function EmployeeFilters({
         value={departmentId || "all"}
         onValueChange={(v) => onDepartmentChange(v === "all" ? "" : v)}
       >
-        <SelectTrigger className="w-[180px] h-9">
+        <SelectTrigger className="h-9 w-[180px]">
           <SelectValue placeholder="All Departments" />
         </SelectTrigger>
         <SelectContent>
@@ -68,11 +68,8 @@ export function EmployeeFilters({
       </Select>
 
       {/* Status Filter */}
-      <Select
-        value={status || "all"}
-        onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}
-      >
-        <SelectTrigger className="w-[150px] h-9">
+      <Select value={status || "all"} onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}>
+        <SelectTrigger className="h-9 w-[150px]">
           <SelectValue placeholder="All Statuses" />
         </SelectTrigger>
         <SelectContent>

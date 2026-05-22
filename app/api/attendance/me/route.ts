@@ -48,5 +48,5 @@ export const GET = withSession(
       console.error("[ATTENDANCE_ME_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

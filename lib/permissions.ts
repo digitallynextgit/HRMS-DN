@@ -36,15 +36,22 @@ export function canAccessEmployee(session: Session, employeeId: string): boolean
 type RouteHandler = (
   req: NextRequest,
   context: { params: any },
-  session: Session
+  session: Session,
 ) => Promise<NextResponse> | NextResponse
 
-export function withAuth(
-  requiredPermission: string | string[],
-  handler: RouteHandler
-) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return async (req: NextRequest, context: { params: any }) => {
+// Next 16 passes `params` as a Promise. Resolve it once in the wrapper so
+// every handler can keep destructuring `ctx.params` synchronously.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type NextRouteContext = { params: Promise<any> | any }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveParams(context: NextRouteContext): Promise<any> {
+  const raw = context?.params
+  return raw && typeof (raw as Promise<unknown>).then === "function" ? await raw : (raw ?? {})
+}
+
+export function withAuth(requiredPermission: string | string[], handler: RouteHandler) {
+  return async (req: NextRequest, context: NextRouteContext) => {
     const session = await getSession()
 
     if (!session) {
@@ -55,30 +62,26 @@ export function withAuth(
       ? requiredPermission
       : [requiredPermission]
 
-    const hasAccess = isSuperAdmin(session) ||
-      permissions.every((p) => session.user.permissions.includes(p))
+    const hasAccess =
+      isSuperAdmin(session) || permissions.every((p) => session.user.permissions.includes(p))
 
     if (!hasAccess) {
-      return NextResponse.json(
-        { error: "Forbidden: insufficient permissions" },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: "Forbidden: insufficient permissions" }, { status: 403 })
     }
 
-    return handler(req, context, session)
+    const params = await resolveParams(context)
+    return handler(req, { params }, session)
   }
 }
 
 // Variant for routes that just need an authenticated user (no specific permission)
-export function withSession(
-  handler: RouteHandler
-) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return async (req: NextRequest, context: { params: any }) => {
+export function withSession(handler: RouteHandler) {
+  return async (req: NextRequest, context: NextRouteContext) => {
     const session = await getSession()
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    return handler(req, context, session)
+    const params = await resolveParams(context)
+    return handler(req, { params }, session)
   }
 }

@@ -56,13 +56,11 @@ export const GET = withAuth(
       const weekendDays = logs.filter((l) => l.status === "WEEKEND").length
 
       const workingLogs = logs.filter(
-        (l) => l.workHours !== null && l.workHours !== undefined && l.workHours > 0
+        (l) => l.workHours !== null && l.workHours !== undefined && l.workHours > 0,
       )
       const totalWorkHours = workingLogs.reduce((sum, l) => sum + (l.workHours ?? 0), 0)
       const avgHoursPerDay =
-        workingLogs.length > 0
-          ? Math.round((totalWorkHours / workingLogs.length) * 100) / 100
-          : 0
+        workingLogs.length > 0 ? Math.round((totalWorkHours / workingLogs.length) * 100) / 100 : 0
 
       return NextResponse.json({
         data: {
@@ -85,5 +83,5 @@ export const GET = withAuth(
       console.error("[ATTENDANCE_SUMMARY_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

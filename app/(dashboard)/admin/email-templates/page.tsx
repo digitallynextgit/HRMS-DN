@@ -19,12 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { EmailTemplateForm } from "@/components/admin/email-template-form"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
@@ -117,7 +112,7 @@ export default function EmailTemplatesPage() {
       />
 
       {isLoading ? (
-        <div className="rounded-lg border">
+        <div className="rounded border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -148,12 +143,10 @@ export default function EmailTemplatesPage() {
           icon={Mail}
           title="No email templates yet"
           description="Create your first email template to start sending transactional emails."
-          action={
-            canWrite ? { label: "Create Template", onClick: handleCreate } : undefined
-          }
+          action={canWrite ? { label: "Create Template", onClick: handleCreate } : undefined}
         />
       ) : (
-        <div className="rounded-lg border">
+        <div className="rounded border">
           <Table>
             <TableHeader>
               <TableRow>
@@ -171,20 +164,20 @@ export default function EmailTemplatesPage() {
                 <TableRow key={template.id}>
                   <TableCell className="font-medium">{template.name}</TableCell>
                   <TableCell>
-                    <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">
+                    <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
                       {template.slug}
                     </code>
                   </TableCell>
-                  <TableCell className="max-w-[200px] text-muted-foreground text-sm">
+                  <TableCell className="text-muted-foreground max-w-[200px] text-sm">
                     {truncate(template.subject, 50)}
                   </TableCell>
                   <TableCell>
                     {template.trigger ? (
-                      <Badge variant="outline" className="text-xs font-mono">
+                      <Badge variant="outline" className="font-mono text-xs">
                         {template.trigger}
                       </Badge>
                     ) : (
-                      <span className="text-muted-foreground text-sm">—</span>
+                      <span className="text-muted-foreground text-sm">-</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -197,7 +190,7 @@ export default function EmailTemplatesPage() {
                       aria-label={`Toggle ${template.name}`}
                     />
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
                     {formatDate(template.updatedAt)}
                   </TableCell>
                   {canWrite && (
@@ -221,11 +214,9 @@ export default function EmailTemplatesPage() {
       )}
 
       <Sheet open={sheetOpen} onOpenChange={handleSheetClose}>
-        <SheetContent className="w-full sm:max-w-[640px] overflow-y-auto">
+        <SheetContent className="w-full overflow-y-auto sm:max-w-[640px]">
           <SheetHeader>
-            <SheetTitle>
-              {editingTemplate ? "Edit Template" : "Create Template"}
-            </SheetTitle>
+            <SheetTitle>{editingTemplate ? "Edit Template" : "Create Template"}</SheetTitle>
           </SheetHeader>
           <div className="mt-6">
             <EmailTemplateForm

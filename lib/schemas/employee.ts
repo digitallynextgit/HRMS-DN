@@ -1,19 +1,23 @@
 import { z } from "zod"
 
-const addressSchema = z.object({
-  line1: z.string().optional(),
-  line2: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  zip: z.string().optional(),
-  country: z.string().optional().default("India"),
-}).optional()
+const addressSchema = z
+  .object({
+    line1: z.string().optional(),
+    line2: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zip: z.string().optional(),
+    country: z.string().optional().default("India"),
+  })
+  .optional()
 
-const emergencyContactSchema = z.object({
-  name: z.string().optional(),
-  relation: z.string().optional(),
-  phone: z.string().optional(),
-}).optional()
+const emergencyContactSchema = z
+  .object({
+    name: z.string().optional(),
+    relation: z.string().optional(),
+    phone: z.string().optional(),
+  })
+  .optional()
 
 export const createEmployeeSchema = z.object({
   // Personal
@@ -31,7 +35,9 @@ export const createEmployeeSchema = z.object({
   // Employment
   departmentId: z.string().uuid("Select a department").optional(),
   designationId: z.string().uuid("Select a designation").optional(),
+  roleId: z.string().uuid("Select a role").optional(),
   managerId: z.string().uuid().optional(),
+  dottedManagerId: z.string().uuid().optional(),
   employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]).default("FULL_TIME"),
   dateOfJoining: z.string().optional(),
   probationEndDate: z.string().optional(),

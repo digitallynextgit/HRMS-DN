@@ -77,9 +77,7 @@ export const GET = withAuth(
     ])
 
     // Resolve department ids → names for the byDepartment groupBy result
-    const departmentIds = byDepartment
-      .map((d) => d.departmentId)
-      .filter(Boolean) as string[]
+    const departmentIds = byDepartment.map((d) => d.departmentId).filter(Boolean) as string[]
 
     const departments = await db.department.findMany({
       where: { id: { in: departmentIds } },
@@ -117,5 +115,5 @@ export const GET = withAuth(
       },
       recentJoiners,
     })
-  }
+  },
 )

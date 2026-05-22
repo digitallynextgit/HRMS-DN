@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { withSession } from "@/lib/permissions"
 import type { Session } from "next-auth"
 
-// GET /api/tasks?mine=true — all tasks assigned to the current user
+// GET /api/tasks?mine=true - all tasks assigned to the current user
 export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: Session) => {
   try {
     const { searchParams } = req.nextUrl

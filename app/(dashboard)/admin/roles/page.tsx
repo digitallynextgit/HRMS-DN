@@ -33,12 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { RoleForm } from "@/components/admin/role-form"
 import { PERMISSIONS } from "@/lib/constants"
 
@@ -146,33 +141,29 @@ export default function RolesPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">
-            Role Management
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-foreground text-2xl font-semibold">Role Management</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             Manage permission roles assigned to employees
           </p>
         </div>
 
         {canWrite && (
           <Button onClick={openCreate}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Create Role
           </Button>
         )}
       </div>
 
       {/* Roles table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-border bg-card overflow-hidden rounded border">
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <div className="text-muted-foreground flex items-center justify-center py-20">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
             Loading roles…
           </div>
         ) : roles.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            No roles found.
-          </div>
+          <div className="text-muted-foreground py-20 text-center">No roles found.</div>
         ) : (
           <Table>
             <TableHeader>
@@ -182,9 +173,7 @@ export default function RolesPage() {
                 <TableHead className="text-center">Permissions</TableHead>
                 <TableHead className="text-center">Employees</TableHead>
                 <TableHead className="text-center">Type</TableHead>
-                {canWrite && (
-                  <TableHead className="text-right">Actions</TableHead>
-                )}
+                {canWrite && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
 
@@ -194,32 +183,26 @@ export default function RolesPage() {
                   {/* Name */}
                   <TableCell>
                     <div>
-                      <p className="font-medium text-foreground">
-                        {role.displayName}
-                      </p>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        {role.name}
-                      </p>
+                      <p className="text-foreground font-medium">{role.displayName}</p>
+                      <p className="text-muted-foreground font-mono text-xs">{role.name}</p>
                     </div>
                   </TableCell>
 
                   {/* Description */}
-                  <TableCell className="text-muted-foreground text-sm max-w-xs truncate">
-                    {role.description ?? (
-                      <span className="text-muted-foreground italic">—</span>
-                    )}
+                  <TableCell className="text-muted-foreground max-w-xs truncate text-sm">
+                    {role.description ?? <span className="text-muted-foreground italic">-</span>}
                   </TableCell>
 
                   {/* Permissions count */}
                   <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center rounded-full bg-blue-50 text-blue-700 text-xs font-medium px-2.5 py-0.5 min-w-[2rem]">
+                    <span className="inline-flex min-w-[2rem] items-center justify-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
                       {role._count.rolePermissions}
                     </span>
                   </TableCell>
 
                   {/* Employees count */}
                   <TableCell className="text-center">
-                    <span className="inline-flex items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium px-2.5 py-0.5 min-w-[2rem]">
+                    <span className="bg-muted text-muted-foreground inline-flex min-w-[2rem] items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                       {role._count.employeeRoles}
                     </span>
                   </TableCell>
@@ -255,7 +238,7 @@ export default function RolesPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => setDeleteTarget(role)}
-                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                             aria-label={`Delete ${role.displayName}`}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -273,7 +256,7 @@ export default function RolesPage() {
 
       {/* Create / Edit Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>
               {editingRole ? `Edit Role: ${editingRole.displayName}` : "Create Role"}
@@ -301,9 +284,8 @@ export default function RolesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Role</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the role{" "}
-              <strong>{deleteTarget?.displayName}</strong>? This action cannot be
-              undone. Employees assigned this role will lose its permissions
+              Are you sure you want to delete the role <strong>{deleteTarget?.displayName}</strong>?
+              This action cannot be undone. Employees assigned this role will lose its permissions
               immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>

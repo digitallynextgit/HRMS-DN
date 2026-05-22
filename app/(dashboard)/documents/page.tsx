@@ -1,7 +1,7 @@
 "use client"
 
-import * as React from "react"
-import { Upload, FolderOpen } from "lucide-react"
+import { useState } from "react"
+import { Upload } from "lucide-react"
 
 import { PageHeader } from "@/components/shared/page-header"
 import { Button } from "@/components/ui/button"
@@ -24,8 +24,8 @@ export default function CompanyDocumentsPage() {
   const canWrite = can(PERMISSIONS.DOCUMENT_WRITE)
   const canDelete = can(PERMISSIONS.DOCUMENT_DELETE)
 
-  const [uploadOpen, setUploadOpen] = React.useState(false)
-  const [selectedCategory, setSelectedCategory] = React.useState<string>("")
+  const [uploadOpen, setUploadOpen] = useState(false)
+  const [selectedCategory, setSelectedCategory] = useState<string>("")
 
   return (
     <div className="flex flex-col gap-6">
@@ -63,10 +63,7 @@ export default function CompanyDocumentsPage() {
         onUploadClick={() => setUploadOpen(true)}
       />
 
-      <DocumentUploadDialog
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-      />
+      <DocumentUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} />
     </div>
   )
 }

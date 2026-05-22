@@ -16,7 +16,7 @@ interface AttendanceTableProps {
 }
 
 function formatTime(dt: string | null): string {
-  if (!dt) return "—"
+  if (!dt) return "-"
   return new Date(dt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
 }
 
@@ -28,18 +28,18 @@ export function AttendanceTable({
 }: AttendanceTableProps) {
   if (isLoading) {
     return (
-      <div className="rounded-lg border bg-card overflow-x-auto">
+      <div className="bg-card rounded border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b bg-muted/40">
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Employee</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Date</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Check In</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Check Out</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Work Hours</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+            <tr className="bg-muted/40 border-b">
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employee</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">Date</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">Check In</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">Check Out</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">Work Hours</th>
+              <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
               {canEdit && (
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
               )}
             </tr>
           </thead>
@@ -55,11 +55,21 @@ export function AttendanceTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3"><Skeleton className="h-3.5 w-24" /></td>
-                <td className="px-4 py-3"><Skeleton className="h-3.5 w-16" /></td>
-                <td className="px-4 py-3"><Skeleton className="h-3.5 w-16" /></td>
-                <td className="px-4 py-3"><Skeleton className="h-3.5 w-12" /></td>
-                <td className="px-4 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                <td className="px-4 py-3">
+                  <Skeleton className="h-3.5 w-24" />
+                </td>
+                <td className="px-4 py-3">
+                  <Skeleton className="h-3.5 w-16" />
+                </td>
+                <td className="px-4 py-3">
+                  <Skeleton className="h-3.5 w-16" />
+                </td>
+                <td className="px-4 py-3">
+                  <Skeleton className="h-3.5 w-12" />
+                </td>
+                <td className="px-4 py-3">
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </td>
                 {canEdit && <td className="px-4 py-3" />}
               </tr>
             ))}
@@ -71,9 +81,9 @@ export function AttendanceTable({
 
   if (logs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border bg-card">
+      <div className="bg-card flex flex-col items-center justify-center rounded border py-20 text-center">
         <p className="text-muted-foreground text-sm">No attendance records found.</p>
-        <p className="text-muted-foreground text-xs mt-1">
+        <p className="text-muted-foreground mt-1 text-xs">
           Try adjusting your filters or adding a manual record.
         </p>
       </div>
@@ -81,35 +91,29 @@ export function AttendanceTable({
   }
 
   return (
-    <div className="rounded-lg border bg-card overflow-x-auto">
+    <div className="bg-card rounded border">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b bg-muted/40">
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Employee</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Date</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Check In</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Check Out</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Work Hours</th>
-            <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+          <tr className="bg-muted/40 border-b">
+            <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employee</th>
+            <th className="text-muted-foreground px-4 py-3 text-left font-medium">Date</th>
+            <th className="text-muted-foreground px-4 py-3 text-left font-medium">Check In</th>
+            <th className="text-muted-foreground px-4 py-3 text-left font-medium">Check Out</th>
+            <th className="text-muted-foreground px-4 py-3 text-left font-medium">Work Hours</th>
+            <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
             {canEdit && (
-              <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+              <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
             )}
           </tr>
         </thead>
         <tbody className="divide-y">
           {logs.map((log) => {
             const employee = log.employee
-            const fullName = employee
-              ? `${employee.firstName} ${employee.lastName}`
-              : "Unknown"
-            const initials = employee
-              ? getInitials(employee.firstName, employee.lastName)
-              : "?"
+            const fullName = employee ? `${employee.firstName} ${employee.lastName}` : "Unknown"
+            const initials = employee ? getInitials(employee.firstName, employee.lastName) : "?"
             const avatarBg = getAvatarColor(fullName)
-            const statusColor =
-              ATTENDANCE_STATUS_COLORS[log.status] ?? "bg-gray-100 text-gray-700"
-            const statusLabel =
-              ATTENDANCE_STATUS_LABELS[log.status] ?? log.status
+            const statusColor = ATTENDANCE_STATUS_COLORS[log.status] ?? "bg-gray-100 text-gray-700"
+            const statusLabel = ATTENDANCE_STATUS_LABELS[log.status] ?? log.status
 
             return (
               <tr key={log.id} className="hover:bg-muted/20 transition-colors">
@@ -117,54 +121,41 @@ export function AttendanceTable({
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8 shrink-0">
                       {employee?.profilePhoto ? (
-                        <AvatarImage
-                          src={employee.profilePhoto}
-                          alt={fullName}
-                        />
+                        <AvatarImage src={employee.profilePhoto} alt={fullName} />
                       ) : null}
-                      <AvatarFallback
-                        className={cn("text-white text-xs font-semibold", avatarBg)}
-                      >
+                      <AvatarFallback className={cn("text-xs font-semibold text-white", avatarBg)}>
                         {initials}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0">
-                      <p className="font-medium truncate">{fullName}</p>
+                      <p className="truncate font-medium">{fullName}</p>
                       {employee && (
-                        <p className="text-xs text-muted-foreground">
-                          {employee.employeeNo}
-                        </p>
+                        <p className="text-muted-foreground text-xs">{employee.employeeNo}</p>
                       )}
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                <td className="text-muted-foreground px-4 py-3 whitespace-nowrap">
                   {formatDate(log.date)}
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {formatTime(log.checkIn)}
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {formatTime(log.checkOut)}
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
+                <td className="text-muted-foreground px-4 py-3">{formatTime(log.checkIn)}</td>
+                <td className="text-muted-foreground px-4 py-3">{formatTime(log.checkOut)}</td>
+                <td className="text-muted-foreground px-4 py-3">
                   {log.workHours !== null && log.workHours !== undefined
                     ? `${log.workHours}h`
-                    : "—"}
+                    : "-"}
                 </td>
                 <td className="px-4 py-3">
                   <span
                     className={cn(
                       "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                      statusColor
+                      statusColor,
                     )}
                   >
                     {statusLabel}
                   </span>
                   {log.isManual && (
-                    <span className="ml-1.5 text-[10px] text-muted-foreground italic">
-                      manual
-                    </span>
+                    <span className="text-muted-foreground ml-1.5 text-[10px] italic">manual</span>
                   )}
                 </td>
                 {canEdit && (

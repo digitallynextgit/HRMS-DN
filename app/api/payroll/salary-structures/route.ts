@@ -29,7 +29,7 @@ export const GET = withAuth(
       console.error("[SALARY_STRUCTURES_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withAuth(
@@ -54,7 +54,7 @@ export const POST = withAuth(
       if (!employeeId || basicSalary === undefined || !effectiveFrom) {
         return NextResponse.json(
           { error: "employeeId, basicSalary, and effectiveFrom are required" },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -68,7 +68,7 @@ export const POST = withAuth(
       if (existing) {
         return NextResponse.json(
           { error: "A salary structure already exists for this employee. Use PATCH to update it." },
-          { status: 409 }
+          { status: 409 },
         )
       }
 
@@ -105,5 +105,5 @@ export const POST = withAuth(
       console.error("[SALARY_STRUCTURES_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

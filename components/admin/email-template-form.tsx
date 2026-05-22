@@ -35,10 +35,7 @@ interface EmailTemplateFormProps {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function submitTemplate(
-  data: Record<string, unknown>,
-  isEdit: boolean
-): Promise<void> {
+async function submitTemplate(data: Record<string, unknown>, isEdit: boolean): Promise<void> {
   const res = await fetch("/api/notifications/templates", {
     method: isEdit ? "PATCH" : "POST",
     headers: { "Content-Type": "application/json" },
@@ -46,7 +43,9 @@ async function submitTemplate(
   })
   if (!res.ok) {
     const json = await res.json().catch(() => ({}))
-    throw new Error(json.error ?? (isEdit ? "Failed to update template" : "Failed to create template"))
+    throw new Error(
+      json.error ?? (isEdit ? "Failed to update template" : "Failed to create template"),
+    )
   }
 }
 
@@ -128,8 +127,7 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
   }
 
   const isSubmitting = mutation.isPending
-  const canSubmit =
-    name.trim() && slug.trim() && subject.trim() && bodyHtml.trim() && !isSubmitting
+  const canSubmit = name.trim() && slug.trim() && subject.trim() && bodyHtml.trim() && !isSubmitting
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
@@ -151,7 +149,7 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
       <div className="flex flex-col gap-2">
         <Label htmlFor="tpl-slug">
           Slug
-          <span className="ml-1 text-xs text-muted-foreground">(unique identifier)</span>
+          <span className="text-muted-foreground ml-1 text-xs">(unique identifier)</span>
         </Label>
         <Input
           id="tpl-slug"
@@ -186,7 +184,9 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
       <div className="flex flex-col gap-2">
         <Label htmlFor="tpl-body">
           Body HTML
-          <span className="ml-1 text-xs text-muted-foreground">(supports {"{{merge_fields}}"})</span>
+          <span className="text-muted-foreground ml-1 text-xs">
+            (supports {"{{merge_fields}}"})
+          </span>
         </Label>
         <Textarea
           id="tpl-body"
@@ -204,7 +204,7 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
       <div className="flex flex-col gap-2">
         <Label htmlFor="tpl-bodytext">
           Plain Text Body
-          <span className="ml-1 text-xs text-muted-foreground">(optional fallback)</span>
+          <span className="text-muted-foreground ml-1 text-xs">(optional fallback)</span>
         </Label>
         <Textarea
           id="tpl-bodytext"
@@ -223,22 +223,18 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
       <div className="flex flex-col gap-3">
         <Label>
           Merge Fields
-          <span className="ml-1 text-xs text-muted-foreground">(available placeholders)</span>
+          <span className="text-muted-foreground ml-1 text-xs">(available placeholders)</span>
         </Label>
 
         <div className="flex flex-wrap gap-2">
           {mergeFields.map((field) => (
-            <Badge
-              key={field}
-              variant="secondary"
-              className="gap-1 pr-1 font-mono text-xs"
-            >
+            <Badge key={field} variant="secondary" className="gap-1 pr-1 font-mono text-xs">
               {`{{${field}}}`}
               <button
                 type="button"
                 onClick={() => handleRemoveField(field)}
                 disabled={isSubmitting}
-                className="ml-0.5 rounded-full p-0.5 text-muted-foreground hover:bg-background hover:text-foreground"
+                className="text-muted-foreground hover:bg-background hover:text-foreground ml-0.5 rounded-full p-0.5"
                 aria-label={`Remove ${field}`}
               >
                 <X className="h-3 w-3" />
@@ -246,7 +242,7 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
             </Badge>
           ))}
           {mergeFields.length === 0 && (
-            <p className="text-xs text-muted-foreground italic">No merge fields defined</p>
+            <p className="text-muted-foreground text-xs italic">No merge fields defined</p>
           )}
         </div>
 
@@ -279,7 +275,7 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
       <div className="flex flex-col gap-2">
         <Label htmlFor="tpl-trigger">
           Trigger
-          <span className="ml-1 text-xs text-muted-foreground">(optional event name)</span>
+          <span className="text-muted-foreground ml-1 text-xs">(optional event name)</span>
         </Label>
         <Input
           id="tpl-trigger"
@@ -293,12 +289,12 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
       </div>
 
       {/* Active toggle */}
-      <div className="flex items-center justify-between rounded-lg border p-4">
+      <div className="flex items-center justify-between rounded border p-4">
         <div className="space-y-0.5">
           <Label htmlFor="tpl-active" className="cursor-pointer text-sm font-medium">
             Active
           </Label>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Inactive templates will not be used for automated emails.
           </p>
         </div>
@@ -315,8 +311,12 @@ export function EmailTemplateForm({ template, onSuccess }: EmailTemplateFormProp
         <Button type="submit" disabled={!canSubmit}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isSubmitting
-            ? isEdit ? "Saving..." : "Creating..."
-            : isEdit ? "Save Changes" : "Create Template"}
+            ? isEdit
+              ? "Saving..."
+              : "Creating..."
+            : isEdit
+              ? "Save Changes"
+              : "Create Template"}
         </Button>
       </div>
     </form>

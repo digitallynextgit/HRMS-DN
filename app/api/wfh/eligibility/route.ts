@@ -20,7 +20,7 @@ export const GET = withSession(
 
       if (!probationEnd || now < new Date(probationEnd)) {
         tier = 1
-        label = "On Probation — WFH allowed only in emergencies (Manager + HR approval required)"
+        label = "On Probation - WFH allowed only in emergencies (Manager + HR approval required)"
         if (probationEnd) {
           const sixMonthsAfter = new Date(probationEnd)
           sixMonthsAfter.setMonth(sixMonthsAfter.getMonth() + 6)
@@ -31,7 +31,8 @@ export const GET = withSession(
         sixMonthsAfter.setMonth(sixMonthsAfter.getMonth() + 6)
         if (now < sixMonthsAfter) {
           tier = 2
-          label = "Within 6 months of probation completion — WFH allowed only in emergencies (Manager + HR approval required)"
+          label =
+            "Within 6 months of probation completion - WFH allowed only in emergencies (Manager + HR approval required)"
           eligibleFromDate = sixMonthsAfter.toISOString().split("T")[0]
         } else {
           tier = 3
@@ -43,12 +44,12 @@ export const GET = withSession(
       let usedThisMonth = 0
       if (tier === 3) {
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-        const monthEnd   = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
         usedThisMonth = await db.wfhRequest.count({
           where: {
             employeeId: session.user.id,
-            status:     { in: ["PENDING", "APPROVED"] },
-            date:       { gte: monthStart, lte: monthEnd },
+            status: { in: ["PENDING", "APPROVED"] },
+            date: { gte: monthStart, lte: monthEnd },
           },
         })
       }
@@ -57,15 +58,15 @@ export const GET = withSession(
         tier,
         label,
         eligibleFromDate,
-        monthlyQuota:  tier === 3 ? 1 : 0,
+        monthlyQuota: tier === 3 ? 1 : 0,
         usedThisMonth,
         canApplyEmergencyOnly: tier !== 3,
-        joiningDate:   employee?.dateOfJoining?.toISOString().split("T")[0] ?? null,
+        joiningDate: employee?.dateOfJoining?.toISOString().split("T")[0] ?? null,
         probationEnd: probationEnd ? new Date(probationEnd).toISOString().split("T")[0] : null,
       })
     } catch (error) {
       console.error("[WFH_ELIGIBILITY_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

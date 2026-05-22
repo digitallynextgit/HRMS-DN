@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { RefreshCw, Loader2, CheckCircle2, LogIn, LogOut } from "lucide-react"
@@ -60,7 +60,9 @@ function Countdown({ expiresAt }: { expiresAt: string }) {
 export default function KioskPage() {
   const [qr, setQr] = useState<QrData | null>(null)
   const [scanToken, setScanToken] = useState("")
-  const [lastAction, setLastAction] = useState<{ name: string; time: string; type: string } | null>(null)
+  const [lastAction, setLastAction] = useState<{ name: string; time: string; type: string } | null>(
+    null,
+  )
 
   const genMut = useMutation({
     mutationFn: generateQr,
@@ -71,7 +73,11 @@ export default function KioskPage() {
   const scanMut = useMutation({
     mutationFn: ({ token, type }: { token: string; type: "IN" | "OUT" }) => scanQr(token, type),
     onSuccess: (data, { type }) => {
-      setLastAction({ name: data.employee ?? "Employee", time: new Date().toLocaleTimeString(), type })
+      setLastAction({
+        name: data.employee ?? "Employee",
+        time: new Date().toLocaleTimeString(),
+        type,
+      })
       toast.success(data.message)
       setScanToken("")
     },
@@ -96,9 +102,22 @@ export default function KioskPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <PageHeader title="QR Attendance Kiosk" description="Display this screen for employees to check in/out" />
-        <Button variant="outline" size="sm" onClick={() => genMut.mutate()} disabled={genMut.isPending} className="gap-2">
-          {genMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+        <PageHeader
+          title="QR Attendance Kiosk"
+          description="Display this screen for employees to check in/out"
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => genMut.mutate()}
+          disabled={genMut.isPending}
+          className="gap-2"
+        >
+          {genMut.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
           Refresh QR
         </Button>
       </div>
@@ -106,23 +125,26 @@ export default function KioskPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* QR Display */}
         <Card>
-          <CardContent className="p-8 flex flex-col items-center gap-4">
-            <p className="text-sm text-muted-foreground font-medium">Current QR Token</p>
+          <CardContent className="flex flex-col items-center gap-4 p-8">
+            <p className="text-muted-foreground text-sm font-medium">Current QR Token</p>
             {qr ? (
               <>
-                {/* Large token display — in production replace with <QRCodeCanvas value={...} /> */}
-                <div className="bg-muted rounded-xl p-6 w-full text-center">
-                  <p className="font-mono text-2xl font-bold tracking-wider break-all select-all">{qr.token}</p>
+                {/* Large token display - in production replace with <QRCodeCanvas value={...} /> */}
+                <div className="bg-muted w-full rounded p-6 text-center">
+                  <p className="font-mono text-2xl font-bold tracking-wider break-all select-all">
+                    {qr.token}
+                  </p>
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-muted-foreground text-sm">
                   Expires in <Countdown expiresAt={qr.expiresAt} />
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  Employees enter this code at the scan terminal, or use the scan page on their device.
+                <p className="text-muted-foreground text-center text-xs">
+                  Employees enter this code at the scan terminal, or use the scan page on their
+                  device.
                 </p>
               </>
             ) : (
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="text-muted-foreground flex items-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin" /> Generating…
               </div>
             )}
@@ -131,25 +153,31 @@ export default function KioskPage() {
 
         {/* Manual scan terminal */}
         <Card>
-          <CardContent className="p-6 space-y-4">
+          <CardContent className="space-y-4 p-6">
             <p className="text-sm font-medium">Manual Scan Terminal</p>
-            <p className="text-xs text-muted-foreground">Employee enters the token code to check in or out.</p>
+            <p className="text-muted-foreground text-xs">
+              Employee enters the token code to check in or out.
+            </p>
             <div className="space-y-1.5">
               <Label>Token Code</Label>
               <Input
                 value={scanToken}
-                onChange={e => setScanToken(e.target.value)}
+                onChange={(e) => setScanToken(e.target.value)}
                 placeholder="Paste or type token..."
                 className="font-mono"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Button
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                className="bg-emerald-600 text-white hover:bg-emerald-700"
                 onClick={() => scanMut.mutate({ token: scanToken, type: "IN" })}
                 disabled={!scanToken || scanMut.isPending}
               >
-                {scanMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LogIn className="h-4 w-4 mr-2" />}
+                {scanMut.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <LogIn className="mr-2 h-4 w-4" />
+                )}
                 Check In
               </Button>
               <Button
@@ -158,15 +186,22 @@ export default function KioskPage() {
                 onClick={() => scanMut.mutate({ token: scanToken, type: "OUT" })}
                 disabled={!scanToken || scanMut.isPending}
               >
-                {scanMut.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LogOut className="h-4 w-4 mr-2" />}
+                {scanMut.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <LogOut className="mr-2 h-4 w-4" />
+                )}
                 Check Out
               </Button>
             </div>
 
             {lastAction && (
-              <div className="flex items-center gap-2 text-emerald-600 text-sm border border-emerald-200 bg-emerald-50 rounded-lg p-3">
+              <div className="flex items-center gap-2 rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-600">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span><strong>{lastAction.name}</strong> checked {lastAction.type.toLowerCase()} at {lastAction.time}</span>
+                <span>
+                  <strong>{lastAction.name}</strong> checked {lastAction.type.toLowerCase()} at{" "}
+                  {lastAction.time}
+                </span>
               </div>
             )}
           </CardContent>

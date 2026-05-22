@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
   })
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+    <div className="bg-muted/30 flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-xl">Forgot Password</CardTitle>
@@ -38,12 +38,13 @@ export default function ForgotPasswordPage() {
         </CardHeader>
         <CardContent>
           {sent ? (
-            <div className="text-center space-y-4">
-              <CheckCircle2 className="h-12 w-12 text-emerald-600 mx-auto" />
+            <div className="space-y-4 text-center">
+              <CheckCircle2 className="mx-auto h-12 w-12 text-emerald-600" />
               <div>
                 <p className="font-medium">Check your email</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  If <strong>{email}</strong> is associated with an account, you&apos;ll receive a reset link shortly.
+                <p className="text-muted-foreground mt-1 text-sm">
+                  If <strong>{email}</strong> is associated with an account, you&apos;ll receive a
+                  reset link shortly.
                 </p>
               </div>
               <Link href="/login">
@@ -54,7 +55,10 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <form
-              onSubmit={e => { e.preventDefault(); mut.mutate(email) }}
+              onSubmit={(e) => {
+                e.preventDefault()
+                mut.mutate(email)
+              }}
               className="space-y-4"
             >
               <div className="space-y-1.5">
@@ -63,21 +67,26 @@ export default function ForgotPasswordPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@company.com"
                   required
                 />
               </div>
               {mut.isError && (
-                <p className="text-sm text-destructive">{(mut.error as Error).message}</p>
+                <p className="text-destructive text-sm">{(mut.error as Error).message}</p>
               )}
               <Button type="submit" className="w-full gap-2" disabled={mut.isPending || !email}>
-                {mut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                {mut.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
                 Send Reset Link
               </Button>
               <div className="text-center">
-                <Link href="/login" className="text-sm text-muted-foreground hover:text-foreground">
-                  <ArrowLeft className="h-3 w-3 inline mr-1" />Back to login
+                <Link href="/login" className="text-muted-foreground hover:text-foreground text-sm">
+                  <ArrowLeft className="mr-1 inline h-3 w-3" />
+                  Back to login
                 </Link>
               </div>
             </form>

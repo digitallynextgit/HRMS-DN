@@ -11,7 +11,8 @@ export const POST = async (req: NextRequest) => {
     const employee = await db.employee.findUnique({ where: { email: email.toLowerCase().trim() } })
 
     // Always return success to prevent user enumeration
-    if (!employee) return NextResponse.json({ message: "If that email exists, a reset link has been sent." })
+    if (!employee)
+      return NextResponse.json({ message: "If that email exists, a reset link has been sent." })
 
     // Expire old tokens
     await db.passwordReset.deleteMany({ where: { employeeId: employee.id } })

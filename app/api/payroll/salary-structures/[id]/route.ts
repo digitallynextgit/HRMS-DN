@@ -35,7 +35,7 @@ export const GET = withAuth(
       console.error("[SALARY_STRUCTURE_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const PATCH = withAuth(
@@ -96,7 +96,7 @@ export const PATCH = withAuth(
       console.error("[SALARY_STRUCTURE_PATCH]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const DELETE = withAuth(
@@ -118,7 +118,7 @@ export const DELETE = withAuth(
       if (referencedRecords > 0) {
         return NextResponse.json(
           { error: "Cannot delete: payroll records are referencing this salary structure" },
-          { status: 409 }
+          { status: 409 },
         )
       }
 
@@ -129,5 +129,5 @@ export const DELETE = withAuth(
       console.error("[SALARY_STRUCTURE_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

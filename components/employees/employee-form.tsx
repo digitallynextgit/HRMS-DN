@@ -5,7 +5,18 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Upload,
+  FileText,
+  Trash2,
+  X,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,10 +28,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn, formatDate } from "@/lib/utils"
-import { EMPLOYMENT_TYPE_LABELS } from "@/lib/constants"
+import {
+  EMPLOYMENT_TYPE_LABELS,
+  DOCUMENT_CATEGORY_LABELS,
+  ALLOWED_FILE_TYPES,
+  MAX_FILE_SIZE,
+} from "@/lib/constants"
 import {
   useCreateEmployee,
   useUpdateEmployee,
@@ -48,11 +63,15 @@ const formSchema = z.object({
   departmentId: z.string().optional(),
   designationId: z.string().optional(),
   managerId: z.string().optional(),
-  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]).default("FULL_TIME"),
+  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]),
   dateOfJoining: z.string().optional(),
   probationEndDate: z.string().optional(),
   workLocation: z.string().optional(),
-  password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
+  password: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .optional()
+    .or(z.literal("")),
 
   // Step 3 - Address
   currentLine1: z.string().optional(),
@@ -60,7 +79,7 @@ const formSchema = z.object({
   currentCity: z.string().optional(),
   currentState: z.string().optional(),
   currentZip: z.string().optional(),
-  sameAsCurrent: z.boolean().default(false),
+  sameAsCurrent: z.boolean(),
   permanentLine1: z.string().optional(),
   permanentLine2: z.string().optional(),
   permanentCity: z.string().optional(),
@@ -80,9 +99,39 @@ type FormData = z.infer<typeof formSchema>
 const STEPS = [
   { number: 1, label: "Personal Info" },
   { number: 2, label: "Employment" },
-  { number: 3, label: "Address & Emergency" },
-  { number: 4, label: "Review & Submit" },
+  { number: 3, label: "Documents" },
+  { number: 4, label: "Address & Emergency" },
+  { number: 5, label: "Review & Submit" },
 ]
+
+// ─── Document step state ──────────────────────────────────────────────────────
+
+type DocCategory = keyof typeof DOCUMENT_CATEGORY_LABELS
+
+interface PendingDoc {
+  /** Local-only id for keying. */
+  uid: string
+  file: File
+  title: string
+  category: DocCategory
+  expiresAt?: string
+}
+
+interface ExistingDoc {
+  id: string
+  title: string
+  category: string
+  fileName: string
+  fileSize: number
+  mimeType: string
+  createdAt: string
+}
+
+async function fetchEmployeeDocs(employeeId: string): Promise<{ data: ExistingDoc[] }> {
+  const res = await fetch(`/api/employees/${employeeId}/documents`)
+  if (!res.ok) throw new Error("Failed to load documents")
+  return res.json()
+}
 
 // ─── Props ───────────────────────────────────────────────────────────────────
 
@@ -93,15 +142,9 @@ interface EmployeeFormProps {
 
 // ─── Step indicator ───────────────────────────────────────────────────────────
 
-function StepIndicator({
-  steps,
-  currentStep,
-}: {
-  steps: typeof STEPS
-  currentStep: number
-}) {
+function StepIndicator({ steps, currentStep }: { steps: typeof STEPS; currentStep: number }) {
   return (
-    <div className="flex items-center justify-center gap-0 mb-8">
+    <div className="mb-8 flex items-center justify-center gap-0">
       {steps.map((step, index) => {
         const isCompleted = currentStep > step.number
         const isActive = currentStep === step.number
@@ -111,18 +154,19 @@ function StepIndicator({
             <div className="flex flex-col items-center gap-1.5">
               <div
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold transition-all",
+                  "flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all",
                   isCompleted && "bg-primary text-primary-foreground",
-                  isActive && "bg-primary text-primary-foreground ring-2 ring-primary ring-offset-2",
-                  !isCompleted && !isActive && "bg-muted text-muted-foreground"
+                  isActive &&
+                    "bg-primary text-primary-foreground ring-primary ring-2 ring-offset-2",
+                  !isCompleted && !isActive && "bg-muted text-muted-foreground",
                 )}
               >
                 {isCompleted ? <Check className="h-4 w-4" /> : step.number}
               </div>
               <span
                 className={cn(
-                  "text-xs hidden sm:block",
-                  isActive ? "text-foreground font-medium" : "text-muted-foreground"
+                  "hidden text-xs sm:block",
+                  isActive ? "text-foreground font-medium" : "text-muted-foreground",
                 )}
               >
                 {step.label}
@@ -131,8 +175,8 @@ function StepIndicator({
             {index < steps.length - 1 && (
               <div
                 className={cn(
-                  "h-px w-12 sm:w-20 mx-1 mb-5 transition-colors",
-                  currentStep > step.number ? "bg-primary" : "bg-muted"
+                  "mx-1 mb-5 h-px w-12 transition-colors sm:w-20",
+                  currentStep > step.number ? "bg-primary" : "bg-muted",
                 )}
               />
             )}
@@ -163,7 +207,7 @@ function FormField({
         {required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {children}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-xs">{error}</p>}
     </div>
   )
 }
@@ -173,8 +217,8 @@ function FormField({
 function ReviewRow({ label, value }: { label: string; value?: string | null }) {
   return (
     <div className="flex gap-2">
-      <span className="text-sm text-muted-foreground w-36 shrink-0">{label}</span>
-      <span className="text-sm font-medium">{value || "—"}</span>
+      <span className="text-muted-foreground w-36 shrink-0 text-sm">{label}</span>
+      <span className="text-sm font-medium">{value || "-"}</span>
     </div>
   )
 }
@@ -183,19 +227,112 @@ function ReviewRow({ label, value }: { label: string; value?: string | null }) {
 
 export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [currentStep, setCurrentStep] = useState(1)
 
+  // Documents step state
+  const [pendingDocs, setPendingDocs] = useState<PendingDoc[]>([])
+  const [docsBusy, setDocsBusy] = useState(false)
+
   const { data: employeeData, isLoading: isLoadingEmployee } = useEmployee(
-    mode === "edit" ? employeeId : null
+    mode === "edit" ? employeeId : null,
   )
   const { data: deptsData } = useDepartments()
   const { data: desigData } = useDesignations()
+
+  // Existing documents (edit mode only).
+  const { data: existingDocsData, refetch: refetchDocs } = useQuery({
+    queryKey: ["employee-documents", employeeId],
+    queryFn: () => fetchEmployeeDocs(employeeId!),
+    enabled: mode === "edit" && !!employeeId,
+    staleTime: 30_000,
+  })
+  const existingDocs: ExistingDoc[] = existingDocsData?.data ?? []
 
   const departments = deptsData?.data ?? []
   const designations = desigData?.data ?? []
 
   const createEmployee = useCreateEmployee()
   const updateEmployee = useUpdateEmployee()
+
+  // Add files chosen via the file picker as pending uploads.
+  function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return
+    const added: PendingDoc[] = []
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`"${file.name}" exceeds the ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`)
+        continue
+      }
+      if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+        toast.error(`"${file.name}" is not an allowed file type`)
+        continue
+      }
+      added.push({
+        uid: crypto.randomUUID(),
+        file,
+        title: file.name.replace(/\.[^/.]+$/, ""),
+        category: "OTHER",
+      })
+    }
+    if (added.length > 0) setPendingDocs((prev) => [...prev, ...added])
+  }
+
+  function updatePendingDoc(uid: string, patch: Partial<Omit<PendingDoc, "uid" | "file">>) {
+    setPendingDocs((prev) => prev.map((d) => (d.uid === uid ? { ...d, ...patch } : d)))
+  }
+
+  function removePendingDoc(uid: string) {
+    setPendingDocs((prev) => prev.filter((d) => d.uid !== uid))
+  }
+
+  async function uploadPendingDocs(targetEmployeeId: string) {
+    if (pendingDocs.length === 0) return
+    setDocsBusy(true)
+    let okCount = 0
+    let failCount = 0
+    for (const doc of pendingDocs) {
+      const fd = new FormData()
+      fd.append("file", doc.file)
+      fd.append("title", doc.title.trim() || doc.file.name)
+      fd.append("category", doc.category)
+      if (doc.expiresAt) fd.append("expiresAt", doc.expiresAt)
+      try {
+        const res = await fetch(`/api/employees/${targetEmployeeId}/documents`, {
+          method: "POST",
+          body: fd,
+        })
+        if (!res.ok) throw new Error(await res.text())
+        okCount++
+      } catch (err) {
+        console.error("[employee-form] upload failed", doc.file.name, err)
+        failCount++
+      }
+    }
+    setDocsBusy(false)
+    if (okCount > 0) toast.success(`Uploaded ${okCount} document${okCount !== 1 ? "s" : ""}`)
+    if (failCount > 0)
+      toast.error(`${failCount} document${failCount !== 1 ? "s" : ""} failed to upload`)
+    setPendingDocs([])
+  }
+
+  async function deleteExistingDoc(docId: string) {
+    if (!employeeId) return
+    try {
+      const res = await fetch(`/api/employees/${employeeId}/documents/${docId}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed to delete" }))
+        throw new Error(err.error || "Failed to delete")
+      }
+      toast.success("Document removed")
+      refetchDocs()
+      queryClient.invalidateQueries({ queryKey: ["employee-documents", employeeId] })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete")
+    }
+  }
 
   const {
     register,
@@ -205,7 +342,6 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
     formState: { errors },
     reset,
     trigger,
-    getValues,
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -263,14 +399,15 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
   const stepFields: Record<number, (keyof FormData)[]> = {
     1: ["firstName", "lastName", "email"],
     2: [],
-    3: [],
+    3: [], // Documents step — no schema fields to validate (files only)
     4: [],
+    5: [],
   }
 
   async function goNext() {
     const fieldsToValidate = stepFields[currentStep]
     const valid = fieldsToValidate.length > 0 ? await trigger(fieldsToValidate) : true
-    if (valid) setCurrentStep((s) => Math.min(s + 1, 4))
+    if (valid) setCurrentStep((s) => Math.min(s + 1, STEPS.length))
   }
 
   function goPrev() {
@@ -307,16 +444,15 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
               zip: data.currentZip,
             }
           : undefined,
-      permanentAddress:
-        data.sameAsCurrent
-          ? {
-              line1: data.currentLine1,
-              line2: data.currentLine2,
-              city: data.currentCity,
-              state: data.currentState,
-              zip: data.currentZip,
-            }
-          : data.permanentLine1 || data.permanentCity
+      permanentAddress: data.sameAsCurrent
+        ? {
+            line1: data.currentLine1,
+            line2: data.currentLine2,
+            city: data.currentCity,
+            state: data.currentState,
+            zip: data.currentZip,
+          }
+        : data.permanentLine1 || data.permanentCity
           ? {
               line1: data.permanentLine1,
               line2: data.permanentLine2,
@@ -325,33 +461,36 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
               zip: data.permanentZip,
             }
           : undefined,
-      emergencyContact:
-        data.emergencyName
-          ? {
-              name: data.emergencyName,
-              relation: data.emergencyRelation,
-              phone: data.emergencyPhone,
-            }
-          : undefined,
+      emergencyContact: data.emergencyName
+        ? {
+            name: data.emergencyName,
+            relation: data.emergencyRelation,
+            phone: data.emergencyPhone,
+          }
+        : undefined,
     }
 
     if (mode === "create") {
       const result = await createEmployee.mutateAsync(payload as Record<string, unknown>)
-      if (result?.data?.id) {
-        router.push(`/employees/${result.data.id}`)
+      const newId = result?.data?.id
+      if (newId) {
+        // Upload any staged documents before redirecting.
+        if (pendingDocs.length > 0) await uploadPendingDocs(newId)
+        router.push(`/employees/${newId}`)
       }
     } else if (mode === "edit" && employeeId) {
       await updateEmployee.mutateAsync({ id: employeeId, body: payload as Record<string, unknown> })
+      if (pendingDocs.length > 0) await uploadPendingDocs(employeeId)
       router.push(`/employees/${employeeId}`)
     }
   }
 
-  const isSubmitting = createEmployee.isPending || updateEmployee.isPending
+  const isSubmitting = createEmployee.isPending || updateEmployee.isPending || docsBusy
 
   if (mode === "edit" && isLoadingEmployee) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
       </div>
     )
   }
@@ -369,7 +508,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
           <CardHeader>
             <CardTitle className="text-base">Personal Information</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <CardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <FormField label="First Name" required error={errors.firstName?.message}>
               <Input {...register("firstName")} placeholder="John" />
             </FormField>
@@ -429,7 +568,9 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bg) => (
-                    <SelectItem key={bg} value={bg}>{bg}</SelectItem>
+                    <SelectItem key={bg} value={bg}>
+                      {bg}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -444,7 +585,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
           <CardHeader>
             <CardTitle className="text-base">Employment Details</CardTitle>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <CardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <FormField label="Department" error={errors.departmentId?.message}>
               <Select
                 value={watchedValues.departmentId || ""}
@@ -455,7 +596,9 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {departments.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -471,7 +614,9 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {designations.map((d) => (
-                    <SelectItem key={d.id} value={d.id}>{d.title}</SelectItem>
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.title}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -487,14 +632,20 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(EMPLOYMENT_TYPE_LABELS).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </FormField>
 
             <FormField label="Manager Employee ID" error={errors.managerId?.message}>
-              <Input {...register("managerId")} placeholder="Manager's Employee ID (UUID)" autoComplete="off" />
+              <Input
+                {...register("managerId")}
+                placeholder="Manager's Employee ID (UUID)"
+                autoComplete="off"
+              />
             </FormField>
 
             <FormField label="Date of Joining" error={errors.dateOfJoining?.message}>
@@ -506,7 +657,11 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
             </FormField>
 
             <FormField label="Work Location" error={errors.workLocation?.message}>
-              <Input {...register("workLocation")} placeholder="e.g. Mumbai HQ, Remote" autoComplete="off" />
+              <Input
+                {...register("workLocation")}
+                placeholder="e.g. Mumbai HQ, Remote"
+                autoComplete="off"
+              />
             </FormField>
 
             {mode === "create" && (
@@ -523,14 +678,196 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
         </Card>
       )}
 
-      {/* ── Step 3: Address & Emergency ───────────────────────────────────── */}
+      {/* ── Step 3: Documents ─────────────────────────────────────────────── */}
       {currentStep === 3 && (
+        <div className="space-y-6">
+          {/* Hidden file input shared by every "Add Document" trigger on this step. */}
+          <input
+            id="emp-doc-input"
+            type="file"
+            multiple
+            className="hidden"
+            accept={ALLOWED_FILE_TYPES.join(",")}
+            onChange={(e) => {
+              handleFiles(e.target.files)
+              e.target.value = ""
+            }}
+          />
+
+          {/* Existing documents (edit mode only) */}
+          {mode === "edit" && existingDocs.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Uploaded Documents</CardTitle>
+                <p className="text-muted-foreground text-xs">
+                  Documents already on file for this employee.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {existingDocs.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className="bg-muted/30 hover:bg-muted/50 flex items-center justify-between rounded border px-4 py-3 transition-colors"
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="bg-background flex h-9 w-9 shrink-0 items-center justify-center rounded border">
+                        <FileText className="text-muted-foreground h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{doc.title}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {doc.fileName} · {(doc.fileSize / 1024).toFixed(1)} KB ·{" "}
+                          {DOCUMENT_CATEGORY_LABELS[doc.category] ?? doc.category}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-destructive hover:text-destructive h-8 w-8 shrink-0"
+                      onClick={() => deleteExistingDoc(doc.id)}
+                      aria-label="Remove document"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* New documents to upload */}
+          <Card>
+            <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+              <div>
+                <CardTitle className="text-base">Upload Documents</CardTitle>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  ID proof, certificates, offer letters, etc. PDF / DOC / JPG / PNG up to{" "}
+                  {MAX_FILE_SIZE / (1024 * 1024)}MB each.
+                </p>
+              </div>
+              {pendingDocs.length > 0 && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 gap-1.5"
+                  onClick={() => document.getElementById("emp-doc-input")?.click()}
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  Add Document
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {pendingDocs.length === 0 ? (
+                <label
+                  htmlFor="emp-doc-input"
+                  className="border-border hover:border-foreground/40 hover:bg-muted/30 flex cursor-pointer flex-col items-center justify-center rounded border border-dashed py-12 transition-colors"
+                >
+                  <Upload className="text-muted-foreground mb-3 h-6 w-6" />
+                  <span className="text-sm font-medium">Click to add documents</span>
+                  <span className="text-muted-foreground mt-1 text-xs">
+                    You can select multiple files
+                  </span>
+                </label>
+              ) : (
+                <div className="space-y-3">
+                  {pendingDocs.map((doc) => (
+                    <div key={doc.uid} className="bg-muted/20 space-y-4 rounded border p-4">
+                      {/* Filename header — prominent so it's clear which doc you're editing */}
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="bg-background flex h-9 w-9 shrink-0 items-center justify-center rounded border">
+                            <FileText className="text-muted-foreground h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{doc.file.name}</p>
+                            <p className="text-muted-foreground text-xs">
+                              {(doc.file.size / 1024).toFixed(1)} KB ·{" "}
+                              {doc.file.type || "unknown type"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive h-8 w-8 shrink-0"
+                          onClick={() => removePendingDoc(doc.uid)}
+                          aria-label="Remove file"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Metadata grid */}
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <FormField label="Document Title" required>
+                          <Input
+                            value={doc.title}
+                            onChange={(e) => updatePendingDoc(doc.uid, { title: e.target.value })}
+                            placeholder="e.g. PAN Card"
+                          />
+                        </FormField>
+                        <FormField label="Category">
+                          <Select
+                            value={doc.category}
+                            onValueChange={(v) =>
+                              updatePendingDoc(doc.uid, { category: v as DocCategory })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Object.entries(DOCUMENT_CATEGORY_LABELS).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormField>
+                        <FormField label="Expires (optional)">
+                          <Input
+                            type="date"
+                            value={doc.expiresAt ?? ""}
+                            onChange={(e) =>
+                              updatePendingDoc(doc.uid, { expiresAt: e.target.value || undefined })
+                            }
+                          />
+                        </FormField>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Trailing "Add Another" button beneath the list */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full gap-1.5 border-dashed"
+                    onClick={() => document.getElementById("emp-doc-input")?.click()}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Add Another Document
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* ── Step 4: Address & Emergency ───────────────────────────────────── */}
+      {currentStep === 4 && (
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Current Address</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <CardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div className="sm:col-span-2">
                 <FormField label="Address Line 1">
                   <Input {...register("currentLine1")} placeholder="Street address, building" />
@@ -557,17 +894,17 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Permanent Address</CardTitle>
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex cursor-pointer items-center gap-2">
                   <Checkbox
                     checked={sameAsCurrent}
                     onCheckedChange={(checked) => setValue("sameAsCurrent", !!checked)}
                   />
-                  <span className="text-sm text-muted-foreground">Same as current</span>
+                  <span className="text-muted-foreground text-sm">Same as current</span>
                 </label>
               </div>
             </CardHeader>
             {!sameAsCurrent && (
-              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <CardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <FormField label="Address Line 1">
                     <Input {...register("permanentLine1")} placeholder="Street address, building" />
@@ -595,7 +932,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
             <CardHeader>
               <CardTitle className="text-base">Emergency Contact</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <CardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <FormField label="Contact Name">
                 <Input {...register("emergencyName")} placeholder="Jane Doe" />
               </FormField>
@@ -610,20 +947,28 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
         </div>
       )}
 
-      {/* ── Step 4: Review ────────────────────────────────────────────────── */}
-      {currentStep === 4 && (
+      {/* ── Step 5: Review ────────────────────────────────────────────────── */}
+      {currentStep === 5 && (
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Personal Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <ReviewRow label="Full Name" value={`${watchedValues.firstName || ""} ${watchedValues.lastName || ""}`.trim()} />
+              <ReviewRow
+                label="Full Name"
+                value={`${watchedValues.firstName || ""} ${watchedValues.lastName || ""}`.trim()}
+              />
               <ReviewRow label="Work Email" value={watchedValues.email} />
               <ReviewRow label="Personal Email" value={watchedValues.personalEmail} />
               <ReviewRow label="Work Phone" value={watchedValues.phone} />
               <ReviewRow label="Personal Phone" value={watchedValues.personalPhone} />
-              <ReviewRow label="Date of Birth" value={watchedValues.dateOfBirth ? formatDate(watchedValues.dateOfBirth) : undefined} />
+              <ReviewRow
+                label="Date of Birth"
+                value={
+                  watchedValues.dateOfBirth ? formatDate(watchedValues.dateOfBirth) : undefined
+                }
+              />
               <ReviewRow label="Gender" value={watchedValues.gender || undefined} />
               <ReviewRow label="Nationality" value={watchedValues.nationality} />
               <ReviewRow label="Blood Group" value={watchedValues.bloodGroup} />
@@ -637,10 +982,28 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
             <CardContent className="space-y-2">
               <ReviewRow label="Department" value={selectedDept?.name} />
               <ReviewRow label="Designation" value={selectedDesig?.title} />
-              <ReviewRow label="Employment Type" value={EMPLOYMENT_TYPE_LABELS[watchedValues.employmentType] ?? watchedValues.employmentType} />
+              <ReviewRow
+                label="Employment Type"
+                value={
+                  EMPLOYMENT_TYPE_LABELS[watchedValues.employmentType] ??
+                  watchedValues.employmentType
+                }
+              />
               <ReviewRow label="Work Location" value={watchedValues.workLocation} />
-              <ReviewRow label="Date of Joining" value={watchedValues.dateOfJoining ? formatDate(watchedValues.dateOfJoining) : undefined} />
-              <ReviewRow label="Probation End" value={watchedValues.probationEndDate ? formatDate(watchedValues.probationEndDate) : undefined} />
+              <ReviewRow
+                label="Date of Joining"
+                value={
+                  watchedValues.dateOfJoining ? formatDate(watchedValues.dateOfJoining) : undefined
+                }
+              />
+              <ReviewRow
+                label="Probation End"
+                value={
+                  watchedValues.probationEndDate
+                    ? formatDate(watchedValues.probationEndDate)
+                    : undefined
+                }
+              />
             </CardContent>
           </Card>
 
@@ -694,11 +1057,33 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
               </CardContent>
             </Card>
           )}
+
+          {(pendingDocs.length > 0 || (mode === "edit" && existingDocs.length > 0)) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Documents</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {mode === "edit" && existingDocs.length > 0 && (
+                  <ReviewRow
+                    label="Already uploaded"
+                    value={`${existingDocs.length} document${existingDocs.length !== 1 ? "s" : ""}`}
+                  />
+                )}
+                {pendingDocs.length > 0 && (
+                  <ReviewRow
+                    label="Will upload"
+                    value={`${pendingDocs.length} new document${pendingDocs.length !== 1 ? "s" : ""}`}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
       {/* ── Navigation ────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between mt-8">
+      <div className="mt-8 flex items-center justify-between">
         <Button
           type="button"
           variant="outline"
@@ -711,7 +1096,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
         </Button>
 
         <div className="flex items-center gap-3">
-          {currentStep < 4 ? (
+          {currentStep < STEPS.length ? (
             <Button type="button" onClick={goNext} className="gap-1.5">
               Next
               <ChevronRight className="h-4 w-4" />
@@ -720,7 +1105,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
             <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : mode === "create" ? (

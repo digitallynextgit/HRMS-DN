@@ -28,7 +28,7 @@ export const GET = withSession(
       console.error("[DESIGNATIONS_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withAuth(
@@ -41,7 +41,7 @@ export const POST = withAuth(
       if (!parsed.success) {
         return NextResponse.json(
           { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
-          { status: 422 }
+          { status: 422 },
         )
       }
 
@@ -65,5 +65,5 @@ export const POST = withAuth(
       }
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

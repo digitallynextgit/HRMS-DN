@@ -13,9 +13,17 @@ export const GET = withSession(
       const request = await db.wfhRequest.findUnique({
         where: { id },
         include: {
-          employee:        { select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true } },
+          employee: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              employeeNo: true,
+              profilePhoto: true,
+            },
+          },
           managerApprover: { select: { id: true, firstName: true, lastName: true } },
-          hrApprover:      { select: { id: true, firstName: true, lastName: true } },
+          hrApprover: { select: { id: true, firstName: true, lastName: true } },
         },
       })
 
@@ -33,7 +41,7 @@ export const GET = withSession(
       console.error("[WFH_REQUEST_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const PATCH = withSession(
@@ -46,7 +54,7 @@ export const PATCH = withSession(
       if (!action || !["CANCEL", "APPROVE", "REJECT"].includes(action)) {
         return NextResponse.json(
           { error: "Action must be one of: CANCEL, APPROVE, REJECT" },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -55,8 +63,10 @@ export const PATCH = withSession(
 
       if (request.status !== "PENDING") {
         return NextResponse.json(
-          { error: `Cannot ${action.toLowerCase()} a request that is already ${request.status.toLowerCase()}` },
-          { status: 409 }
+          {
+            error: `Cannot ${action.toLowerCase()} a request that is already ${request.status.toLowerCase()}`,
+          },
+          { status: 409 },
         )
       }
 
@@ -65,7 +75,10 @@ export const PATCH = withSession(
       // ── CANCEL: only the requester ──
       if (action === "CANCEL") {
         if (request.employeeId !== session.user.id) {
-          return NextResponse.json({ error: "You can only cancel your own WFH requests" }, { status: 403 })
+          return NextResponse.json(
+            { error: "You can only cancel your own WFH requests" },
+            { status: 403 },
+          )
         }
         const updated = await db.wfhRequest.update({
           where: { id },
@@ -76,13 +89,16 @@ export const PATCH = withSession(
 
       // ── APPROVE / REJECT: requires wfh:approve permission ──
       if (!canApprove) {
-        return NextResponse.json({ error: "Forbidden: requires wfh:approve permission" }, { status: 403 })
+        return NextResponse.json(
+          { error: "Forbidden: requires wfh:approve permission" },
+          { status: 403 },
+        )
       }
       if (action === "REJECT" && !rejectionReason?.trim()) {
         return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 })
       }
 
-      // Determine approver role — "MANAGER" or "HR"
+      // Determine approver role - "MANAGER" or "HR"
       // For emergency requests (tier 1/2), BOTH manager and HR must approve before status changes.
       // For tier-3 standard requests, single manager approval is enough; HR is auto-notified.
       const role: "MANAGER" | "HR" = approverRole === "HR" ? "HR" : "MANAGER"
@@ -95,9 +111,7 @@ export const PATCH = withSession(
             ? { managerApproverId: session.user.id, managerApprovedAt: new Date() }
             : {}
         const setHr =
-          role === "HR"
-            ? { hrApproverId: session.user.id, hrApprovedAt: new Date() }
-            : {}
+          role === "HR" ? { hrApproverId: session.user.id, hrApprovedAt: new Date() } : {}
 
         const afterStamp = await db.wfhRequest.update({
           where: { id },
@@ -112,11 +126,19 @@ export const PATCH = withSession(
         if (isFullyApproved) {
           updated = await db.wfhRequest.update({
             where: { id },
-            data:  { status: "APPROVED" },
+            data: { status: "APPROVED" },
             include: {
-              employee:        { select: { id: true, firstName: true, lastName: true, email: true, employeeNo: true } },
+              employee: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                  employeeNo: true,
+                },
+              },
               managerApprover: { select: { id: true, firstName: true, lastName: true } },
-              hrApprover:      { select: { id: true, firstName: true, lastName: true } },
+              hrApprover: { select: { id: true, firstName: true, lastName: true } },
             },
           })
         } else {
@@ -126,14 +148,16 @@ export const PATCH = withSession(
         // REJECT
         updated = await db.wfhRequest.update({
           where: { id },
-          data:  {
-            status:           "REJECTED",
-            rejectionReason:  String(rejectionReason).trim(),
+          data: {
+            status: "REJECTED",
+            rejectionReason: String(rejectionReason).trim(),
             ...(role === "MANAGER" && { managerApproverId: session.user.id }),
-            ...(role === "HR"      && { hrApproverId:      session.user.id }),
+            ...(role === "HR" && { hrApproverId: session.user.id }),
           },
           include: {
-            employee: { select: { id: true, firstName: true, lastName: true, email: true, employeeNo: true } },
+            employee: {
+              select: { id: true, firstName: true, lastName: true, email: true, employeeNo: true },
+            },
           },
         })
       }
@@ -146,20 +170,22 @@ export const PATCH = withSession(
             select: { firstName: true, email: true },
           })
           if (emp) {
-            const dateStr  = new Date(request.date).toDateString()
+            const dateStr = new Date(request.date).toDateString()
             const approved = updated.status === "APPROVED"
             await createNotification({
               employeeId: request.employeeId,
-              title:      approved ? "WFH Approved" : "WFH Rejected",
-              message:    approved
+              title: approved ? "WFH Approved" : "WFH Rejected",
+              message: approved
                 ? `Your Work From Home request for ${dateStr} has been approved.`
                 : `Your Work From Home request for ${dateStr} was rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ""}`,
-              type:       approved ? "success" : "error",
-              link:       "/wfh",
+              type: approved ? "success" : "error",
+              link: "/wfh",
             })
             await sendEmail({
-              to:      emp.email,
-              subject: approved ? "Your WFH request has been approved" : "Your WFH request has been rejected",
+              to: emp.email,
+              subject: approved
+                ? "Your WFH request has been approved"
+                : "Your WFH request has been rejected",
               html: `
                 <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
                   <h2 style="color:${approved ? "#16a34a" : "#dc2626"};">WFH Request ${approved ? "Approved" : "Rejected"}</h2>
@@ -182,5 +208,5 @@ export const PATCH = withSession(
       console.error("[WFH_REQUEST_PATCH]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

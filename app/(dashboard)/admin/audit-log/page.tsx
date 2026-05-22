@@ -77,7 +77,7 @@ export default function AuditLogPage() {
   })
   const [loading, setLoading] = useState(true)
 
-  // Filters  
+  // Filters
   const [moduleFilter, setModuleFilter] = useState<string>("")
   const [actionFilter, setActionFilter] = useState<string>("")
   const [dateFrom, setDateFrom] = useState<string>("")
@@ -122,7 +122,6 @@ export default function AuditLogPage() {
     setPage(1)
   }
 
-
   function handleSearch() {
     setPage(1)
     fetchEntries()
@@ -142,8 +141,7 @@ export default function AuditLogPage() {
   function actionBadgeVariant(action: string) {
     if (action.includes("delete")) return "destructive" as const
     if (action.includes("create")) return "success" as const
-    if (action.includes("update") || action.includes("edit"))
-      return "secondary" as const
+    if (action.includes("update") || action.includes("edit")) return "secondary" as const
     return "outline" as const
   }
 
@@ -155,25 +153,22 @@ export default function AuditLogPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-foreground">Audit Log</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-foreground text-2xl font-semibold">Audit Log</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
             Track all actions performed in the system
           </p>
         </div>
 
         <Button variant="outline" size="sm" onClick={fetchEntries}>
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw className="mr-2 h-4 w-4" />
           Refresh
         </Button>
       </div>
 
       {/* Filters row */}
-      <div className="flex flex-wrap gap-3 p-4 bg-card rounded-xl border border-border">
+      <div className="bg-card border-border flex flex-wrap gap-3 rounded border p-4">
         {/* Module filter */}
-        <Select
-          value={moduleFilter || ALL_MODULES_VALUE}
-          onValueChange={handleModuleChange}
-        >
+        <Select value={moduleFilter || ALL_MODULES_VALUE} onValueChange={handleModuleChange}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="All modules" />
           </SelectTrigger>
@@ -188,8 +183,8 @@ export default function AuditLogPage() {
         </Select>
 
         {/* Action search */}
-        <div className="relative flex-1 min-w-[180px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <div className="relative min-w-[180px] flex-1">
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Filter by action…"
             value={actionFilter}
@@ -233,24 +228,21 @@ export default function AuditLogPage() {
 
       {/* Summary */}
       {!loading && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Showing {entries.length} of {pagination.total} entries
-          {pagination.totalPages > 1 &&
-            ` — Page ${pagination.page} of ${pagination.totalPages}`}
+          {pagination.totalPages > 1 && ` - Page ${pagination.page} of ${pagination.totalPages}`}
         </p>
       )}
 
       {/* Table */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-border bg-card overflow-hidden rounded border">
         {loading ? (
-          <div className="flex items-center justify-center py-20 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <div className="text-muted-foreground flex items-center justify-center py-20">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
             Loading…
           </div>
         ) : entries.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            No audit log entries found.
-          </div>
+          <div className="text-muted-foreground py-20 text-center">No audit log entries found.</div>
         ) : (
           <Table>
             <TableHeader>
@@ -268,7 +260,7 @@ export default function AuditLogPage() {
               {entries.map((entry) => (
                 <TableRow key={entry.id}>
                   {/* Timestamp */}
-                  <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                  <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
                     {format(new Date(entry.createdAt), "dd/MM/yyyy HH:mm:ss")}
                   </TableCell>
 
@@ -276,36 +268,32 @@ export default function AuditLogPage() {
                   <TableCell>
                     {entry.actor ? (
                       <div>
-                        <p className="text-sm font-medium text-foreground">
+                        <p className="text-foreground text-sm font-medium">
                           {entry.actor.firstName} {entry.actor.lastName}
                         </p>
-                        <p className="text-xs text-muted-foreground font-mono">
+                        <p className="text-muted-foreground font-mono text-xs">
                           {entry.actor.employeeNo}
                         </p>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground italic text-sm">
-                        System
-                      </span>
+                      <span className="text-muted-foreground text-sm italic">System</span>
                     )}
                   </TableCell>
 
                   {/* Action */}
                   <TableCell>
-                    <Badge variant={actionBadgeVariant(entry.action)}>
-                      {entry.action}
-                    </Badge>
+                    <Badge variant={actionBadgeVariant(entry.action)}>{entry.action}</Badge>
                   </TableCell>
 
                   {/* Module */}
                   <TableCell>
-                    <span className="text-xs font-medium text-muted-foreground bg-muted rounded px-2 py-0.5">
+                    <span className="text-muted-foreground bg-muted rounded px-2 py-0.5 text-xs font-medium">
                       {entry.module}
                     </span>
                   </TableCell>
 
                   {/* Entity */}
-                  <TableCell className="text-sm text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
                     {entry.entityType ? (
                       <span>
                         {entry.entityType}
@@ -316,15 +304,13 @@ export default function AuditLogPage() {
                         )}
                       </span>
                     ) : (
-                      <span className="text-muted-foreground">—</span>
+                      <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
 
                   {/* IP Address */}
-                  <TableCell className="text-sm font-mono text-muted-foreground">
-                    {entry.ipAddress ?? (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                  <TableCell className="text-muted-foreground font-mono text-sm">
+                    {entry.ipAddress ?? <span className="text-muted-foreground">-</span>}
                   </TableCell>
                 </TableRow>
               ))}
@@ -345,7 +331,7 @@ export default function AuditLogPage() {
             Previous
           </Button>
 
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             Page {pagination.page} of {pagination.totalPages}
           </span>
 

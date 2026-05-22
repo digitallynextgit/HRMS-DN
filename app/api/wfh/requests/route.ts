@@ -5,15 +5,12 @@ import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
 // ─── Eligibility tiers per Digitally Next WFH Policy ──────────────────────────
-// Tier 1 — During probation:               BLOCKED (emergency only, Mgr+HR approval)
-// Tier 2 — Post probation, 0-6 months:     BLOCKED (emergency only, Mgr+HR approval)
-// Tier 3 — Post probation + 6 months:      1 WFH/month, manager approval, HR notification
+// Tier 1 - During probation:               BLOCKED (emergency only, Mgr+HR approval)
+// Tier 2 - Post probation, 0-6 months:     BLOCKED (emergency only, Mgr+HR approval)
+// Tier 3 - Post probation + 6 months:      1 WFH/month, manager approval, HR notification
 type Tier = 1 | 2 | 3
 
-function getEmployeeTier(
-  probationEndDate: Date | null,
-  confirmationDate: Date | null
-): Tier {
+function getEmployeeTier(probationEndDate: Date | null, confirmationDate: Date | null): Tier {
   const now = new Date()
   const probationEnd = probationEndDate ?? confirmationDate
   if (!probationEnd || now < new Date(probationEnd)) return 1
@@ -29,24 +26,24 @@ export const GET = withSession(
       const { searchParams } = new URL(req.url)
       const canApprove = hasPermission(session, PERMISSIONS.WFH_APPROVE)
 
-      const page  = Math.max(1, Number(searchParams.get("page")  ?? 1))
+      const page = Math.max(1, Number(searchParams.get("page") ?? 1))
       const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit") ?? 20)))
-      const skip  = (page - 1) * limit
+      const skip = (page - 1) * limit
 
       const where: Record<string, unknown> = {}
 
       if (canApprove) {
-        const statusParam     = searchParams.get("status")
+        const statusParam = searchParams.get("status")
         const employeeIdParam = searchParams.get("employeeId")
-        const fromParam       = searchParams.get("from")
-        const toParam         = searchParams.get("to")
+        const fromParam = searchParams.get("from")
+        const toParam = searchParams.get("to")
 
-        if (statusParam)     where.status     = statusParam
+        if (statusParam) where.status = statusParam
         if (employeeIdParam) where.employeeId = employeeIdParam
         if (fromParam || toParam) {
           where.date = {}
           if (fromParam) (where.date as Record<string, unknown>).gte = new Date(fromParam)
-          if (toParam)   (where.date as Record<string, unknown>).lte = new Date(toParam)
+          if (toParam) (where.date as Record<string, unknown>).lte = new Date(toParam)
         }
       } else {
         where.employeeId = session.user.id
@@ -58,9 +55,17 @@ export const GET = withSession(
         db.wfhRequest.findMany({
           where,
           include: {
-            employee:        { select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true } },
+            employee: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                employeeNo: true,
+                profilePhoto: true,
+              },
+            },
             managerApprover: { select: { id: true, firstName: true, lastName: true } },
-            hrApprover:      { select: { id: true, firstName: true, lastName: true } },
+            hrApprover: { select: { id: true, firstName: true, lastName: true } },
           },
           orderBy: { createdAt: "desc" },
           skip,
@@ -77,7 +82,7 @@ export const GET = withSession(
       console.error("[WFH_REQUESTS_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withSession(
@@ -103,7 +108,7 @@ export const POST = withSession(
         return NextResponse.json({ error: "Cannot apply for WFH in the past" }, { status: 400 })
       }
 
-      // Block weekends — WFH applies only to working days
+      // Block weekends - WFH applies only to working days
       const dow = wfhDate.getUTCDay()
       if (dow === 0 || dow === 6) {
         return NextResponse.json({ error: "WFH cannot be applied for weekends" }, { status: 400 })
@@ -114,7 +119,10 @@ export const POST = withSession(
         where: { date: wfhDate, isOptional: false },
       })
       if (holiday) {
-        return NextResponse.json({ error: `${wfhDate.toDateString()} is a holiday (${holiday.name})` }, { status: 400 })
+        return NextResponse.json(
+          { error: `${wfhDate.toDateString()} is a holiday (${holiday.name})` },
+          { status: 400 },
+        )
       }
 
       // Fetch employee tier
@@ -125,34 +133,38 @@ export const POST = withSession(
 
       const tier = getEmployeeTier(
         employee?.probationEndDate ?? null,
-        employee?.confirmationDate ?? null
+        employee?.confirmationDate ?? null,
       )
 
       // ── Tier rules ──
       if (tier === 1 || tier === 2) {
         if (!isEmergency) {
-          const tierMsg = tier === 1
-            ? "You are currently on probation. WFH is only available in emergencies and requires both Manager and HR approval."
-            : "You are within 6 months of probation completion. WFH is only available in emergencies and requires both Manager and HR approval."
-          return NextResponse.json({ error: tierMsg, tier, requiresEmergency: true }, { status: 422 })
+          const tierMsg =
+            tier === 1
+              ? "You are currently on probation. WFH is only available in emergencies and requires both Manager and HR approval."
+              : "You are within 6 months of probation completion. WFH is only available in emergencies and requires both Manager and HR approval."
+          return NextResponse.json(
+            { error: tierMsg, tier, requiresEmergency: true },
+            { status: 422 },
+          )
         }
       }
 
       // ── Tier 3: enforce 1 WFH/month ──
       if (tier === 3) {
         const monthStart = new Date(wfhDate.getUTCFullYear(), wfhDate.getUTCMonth(), 1)
-        const monthEnd   = new Date(wfhDate.getUTCFullYear(), wfhDate.getUTCMonth() + 1, 0)
+        const monthEnd = new Date(wfhDate.getUTCFullYear(), wfhDate.getUTCMonth() + 1, 0)
         const usedThisMonth = await db.wfhRequest.count({
           where: {
             employeeId: session.user.id,
-            status:     { in: ["PENDING", "APPROVED"] },
-            date:       { gte: monthStart, lte: monthEnd },
+            status: { in: ["PENDING", "APPROVED"] },
+            date: { gte: monthStart, lte: monthEnd },
           },
         })
         if (usedThisMonth >= 1) {
           return NextResponse.json(
             { error: "You have already used or applied for your 1 WFH day this month." },
-            { status: 422 }
+            { status: 422 },
           )
         }
       }
@@ -161,17 +173,14 @@ export const POST = withSession(
       const overlappingLeave = await db.leaveRequest.findFirst({
         where: {
           employeeId: session.user.id,
-          status:     { in: ["PENDING", "APPROVED"] },
-          AND: [
-            { startDate: { lte: wfhDate } },
-            { endDate:   { gte: wfhDate } },
-          ],
+          status: { in: ["PENDING", "APPROVED"] },
+          AND: [{ startDate: { lte: wfhDate } }, { endDate: { gte: wfhDate } }],
         },
       })
       if (overlappingLeave) {
         return NextResponse.json(
           { error: "WFH cannot be clubbed with a leave on the same day." },
-          { status: 422 }
+          { status: 422 },
         )
       }
 
@@ -179,27 +188,35 @@ export const POST = withSession(
       const duplicate = await db.wfhRequest.findFirst({
         where: {
           employeeId: session.user.id,
-          date:       wfhDate,
-          status:     { in: ["PENDING", "APPROVED"] },
+          date: wfhDate,
+          status: { in: ["PENDING", "APPROVED"] },
         },
       })
       if (duplicate) {
         return NextResponse.json(
           { error: "You already have a WFH request for this date." },
-          { status: 409 }
+          { status: 409 },
         )
       }
 
       const request = await db.wfhRequest.create({
         data: {
-          employeeId:  session.user.id,
-          date:        wfhDate,
-          reason:      reason ? String(reason).trim() : null,
-          status:      "PENDING",
+          employeeId: session.user.id,
+          date: wfhDate,
+          reason: reason ? String(reason).trim() : null,
+          status: "PENDING",
           isEmergency: !!isEmergency,
         },
         include: {
-          employee: { select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true } },
+          employee: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              employeeNo: true,
+              profilePhoto: true,
+            },
+          },
         },
       })
 
@@ -208,5 +225,5 @@ export const POST = withSession(
       console.error("[WFH_REQUESTS_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

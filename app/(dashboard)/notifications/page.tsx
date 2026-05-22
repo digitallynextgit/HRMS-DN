@@ -1,8 +1,8 @@
 "use client"
 
-import * as React from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle, Bell, Info, AlertCircle, CheckCheck } from "lucide-react"
+import { CheckCircle, Info, AlertCircle, CheckCheck } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
@@ -49,7 +49,7 @@ function getNotificationIcon(type: string) {
 
 function NotificationSkeleton() {
   return (
-    <div className="flex items-start gap-3 rounded-lg border bg-card p-4">
+    <div className="bg-card flex items-start gap-3 rounded border p-4">
       <Skeleton className="h-9 w-9 rounded-full" />
       <div className="flex flex-1 flex-col gap-2">
         <Skeleton className="h-4 w-40" />
@@ -67,7 +67,7 @@ const LIMIT = 20
 export default function NotificationsPage() {
   const router = useRouter()
   const qc = useQueryClient()
-  const [page, setPage] = React.useState(1)
+  const [page, setPage] = useState(1)
 
   const { data, isLoading } = useQuery<NotificationsResponse>({
     queryKey: ["notifications", page],
@@ -148,11 +148,12 @@ export default function NotificationsPage() {
               type="button"
               onClick={() => handleNotificationClick(notification)}
               className={cn(
-                "flex w-full items-start gap-3 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                !notification.isRead && "border-l-4 border-l-blue-500 bg-blue-50/30 hover:bg-blue-50/50"
+                "bg-card hover:bg-muted/40 focus-visible:ring-ring flex w-full items-start gap-3 rounded border p-4 text-left transition-colors focus:outline-none focus-visible:ring-2",
+                !notification.isRead &&
+                  "border-l-4 border-l-blue-500 bg-blue-50/30 hover:bg-blue-50/50",
               )}
             >
-              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted">
+              <div className="bg-muted mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
                 {getNotificationIcon(notification.type)}
               </div>
 
@@ -162,17 +163,17 @@ export default function NotificationsPage() {
                     className={cn(
                       "text-sm",
                       notification.isRead
-                        ? "font-normal text-foreground"
-                        : "font-semibold text-foreground"
+                        ? "text-foreground font-normal"
+                        : "text-foreground font-semibold",
                     )}
                   >
                     {notification.title}
                   </p>
-                  <span className="shrink-0 text-xs text-muted-foreground">
+                  <span className="text-muted-foreground shrink-0 text-xs">
                     {formatRelativeTime(notification.createdAt)}
                   </span>
                 </div>
-                <p className="mt-0.5 text-sm text-muted-foreground">
+                <p className="text-muted-foreground mt-0.5 text-sm">
                   {truncate(notification.message, 100)}
                 </p>
               </div>
@@ -188,7 +189,7 @@ export default function NotificationsPage() {
       {/* Pagination */}
       {meta && meta.totalPages > 1 && (
         <div className="flex items-center justify-between border-t pt-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Page {meta.page} of {meta.totalPages} &mdash; {meta.total} total
           </p>
           <div className="flex items-center gap-2">

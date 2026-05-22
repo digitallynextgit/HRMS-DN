@@ -28,5 +28,5 @@ export const POST = withAuth(
       console.error("[DEVICE_TEST_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

@@ -44,7 +44,7 @@ export default function EmployeeDocumentsPage() {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
-        title={employeeName ? `Documents — ${employeeName}` : "Employee Documents"}
+        title={employeeName ? `Documents - ${employeeName}` : "Employee Documents"}
         description="Personal documents, certificates, and employment records."
         actions={
           canWrite ? (
@@ -63,11 +63,7 @@ export default function EmployeeDocumentsPage() {
         onUploadClick={() => setUploadOpen(true)}
       />
 
-      <DocumentUploadDialog
-        open={uploadOpen}
-        onOpenChange={setUploadOpen}
-        employeeId={id}
-      />
+      <DocumentUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} employeeId={id} />
     </div>
   )
 }

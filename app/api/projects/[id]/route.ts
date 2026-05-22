@@ -4,32 +4,46 @@ import { withAuth, withSession } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
-export const GET = withSession(async (_req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
-  try {
-    const project = await db.project.findUnique({
-      where: { id: ctx.params.id },
-      include: {
-        owner: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
-        members: {
-          include: { employee: { select: { id: true, firstName: true, lastName: true, profilePhoto: true, designation: { select: { title: true } } } } },
-        },
-        tasks: {
-          orderBy: { createdAt: "desc" },
-          include: {
-            assignee: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
+export const GET = withSession(
+  async (_req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
+    try {
+      const project = await db.project.findUnique({
+        where: { id: ctx.params.id },
+        include: {
+          owner: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
+          members: {
+            include: {
+              employee: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  profilePhoto: true,
+                  designation: { select: { title: true } },
+                },
+              },
+            },
           },
+          tasks: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              assignee: {
+                select: { id: true, firstName: true, lastName: true, profilePhoto: true },
+              },
+            },
+          },
+          _count: { select: { tasks: true, timesheets: true } },
         },
-        _count: { select: { tasks: true, timesheets: true } },
-      },
-    })
+      })
 
-    if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 })
-    return NextResponse.json({ data: project })
-  } catch (error) {
-    console.error("[PROJECT_GET]", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
-  }
-})
+      if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 })
+      return NextResponse.json({ data: project })
+    } catch (error) {
+      console.error("[PROJECT_GET]", error)
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    }
+  },
+)
 
 export const PATCH = withAuth(
   PERMISSIONS.PROJECT_WRITE,
@@ -57,7 +71,7 @@ export const PATCH = withAuth(
       console.error("[PROJECT_PATCH]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const DELETE = withAuth(
@@ -70,5 +84,5 @@ export const DELETE = withAuth(
       console.error("[PROJECT_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

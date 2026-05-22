@@ -1,5 +1,3 @@
-import * as React from "react"
-
 import { cn } from "@/lib/utils"
 import { getInitials, getAvatarColor } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -32,12 +30,7 @@ export function AvatarDisplay({
   return (
     <Avatar className={cn(sizeClasses[size], className)}>
       {src && <AvatarImage src={src} alt={`${firstName} ${lastName}`} />}
-      <AvatarFallback
-        className={cn(
-          "font-semibold text-white",
-          colorClass
-        )}
-      >
+      <AvatarFallback className={cn("font-semibold text-white", colorClass)}>
         {initials}
       </AvatarFallback>
     </Avatar>

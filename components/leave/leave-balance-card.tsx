@@ -25,26 +25,22 @@ export function LeaveBalanceCard({ balance }: LeaveBalanceCardProps) {
 
   return (
     <Card className="relative overflow-hidden">
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="space-y-3 p-4">
         {/* Header row */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", accent.dot)} />
-              <h4 className="text-sm font-semibold text-foreground truncate">
-                {leaveType.name}
-              </h4>
+              <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", accent.dot)} />
+              <h4 className="text-foreground truncate text-sm font-semibold">{leaveType.name}</h4>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-0.5 ml-3">
-              {leaveType.code}
-            </p>
+            <p className="text-muted-foreground mt-0.5 ml-3 text-[11px]">{leaveType.code}</p>
           </div>
           <span
             className={cn(
-              "shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded-md border",
+              "shrink-0 rounded border px-1.5 py-0.5 text-[10px] font-medium",
               leaveType.isPaid
                 ? "border-border bg-muted/40 text-muted-foreground"
-                : "border-border bg-muted/40 text-muted-foreground"
+                : "border-border bg-muted/40 text-muted-foreground",
             )}
           >
             {leaveType.isPaid ? "Paid" : "Unpaid"}
@@ -53,16 +49,14 @@ export function LeaveBalanceCard({ balance }: LeaveBalanceCardProps) {
 
         {/* Hero number */}
         <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-bold text-foreground tabular-nums">
-            {available}
-          </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-foreground text-2xl font-bold tabular-nums">{available}</span>
+          <span className="text-muted-foreground text-xs">
             / {total} {total === 1 ? "day" : "days"} left
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+        <div className="bg-muted h-1 w-full overflow-hidden rounded-full">
           <div
             className={cn("h-full transition-all", accent.bar)}
             style={{ width: `${usedPercent}%` }}
@@ -70,7 +64,7 @@ export function LeaveBalanceCard({ balance }: LeaveBalanceCardProps) {
         </div>
 
         {/* Breakdown row */}
-        <div className="flex items-center justify-between text-[11px] pt-1">
+        <div className="flex items-center justify-between pt-1 text-[11px]">
           <BreakdownItem label="Used" value={used} />
           <BreakdownItem label="Pending" value={pending} amber={pending > 0} />
           <BreakdownItem label="Carried" value={carried} />
@@ -80,28 +74,18 @@ export function LeaveBalanceCard({ balance }: LeaveBalanceCardProps) {
   )
 }
 
-function BreakdownItem({
-  label,
-  value,
-  amber,
-}: {
-  label: string
-  value: number
-  amber?: boolean
-}) {
+function BreakdownItem({ label, value, amber }: { label: string; value: number; amber?: boolean }) {
   return (
     <div className="flex flex-col items-center">
       <span
         className={cn(
           "text-sm font-semibold tabular-nums",
-          amber ? "text-amber-600 dark:text-amber-400" : "text-foreground"
+          amber ? "text-amber-600 dark:text-amber-400" : "text-foreground",
         )}
       >
         {value}
       </span>
-      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
-        {label}
-      </span>
+      <span className="text-muted-foreground text-[10px] tracking-wider uppercase">{label}</span>
     </div>
   )
 }

@@ -64,7 +64,7 @@ export const GET = withAuth(
       console.error("[ATTENDANCE_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withAuth(
@@ -75,10 +75,7 @@ export const POST = withAuth(
       const { employeeId, date, checkIn, checkOut, status, notes } = body
 
       if (!employeeId || !date) {
-        return NextResponse.json(
-          { error: "employeeId and date are required" },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: "employeeId and date are required" }, { status: 400 })
       }
 
       const employee = await db.employee.findUnique({ where: { id: employeeId } })
@@ -140,5 +137,5 @@ export const POST = withAuth(
       console.error("[ATTENDANCE_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

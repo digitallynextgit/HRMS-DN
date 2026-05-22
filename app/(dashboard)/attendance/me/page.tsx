@@ -11,7 +11,7 @@ import { ATTENDANCE_STATUS_LABELS, ATTENDANCE_STATUS_COLORS } from "@/lib/consta
 import { useMyAttendance } from "@/hooks/use-attendance"
 
 function formatTime(dt: string | null): string {
-  if (!dt) return "—"
+  if (!dt) return "-"
   return new Date(dt).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -31,12 +31,12 @@ export default function MyAttendancePage() {
   const presentDays = logs.filter((l) => l.status === "PRESENT").length
   const absentDays = logs.filter((l) => l.status === "ABSENT").length
   const lateDays = logs.filter((l) => l.status === "LATE").length
-  const workingLogs = logs.filter((l) => l.workHours !== null && l.workHours !== undefined && l.workHours > 0)
+  const workingLogs = logs.filter(
+    (l) => l.workHours !== null && l.workHours !== undefined && l.workHours > 0,
+  )
   const totalHours = workingLogs.reduce((sum, l) => sum + (l.workHours ?? 0), 0)
   const avgHours =
-    workingLogs.length > 0
-      ? Math.round((totalHours / workingLogs.length) * 10) / 10
-      : 0
+    workingLogs.length > 0 ? Math.round((totalHours / workingLogs.length) * 10) / 10 : 0
 
   return (
     <div className="space-y-6">
@@ -46,31 +46,31 @@ export default function MyAttendancePage() {
       />
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Present Days"
-          value={isLoading ? "—" : presentDays}
+          value={isLoading ? "-" : presentDays}
           icon={CheckCircle2}
           iconColor="text-green-600"
           iconBg="bg-green-50"
         />
         <StatCard
           title="Absent Days"
-          value={isLoading ? "—" : absentDays}
+          value={isLoading ? "-" : absentDays}
           icon={XCircle}
           iconColor="text-red-600"
           iconBg="bg-red-50"
         />
         <StatCard
           title="Late Days"
-          value={isLoading ? "—" : lateDays}
+          value={isLoading ? "-" : lateDays}
           icon={Clock}
           iconColor="text-orange-600"
           iconBg="bg-orange-50"
         />
         <StatCard
           title="Avg Work Hours"
-          value={isLoading ? "—" : `${avgHours}h`}
+          value={isLoading ? "-" : `${avgHours}h`}
           icon={Timer}
           iconColor="text-blue-600"
           iconBg="bg-blue-50"
@@ -82,58 +82,56 @@ export default function MyAttendancePage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-lg" />
+            <Skeleton key={i} className="h-16 rounded" />
           ))}
         </div>
       ) : logs.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border bg-card">
+        <div className="bg-card flex flex-col items-center justify-center rounded border py-20 text-center">
           <p className="text-muted-foreground text-sm">
             No attendance records found for the last 30 days.
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card divide-y overflow-hidden">
+        <div className="bg-card divide-y overflow-hidden rounded border">
           {logs.map((log) => {
-            const statusColor =
-              ATTENDANCE_STATUS_COLORS[log.status] ?? "bg-gray-100 text-gray-700"
-            const statusLabel =
-              ATTENDANCE_STATUS_LABELS[log.status] ?? log.status
+            const statusColor = ATTENDANCE_STATUS_COLORS[log.status] ?? "bg-gray-100 text-gray-700"
+            const statusLabel = ATTENDANCE_STATUS_LABELS[log.status] ?? log.status
 
             return (
               <div
                 key={log.id}
-                className="flex items-center justify-between px-5 py-4 hover:bg-muted/20 transition-colors"
+                className="hover:bg-muted/20 flex items-center justify-between px-5 py-4 transition-colors"
               >
                 {/* Date */}
                 <div className="min-w-[110px]">
-                  <p className="font-medium text-sm">{formatDate(log.date, "EEE, dd MMM")}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(log.date, "yyyy")}</p>
+                  <p className="text-sm font-medium">{formatDate(log.date, "EEE, dd MMM")}</p>
+                  <p className="text-muted-foreground text-xs">{formatDate(log.date, "yyyy")}</p>
                 </div>
 
                 {/* Check in / out */}
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-6 text-sm">
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-foreground/60">IN</span>
+                    <span className="text-foreground/60 text-xs font-medium">IN</span>
                     <span>{formatTime(log.checkIn)}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-foreground/60">OUT</span>
+                    <span className="text-foreground/60 text-xs font-medium">OUT</span>
                     <span>{formatTime(log.checkOut)}</span>
                   </div>
                 </div>
 
                 {/* Work hours */}
-                <div className="text-sm text-muted-foreground min-w-[60px] text-right">
+                <div className="text-muted-foreground min-w-[60px] text-right text-sm">
                   {log.workHours !== null && log.workHours !== undefined
                     ? `${log.workHours}h`
-                    : "—"}
+                    : "-"}
                 </div>
 
                 {/* Status */}
                 <span
                   className={cn(
                     "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    statusColor
+                    statusColor,
                   )}
                 >
                   {statusLabel}
@@ -141,7 +139,7 @@ export default function MyAttendancePage() {
 
                 {/* Notes */}
                 {log.notes && (
-                  <p className="text-xs text-muted-foreground max-w-[140px] truncate hidden sm:block">
+                  <p className="text-muted-foreground hidden max-w-[140px] truncate text-xs sm:block">
                     {log.notes}
                   </p>
                 )}
@@ -154,7 +152,7 @@ export default function MyAttendancePage() {
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Page {pagination.page} of {pagination.totalPages}
           </p>
           <div className="flex items-center gap-2">

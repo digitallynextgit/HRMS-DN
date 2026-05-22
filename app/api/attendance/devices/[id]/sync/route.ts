@@ -40,7 +40,7 @@ async function syncFromDevice(
   policyHour: number,
   policyMin: number,
   lateGraceMins: number,
-  datesToSync: Date[]
+  datesToSync: Date[],
 ): Promise<{ synced: number; errors: string[]; usedSimulation: false }> {
   const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins
 
@@ -56,7 +56,7 @@ async function syncFromDevice(
     throw new Error(error)
   }
 
-  // Resolve employee IDs — Hikvision stores employee numbers (e.g. "EMP-001")
+  // Resolve employee IDs - Hikvision stores employee numbers (e.g. "EMP-001")
   const employees = await db.employee.findMany({
     where: { isActive: true, status: "ACTIVE" },
     select: { id: true, employeeNo: true },
@@ -126,7 +126,7 @@ async function syncFromDevice(
             workHours: null,
             status: $Enums.AttendanceStatus.WEEKEND,
             isManual: false,
-            notes: "Weekend — synced from device",
+            notes: "Weekend - synced from device",
           }
         } else {
           const checkIn = checkIns.get(key) ?? null
@@ -135,15 +135,12 @@ async function syncFromDevice(
           let workHours: number | null = null
           if (checkIn && checkOut && checkOut > checkIn) {
             workHours =
-              Math.round(
-                ((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)) * 100
-              ) / 100
+              Math.round(((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)) * 100) / 100
           }
 
           let status: $Enums.AttendanceStatus = $Enums.AttendanceStatus.ABSENT
           if (checkIn) {
-            const checkInMins =
-              checkIn.getUTCHours() * 60 + checkIn.getUTCMinutes()
+            const checkInMins = checkIn.getUTCHours() * 60 + checkIn.getUTCMinutes()
             status =
               checkInMins > lateThresholdMins
                 ? $Enums.AttendanceStatus.LATE
@@ -196,7 +193,7 @@ async function syncSimulated(
   policyHour: number,
   policyMin: number,
   lateGraceMins: number,
-  datesToSync: Date[]
+  datesToSync: Date[],
 ): Promise<{ synced: number; errors: string[]; usedSimulation: true }> {
   const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins
 
@@ -226,7 +223,7 @@ async function syncSimulated(
               workHours: null,
               status: $Enums.AttendanceStatus.WEEKEND,
               isManual: false,
-              notes: "Weekend — simulated",
+              notes: "Weekend - simulated",
             },
             update: { status: $Enums.AttendanceStatus.WEEKEND, deviceId },
           })
@@ -256,21 +253,17 @@ async function syncSimulated(
         }
 
         const checkInHour = randomBetween(8, 9)
-        const checkInMin =
-          checkInHour === 8 ? randomBetween(30, 59) : randomBetween(0, 30)
+        const checkInMin = checkInHour === 8 ? randomBetween(30, 59) : randomBetween(0, 30)
         const checkIn = buildDatetime(date, checkInHour, checkInMin)
 
         const checkOutHour = randomBetween(17, 18)
-        const rawCheckOutMin =
-          checkOutHour === 17 ? randomBetween(30, 59) : randomBetween(0, 60)
+        const rawCheckOutMin = checkOutHour === 17 ? randomBetween(30, 59) : randomBetween(0, 60)
         const resolvedMin = rawCheckOutMin === 60 ? 0 : rawCheckOutMin
         const resolvedHour = rawCheckOutMin === 60 ? 19 : checkOutHour
         const checkOut = buildDatetime(date, resolvedHour, resolvedMin)
 
         const workHours =
-          Math.round(
-            ((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)) * 100
-          ) / 100
+          Math.round(((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)) * 100) / 100
 
         const checkInTotalMins = checkInHour * 60 + checkInMin
         const status: $Enums.AttendanceStatus =
@@ -289,9 +282,16 @@ async function syncSimulated(
             workHours,
             status,
             isManual: false,
-            notes: "Simulated — device unreachable",
+            notes: "Simulated - device unreachable",
           },
-          update: { deviceId, checkIn, checkOut, workHours, status, notes: "Simulated — device unreachable" },
+          update: {
+            deviceId,
+            checkIn,
+            checkOut,
+            workHours,
+            status,
+            notes: "Simulated - device unreachable",
+          },
         })
         synced++
       } catch (err) {
@@ -349,21 +349,15 @@ export const POST = withAuth(
           policyHour,
           policyMin,
           lateGraceMins,
-          datesToSync
+          datesToSync,
         )
       } catch (deviceErr) {
-        // Device unreachable or auth failed — fall back to simulation
-        const simResult = await syncSimulated(
-          id,
-          policyHour,
-          policyMin,
-          lateGraceMins,
-          datesToSync
-        )
+        // Device unreachable or auth failed - fall back to simulation
+        const simResult = await syncSimulated(id, policyHour, policyMin, lateGraceMins, datesToSync)
         syncResult = {
           ...simResult,
           errors: [
-            `Device unreachable (${deviceErr instanceof Error ? deviceErr.message : String(deviceErr)}) — used simulation`,
+            `Device unreachable (${deviceErr instanceof Error ? deviceErr.message : String(deviceErr)}) - used simulation`,
             ...simResult.errors,
           ],
         }
@@ -385,5 +379,5 @@ export const POST = withAuth(
       console.error("[DEVICE_SYNC_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

@@ -5,7 +5,7 @@ import { db } from "@/lib/db"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
-// GET — return pre-signed download URL for the document
+// GET - return pre-signed download URL for the document
 export const GET = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -27,7 +27,7 @@ export const GET = withSession(
           return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
       } else {
-        // Company document — requires document:read
+        // Company document - requires document:read
         if (!hasPermission(session, PERMISSIONS.DOCUMENT_READ)) {
           return NextResponse.json({ error: "Forbidden" }, { status: 403 })
         }
@@ -40,10 +40,10 @@ export const GET = withSession(
       console.error("[documents/[id]] GET error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// DELETE — remove from MinIO and DB
+// DELETE - remove from MinIO and DB
 export const DELETE = withAuth(
   PERMISSIONS.DOCUMENT_DELETE,
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
@@ -75,7 +75,8 @@ export const DELETE = withAuth(
             category: document.category,
             employeeId: document.employeeId,
           },
-          ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
+          ipAddress:
+            req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
           userAgent: req.headers.get("user-agent") ?? undefined,
         },
       })
@@ -85,5 +86,5 @@ export const DELETE = withAuth(
       console.error("[documents/[id]] DELETE error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

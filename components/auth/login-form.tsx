@@ -87,7 +87,7 @@ export function LoginForm() {
                     {...field}
                   />
                 </FormControl>
-                <FormMessage className="text-xs text-destructive" />
+                <FormMessage className="text-destructive text-xs" />
               </FormItem>
             )}
           />
@@ -113,41 +113,34 @@ export function LoginForm() {
                       tabIndex={-1}
                       aria-label={showPassword ? "Hide password" : "Show password"}
                       onClick={() => setShowPassword((prev) => !prev)}
-                      className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center pr-3 transition-colors"
                     >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </FormControl>
-                <FormMessage className="text-xs text-destructive" />
+                <FormMessage className="text-destructive text-xs" />
               </FormItem>
             )}
           />
 
           {authError && (
-            <p role="alert" className="text-xs text-destructive">
+            <p role="alert" className="text-destructive text-xs">
               {authError}
             </p>
           )}
 
           <div className="flex justify-end">
-            <Link href="/forgot-password" className="text-xs text-muted-foreground hover:text-foreground">
+            <Link
+              href="/forgot-password"
+              className="text-muted-foreground hover:text-foreground text-xs"
+            >
               Forgot password?
             </Link>
           </div>
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting ? "Signing in…" : "Sign in"}
           </Button>
         </form>
@@ -155,10 +148,10 @@ export function LoginForm() {
 
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border" />
+          <span className="border-border w-full border-t" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-background px-2 text-xs text-muted-foreground uppercase tracking-wider">
+          <span className="bg-background text-muted-foreground px-2 text-xs tracking-wider uppercase">
             or
           </span>
         </div>

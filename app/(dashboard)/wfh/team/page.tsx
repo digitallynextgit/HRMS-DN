@@ -47,7 +47,7 @@ export default function TeamWfhPage() {
           setRejectingId(null)
           setRejectReason("")
         },
-      }
+      },
     )
   }
 
@@ -68,14 +68,14 @@ export default function TeamWfhPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-md" />
+            <Skeleton key={i} className="h-16 rounded" />
           ))}
         </div>
       ) : requests.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">
-            <Inbox className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
+            <Inbox className="text-muted-foreground/40 mx-auto mb-2 h-8 w-8" />
+            <p className="text-muted-foreground text-sm">
               {tab === "PENDING" ? "No pending WFH requests." : "No WFH requests yet."}
             </p>
           </CardContent>
@@ -85,62 +85,67 @@ export default function TeamWfhPage() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/40 border-b border-border">
-                  <tr className="text-left text-xs text-muted-foreground uppercase tracking-wider">
+                <thead className="bg-muted/40 border-border border-b">
+                  <tr className="text-muted-foreground text-left text-xs tracking-wider uppercase">
                     <th className="px-4 py-2.5 font-medium">Employee</th>
                     <th className="px-4 py-2.5 font-medium">Date</th>
                     <th className="px-4 py-2.5 font-medium">Reason</th>
                     <th className="px-4 py-2.5 font-medium">Type</th>
                     <th className="px-4 py-2.5 font-medium">Status</th>
-                    <th className="px-4 py-2.5 font-medium text-right">Action</th>
+                    <th className="px-4 py-2.5 text-right font-medium">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-border divide-y">
                   {requests.map((r) => (
                     <tr key={r.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2">
                           <Avatar className="h-7 w-7">
-                            {r.employee.profilePhoto && <AvatarImage src={r.employee.profilePhoto} />}
+                            {r.employee.profilePhoto && (
+                              <AvatarImage src={r.employee.profilePhoto} />
+                            )}
                             <AvatarFallback className="text-[10px]">
                               {getInitials(r.employee.firstName, r.employee.lastName)}
                             </AvatarFallback>
                           </Avatar>
                           <div className="min-w-0">
-                            <p className="font-medium truncate">
+                            <p className="truncate font-medium">
                               {r.employee.firstName} {r.employee.lastName}
                             </p>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-muted-foreground text-[11px]">
                               {r.employee.employeeNo}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-2.5 whitespace-nowrap font-medium">
+                      <td className="px-4 py-2.5 font-medium whitespace-nowrap">
                         {new Date(r.date).toLocaleDateString("en-IN", {
                           weekday: "short",
                           day: "2-digit",
                           month: "short",
                         })}
                       </td>
-                      <td className="px-4 py-2.5 text-muted-foreground max-w-[260px] truncate">
-                        {r.reason || "—"}
+                      <td className="text-muted-foreground max-w-[260px] truncate px-4 py-2.5">
+                        {r.reason || "-"}
                       </td>
                       <td className="px-4 py-2.5">
                         {r.isEmergency ? (
                           <Badge
                             variant="outline"
-                            className="text-xs bg-red-50 border-red-200 text-red-700 dark:bg-red-950/30 dark:border-red-800 dark:text-red-300 inline-flex items-center gap-1"
+                            className="inline-flex items-center gap-1 border-red-200 bg-red-50 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
                           >
                             <AlertTriangle className="h-3 w-3" />
                             Emergency
                           </Badge>
                         ) : (
-                          <span className="text-xs text-muted-foreground">Standard</span>
+                          <span className="text-muted-foreground text-xs">Standard</span>
                         )}
                       </td>
                       <td className="px-4 py-2.5">
-                        <Badge variant="outline" className={cn("text-xs", LEAVE_STATUS_COLORS[r.status])}>
+                        <Badge
+                          variant="outline"
+                          className={cn("text-xs", LEAVE_STATUS_COLORS[r.status])}
+                        >
                           {LEAVE_STATUS_LABELS[r.status]}
                         </Badge>
                       </td>
@@ -150,11 +155,11 @@ export default function TeamWfhPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                              className="text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
                               onClick={() => approve.mutate({ id: r.id })}
                               disabled={approve.isPending}
                             >
-                              <Check className="h-3.5 w-3.5 mr-1" />
+                              <Check className="mr-1 h-3.5 w-3.5" />
                               Approve
                             </Button>
                             <Button
@@ -164,7 +169,7 @@ export default function TeamWfhPage() {
                               onClick={() => setRejectingId(r.id)}
                               disabled={reject.isPending}
                             >
-                              <X className="h-3.5 w-3.5 mr-1" />
+                              <X className="mr-1 h-3.5 w-3.5" />
                               Reject
                             </Button>
                           </div>

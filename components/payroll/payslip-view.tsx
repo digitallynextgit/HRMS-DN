@@ -38,12 +38,14 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
     { label: "Provident Fund (Employer)", amount: record.pfEmployer },
     { label: "ESI", amount: record.esi },
     { label: "TDS", amount: record.tds },
-    ...(record.otherDeductions > 0 ? [{ label: "Other Deductions", amount: record.otherDeductions }] : []),
+    ...(record.otherDeductions > 0
+      ? [{ label: "Other Deductions", amount: record.otherDeductions }]
+      : []),
   ].filter((d) => d.amount > 0)
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader className="mb-6">
           <SheetTitle>Payslip</SheetTitle>
         </SheetHeader>
@@ -51,9 +53,9 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
         {/* Printable area */}
         <div id="payslip-print-area" className="space-y-6">
           {/* Company header */}
-          <div className="text-center border-b pb-4">
-            <h2 className="text-xl font-bold text-foreground">HRMS</h2>
-            <p className="text-sm text-muted-foreground mt-1">
+          <div className="border-b pb-4 text-center">
+            <h2 className="text-foreground text-xl font-bold">HRMS</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
               Payslip for {monthName} {record.year}
             </p>
           </div>
@@ -63,25 +65,20 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
             <span
               className={cn(
                 "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                statusColor
+                statusColor,
               )}
             >
               {statusLabel}
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => window.print()}
-              className="gap-2"
-            >
+            <Button variant="outline" size="sm" onClick={() => window.print()} className="gap-2">
               <Printer className="h-4 w-4" />
               Print
             </Button>
           </div>
 
           {/* Employee details */}
-          <div className="rounded-lg border p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Employee Details</h3>
+          <div className="rounded border p-4">
+            <h3 className="text-foreground mb-3 text-sm font-semibold">Employee Details</h3>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <p className="text-muted-foreground">Name</p>
@@ -95,11 +92,11 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
               </div>
               <div>
                 <p className="text-muted-foreground">Department</p>
-                <p className="font-medium">{record.employee.department?.name ?? "—"}</p>
+                <p className="font-medium">{record.employee.department?.name ?? "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Designation</p>
-                <p className="font-medium">{record.employee.designation?.title ?? "—"}</p>
+                <p className="font-medium">{record.employee.designation?.title ?? "-"}</p>
               </div>
               <div>
                 <p className="text-muted-foreground">Pay Period</p>
@@ -111,11 +108,11 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
           </div>
 
           {/* Attendance summary */}
-          <div className="rounded-lg border p-4">
-            <h3 className="text-sm font-semibold text-foreground mb-3">Attendance Summary</h3>
+          <div className="rounded border p-4">
+            <h3 className="text-foreground mb-3 text-sm font-semibold">Attendance Summary</h3>
             <div className="grid grid-cols-3 gap-3 text-sm">
               <div className="text-center">
-                <p className="text-2xl font-bold text-foreground">{record.workingDays}</p>
+                <p className="text-foreground text-2xl font-bold">{record.workingDays}</p>
                 <p className="text-muted-foreground mt-1">Working Days</p>
               </div>
               <div className="text-center">
@@ -130,23 +127,23 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
           </div>
 
           {/* Earnings table */}
-          <div className="rounded-lg border overflow-hidden">
+          <div className="overflow-hidden rounded border">
             <div className="bg-muted/40 px-4 py-2.5">
-              <h3 className="text-sm font-semibold text-foreground">Earnings</h3>
+              <h3 className="text-foreground text-sm font-semibold">Earnings</h3>
             </div>
             <table className="w-full text-sm">
               <tbody className="divide-y">
                 {earnings.map((e) => (
                   <tr key={e.label}>
-                    <td className="px-4 py-2.5 text-muted-foreground">{e.label}</td>
+                    <td className="text-muted-foreground px-4 py-2.5">{e.label}</td>
                     <td className="px-4 py-2.5 text-right font-medium">{fmt(e.amount)}</td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="border-t bg-muted/20">
+              <tfoot className="bg-muted/20 border-t">
                 <tr>
-                  <td className="px-4 py-2.5 font-semibold text-foreground">Gross Earnings</td>
-                  <td className="px-4 py-2.5 text-right font-bold text-foreground">
+                  <td className="text-foreground px-4 py-2.5 font-semibold">Gross Earnings</td>
+                  <td className="text-foreground px-4 py-2.5 text-right font-bold">
                     {fmt(record.grossSalary)}
                   </td>
                 </tr>
@@ -155,22 +152,22 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
           </div>
 
           {/* Deductions table */}
-          <div className="rounded-lg border overflow-hidden">
+          <div className="overflow-hidden rounded border">
             <div className="bg-muted/40 px-4 py-2.5">
-              <h3 className="text-sm font-semibold text-foreground">Deductions</h3>
+              <h3 className="text-foreground text-sm font-semibold">Deductions</h3>
             </div>
             <table className="w-full text-sm">
               <tbody className="divide-y">
                 {deductions.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-3 text-muted-foreground italic" colSpan={2}>
+                    <td className="text-muted-foreground px-4 py-3 italic" colSpan={2}>
                       No deductions
                     </td>
                   </tr>
                 ) : (
                   deductions.map((d) => (
                     <tr key={d.label}>
-                      <td className="px-4 py-2.5 text-muted-foreground">{d.label}</td>
+                      <td className="text-muted-foreground px-4 py-2.5">{d.label}</td>
                       <td className="px-4 py-2.5 text-right font-medium text-red-600">
                         {fmt(d.amount)}
                       </td>
@@ -178,9 +175,9 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
                   ))
                 )}
               </tbody>
-              <tfoot className="border-t bg-muted/20">
+              <tfoot className="bg-muted/20 border-t">
                 <tr>
-                  <td className="px-4 py-2.5 font-semibold text-foreground">Total Deductions</td>
+                  <td className="text-foreground px-4 py-2.5 font-semibold">Total Deductions</td>
                   <td className="px-4 py-2.5 text-right font-bold text-red-600">
                     {fmt(record.totalDeductions)}
                   </td>
@@ -190,13 +187,13 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
           </div>
 
           {/* Net salary highlight */}
-          <div className="rounded-lg border-2 border-emerald-500 bg-emerald-50 px-4 py-4 flex items-center justify-between">
-            <p className="text-base font-bold text-foreground">Net Salary</p>
+          <div className="flex items-center justify-between rounded border-2 border-emerald-500 bg-emerald-50 px-4 py-4">
+            <p className="text-foreground text-base font-bold">Net Salary</p>
             <p className="text-2xl font-extrabold text-emerald-600">{fmt(record.netSalary)}</p>
           </div>
 
           {record.notes && (
-            <div className="rounded-md bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+            <div className="bg-muted/30 text-muted-foreground rounded px-3 py-2 text-sm">
               <span className="font-medium">Notes: </span>
               {record.notes}
             </div>

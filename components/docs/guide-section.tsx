@@ -9,11 +9,9 @@ interface GuideSectionProps {
 
 export function GuideSection({ title, children, className }: GuideSectionProps) {
   return (
-    <section className={cn("pb-8 border-b border-border last:border-0 last:pb-0", className)}>
-      <h2 className="text-lg font-semibold text-foreground mb-4">{title}</h2>
-      <div className="space-y-3 text-sm text-foreground leading-relaxed">
-        {children}
-      </div>
+    <section className={cn("border-border border-b pb-8 last:border-0 last:pb-0", className)}>
+      <h2 className="text-foreground mb-4 text-lg font-semibold">{title}</h2>
+      <div className="text-foreground space-y-3 text-sm leading-relaxed">{children}</div>
     </section>
   )
 }

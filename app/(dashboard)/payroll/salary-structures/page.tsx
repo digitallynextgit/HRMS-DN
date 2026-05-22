@@ -16,7 +16,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { PageHeader } from "@/components/shared/page-header"
 import { SalaryStructureForm } from "@/components/payroll/salary-structure-form"
-import { useSalaryStructures, useDeleteSalaryStructure, type SalaryStructure } from "@/hooks/use-payroll"
+import {
+  useSalaryStructures,
+  useDeleteSalaryStructure,
+  type SalaryStructure,
+} from "@/hooks/use-payroll"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
 
@@ -77,7 +81,7 @@ export default function SalaryStructuresPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 rounded-lg" />
+            <Skeleton key={i} className="h-14 rounded" />
           ))}
         </div>
       ) : structures.length === 0 ? (
@@ -91,20 +95,24 @@ export default function SalaryStructuresPage() {
           )}
         </div>
       ) : (
-        <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="bg-card rounded border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Employee</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Basic</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">HRA</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Gross</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">PF</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">TDS</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Net</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Effective From</th>
+              <tr className="bg-muted/40 border-b">
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employee</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Basic</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">HRA</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Gross</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">PF</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">TDS</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Net</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  Effective From
+                </th>
                 {can(PERMISSIONS.PAYROLL_WRITE) && (
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">
+                    Actions
+                  </th>
                 )}
               </tr>
             </thead>
@@ -125,19 +133,31 @@ export default function SalaryStructuresPage() {
                         <p className="font-medium">
                           {structure.employee.firstName} {structure.employee.lastName}
                         </p>
-                        <p className="text-xs text-muted-foreground">{structure.employee.employeeNo}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {structure.employee.employeeNo}
+                        </p>
                         {structure.employee.department && (
-                          <p className="text-xs text-muted-foreground">{structure.employee.department.name}</p>
+                          <p className="text-muted-foreground text-xs">
+                            {structure.employee.department.name}
+                          </p>
                         )}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-right">{fmt(structure.basicSalary)}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">{fmt(structure.hra)}</td>
+                    <td className="text-muted-foreground px-4 py-3 text-right">
+                      {fmt(structure.hra)}
+                    </td>
                     <td className="px-4 py-3 text-right font-medium">{fmt(gross)}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">{fmt(structure.pfEmployee)}</td>
-                    <td className="px-4 py-3 text-right text-muted-foreground">{fmt(structure.tds)}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">{fmt(net)}</td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="text-muted-foreground px-4 py-3 text-right">
+                      {fmt(structure.pfEmployee)}
+                    </td>
+                    <td className="text-muted-foreground px-4 py-3 text-right">
+                      {fmt(structure.tds)}
+                    </td>
+                    <td className="px-4 py-3 text-right font-semibold text-emerald-600">
+                      {fmt(net)}
+                    </td>
+                    <td className="text-muted-foreground px-4 py-3">
                       {formatDate(structure.effectiveFrom)}
                     </td>
                     {can(PERMISSIONS.PAYROLL_WRITE) && (
@@ -155,7 +175,7 @@ export default function SalaryStructuresPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive h-8 w-8"
                             onClick={() => setDeleteId(structure.id)}
                             title="Delete"
                           >
@@ -173,11 +193,7 @@ export default function SalaryStructuresPage() {
       )}
 
       {/* Form dialog */}
-      <SalaryStructureForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        editData={editData}
-      />
+      <SalaryStructureForm open={formOpen} onOpenChange={setFormOpen} editData={editData} />
 
       {/* Delete confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

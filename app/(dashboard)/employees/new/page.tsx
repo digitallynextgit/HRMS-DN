@@ -19,7 +19,7 @@ export default async function NewEmployeePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="space-y-6">
       <PageHeader
         title="Add Employee"
         description="Create a new employee profile"

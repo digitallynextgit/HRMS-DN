@@ -59,17 +59,17 @@ export default function ApplyWfhPage() {
       />
 
       {isLoading ? (
-        <Skeleton className="h-32 rounded-lg" />
+        <Skeleton className="h-32 rounded" />
       ) : eligibility ? (
         <Card
           className={cn(
             "border",
             eligibility.tier === 3
               ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/40 dark:bg-emerald-950/20"
-              : "border-amber-200 bg-amber-50/50 dark:border-amber-900/40 dark:bg-amber-950/20"
+              : "border-amber-200 bg-amber-50/50 dark:border-amber-900/40 dark:bg-amber-950/20",
           )}
         >
-          <CardContent className="p-4 space-y-2">
+          <CardContent className="space-y-2 p-4">
             <div className="flex items-center gap-2">
               {eligibility.tier === 3 ? (
                 <Home className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
@@ -79,16 +79,16 @@ export default function ApplyWfhPage() {
               <p className="text-sm font-medium">{eligibility.label}</p>
             </div>
             {eligibility.tier === 3 && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Used this month:{" "}
-                <span className="font-medium text-foreground">{eligibility.usedThisMonth}</span> /{" "}
+                <span className="text-foreground font-medium">{eligibility.usedThisMonth}</span> /{" "}
                 {eligibility.monthlyQuota}
               </p>
             )}
             {eligibility.tier !== 3 && eligibility.eligibleFromDate && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Standard eligibility from{" "}
-                <span className="font-medium text-foreground">
+                <span className="text-foreground font-medium">
                   {new Date(eligibility.eligibleFromDate).toLocaleDateString("en-IN", {
                     day: "2-digit",
                     month: "short",
@@ -112,7 +112,7 @@ export default function ApplyWfhPage() {
             onChange={(e) => setDate(e.target.value)}
             required
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             WFH is for a single day. Weekends and holidays cannot be selected.
           </p>
         </div>
@@ -125,10 +125,10 @@ export default function ApplyWfhPage() {
               onCheckedChange={(v) => setIsEmergency(v === true)}
             />
             <div>
-              <Label htmlFor="emergency" className="font-normal cursor-pointer">
+              <Label htmlFor="emergency" className="cursor-pointer font-normal">
                 Mark as emergency
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Emergency requests still need Manager + HR approval.
               </p>
             </div>
@@ -136,14 +136,14 @@ export default function ApplyWfhPage() {
         )}
 
         {mustBeEmergency && (
-          <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 px-3 py-2.5 text-xs">
-            <Info className="h-4 w-4 shrink-0 mt-0.5 text-amber-700 dark:text-amber-400" />
+          <div className="flex items-start gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs dark:border-amber-800 dark:bg-amber-950/20">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
             <div className="space-y-1">
-              <p className="font-medium text-amber-800 dark:text-amber-300">
-                Emergency-only WFH
-              </p>
-              <ul className="text-amber-700 dark:text-amber-400 list-disc list-inside space-y-0.5">
-                <li>Requires <strong>both Manager and HR</strong> approval</li>
+              <p className="font-medium text-amber-800 dark:text-amber-300">Emergency-only WFH</p>
+              <ul className="list-inside list-disc space-y-0.5 text-amber-700 dark:text-amber-400">
+                <li>
+                  Requires <strong>both Manager and HR</strong> approval
+                </li>
                 <li>Provide a detailed reason (minimum 10 characters)</li>
                 <li>WFH is a privilege, not an entitlement</li>
               </ul>

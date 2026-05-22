@@ -26,25 +26,38 @@ export const POST = withAuth(
       const { name, year, quarter, startDate, endDate } = body
 
       const cycle = await db.reviewCycle.create({
-        data: { name, year: parseInt(year), quarter: quarter ? parseInt(quarter) : null, startDate: new Date(startDate), endDate: new Date(endDate) },
+        data: {
+          name,
+          year: parseInt(year),
+          quarter: quarter ? parseInt(quarter) : null,
+          startDate: new Date(startDate),
+          endDate: new Date(endDate),
+        },
       })
 
       // Auto-create reviews for all active employees
-      const employees = await db.employee.findMany({ where: { isActive: true, status: "ACTIVE" }, select: { id: true, managerId: true } })
+      const employees = await db.employee.findMany({
+        where: { isActive: true, status: "ACTIVE" },
+        select: { id: true, managerId: true },
+      })
       await db.performanceReview.createMany({
-        data: employees.map(e => ({ cycleId: cycle.id, revieweeId: e.id, reviewerId: e.managerId ?? null })),
+        data: employees.map((e) => ({
+          cycleId: cycle.id,
+          revieweeId: e.id,
+          reviewerId: e.managerId ?? null,
+        })),
         skipDuplicates: true,
       })
 
       // Notify all employees that a review cycle has started
       await createNotifications(
-        employees.map(e => ({
+        employees.map((e) => ({
           employeeId: e.id,
           title: "Performance Review Started",
           message: `The "${name}" review cycle is now open. Please complete your self-review.`,
           type: "info" as const,
           link: "/performance/me",
-        }))
+        })),
       )
 
       return NextResponse.json({ data: cycle, reviewsCreated: employees.length }, { status: 201 })
@@ -52,5 +65,5 @@ export const POST = withAuth(
       console.error("[CYCLES_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

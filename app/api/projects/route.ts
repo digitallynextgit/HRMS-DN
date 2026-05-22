@@ -32,7 +32,9 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
           owner: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
           members: {
             include: {
-              employee: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
+              employee: {
+                select: { id: true, firstName: true, lastName: true, profilePhoto: true },
+              },
             },
           },
           _count: { select: { tasks: true } },
@@ -56,7 +58,8 @@ export const POST = withAuth(
   async (req: NextRequest, _ctx: unknown, session: Session) => {
     try {
       const body = await req.json()
-      const { name, description, code, status, priority, startDate, endDate, budget, memberIds } = body
+      const { name, description, code, status, priority, startDate, endDate, budget, memberIds } =
+        body
 
       const project = await db.project.create({
         data: {
@@ -82,7 +85,9 @@ export const POST = withAuth(
         },
         include: {
           owner: { select: { id: true, firstName: true, lastName: true } },
-          members: { include: { employee: { select: { id: true, firstName: true, lastName: true } } } },
+          members: {
+            include: { employee: { select: { id: true, firstName: true, lastName: true } } },
+          },
         },
       })
 
@@ -91,5 +96,5 @@ export const POST = withAuth(
       console.error("[PROJECTS_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

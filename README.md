@@ -1,4 +1,4 @@
-# HRMS — Human Resource Management System
+# HRMS - Human Resource Management System
 
 A full-featured HRMS built for **Digitally Next** using Next.js 14, Prisma, Supabase, and Tailwind CSS. Covers the complete HR lifecycle from recruitment to payroll.
 
@@ -6,48 +6,48 @@ A full-featured HRMS built for **Digitally Next** using Next.js 14, Prisma, Supa
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 14 (App Router) |
-| Language | TypeScript |
-| Database | PostgreSQL via Supabase |
-| ORM | Prisma v5 |
-| Auth | NextAuth v5 (Credentials) |
-| Storage | Supabase Storage |
-| Styling | Tailwind CSS + shadcn/ui |
-| State | TanStack Query + Zustand |
-| Email | Nodemailer (SMTP/Gmail) |
-| Package Manager | pnpm |
+| Layer           | Technology                |
+| --------------- | ------------------------- |
+| Framework       | Next.js 14 (App Router)   |
+| Language        | TypeScript                |
+| Database        | PostgreSQL via Supabase   |
+| ORM             | Prisma v5                 |
+| Auth            | NextAuth v5 (Credentials) |
+| Storage         | Supabase Storage          |
+| Styling         | Tailwind CSS + shadcn/ui  |
+| State           | TanStack Query + Zustand  |
+| Email           | Nodemailer (SMTP/Gmail)   |
+| Package Manager | pnpm                      |
 
 ---
 
 ## Modules
 
-| Module | Features |
-|---|---|
-| **Auth & PBAC** | Login, forgot/reset password, role-based permissions, permission matrix |
-| **Employee Management** | Directory, profiles, add/edit, org chart, department & designation management |
-| **Attendance** | Manual entry, CSV import, QR kiosk, GPS check-in, Hikvision device sync, holiday management |
-| **Leave Management** | Apply for leave, approval workflow, leave balances, team calendar, leave types |
-| **Payroll** | Salary structures, payroll generation, payslips, PF/ESI/TDS calculations, pro-rata & LOP |
-| **Performance** | Review cycles, self-review, manager review, goals tracking |
-| **Recruitment** | Job postings, applicant pipeline (Kanban with drag-and-drop), interview scheduling |
-| **Projects & Tasks** | Project management, task assignment, my tasks view |
-| **Documents** | Employee document locker, company library, Supabase Storage upload |
-| **Notifications** | In-app notification inbox, email notifications |
-| **Analytics** | Dashboard KPIs, department headcount, hire trends, recruitment pipeline charts |
-| **Admin** | Roles & permissions, audit log, email template management |
+| Module                  | Features                                                                                    |
+| ----------------------- | ------------------------------------------------------------------------------------------- |
+| **Auth & PBAC**         | Login, forgot/reset password, role-based permissions, permission matrix                     |
+| **Employee Management** | Directory, profiles, add/edit, org chart, department & designation management               |
+| **Attendance**          | Manual entry, CSV import, QR kiosk, GPS check-in, Hikvision device sync, holiday management |
+| **Leave Management**    | Apply for leave, approval workflow, leave balances, team calendar, leave types              |
+| **Payroll**             | Salary structures, payroll generation, payslips, PF/ESI/TDS calculations, pro-rata & LOP    |
+| **Performance**         | Review cycles, self-review, manager review, goals tracking                                  |
+| **Recruitment**         | Job postings, applicant pipeline (Kanban with drag-and-drop), interview scheduling          |
+| **Projects & Tasks**    | Project management, task assignment, my tasks view                                          |
+| **Documents**           | Employee document locker, company library, Supabase Storage upload                          |
+| **Notifications**       | In-app notification inbox, email notifications                                              |
+| **Analytics**           | Dashboard KPIs, department headcount, hire trends, recruitment pipeline charts              |
+| **Admin**               | Roles & permissions, audit log, email template management                                   |
 
 ---
 
 ## Automated Emails
 
-| Trigger | Email Sent |
-|---|---|
-| New employee created | Welcome / onboarding email |
-| Applicant moves to Screening | Shortlisting notification |
-| Leave approved or rejected | Leave status email to employee |
-| Employee birthday (daily cron) | Birthday greeting |
+| Trigger                        | Email Sent                     |
+| ------------------------------ | ------------------------------ |
+| New employee created           | Welcome / onboarding email     |
+| Applicant moves to Screening   | Shortlisting notification      |
+| Leave approved or rejected     | Leave status email to employee |
+| Employee birthday (daily cron) | Birthday greeting              |
 
 ---
 
@@ -114,7 +114,7 @@ pnpm install
 Create a `.env` file in the root:
 
 ```env
-# Database — use Supabase session pooler URL
+# Database - use Supabase session pooler URL
 DATABASE_URL="postgresql://postgres.[ref]:[password]@aws-1-[region].pooler.supabase.com:5432/postgres"
 
 # Supabase Storage
@@ -153,6 +153,7 @@ pnpm prisma db seed
 ```
 
 This creates all tables and seeds:
+
 - 35 employees (34 real + 1 system admin)
 - Roles, permissions, departments, designations
 - Leave types, salary structures, attendance logs
@@ -171,6 +172,7 @@ pnpm dev
 Open [http://localhost:3000](http://localhost:3000)
 
 **Default login:**
+
 ```
 Email:    admin@hrms.dev
 Password: Admin@123
@@ -195,6 +197,7 @@ git push origin main
 ### 3. Set environment variables
 
 Add all variables from your `.env` in Vercel project settings. Update:
+
 - `NEXTAUTH_URL` → your Vercel URL (e.g. `https://hrms-dn.vercel.app`)
 - `APP_URL` → same Vercel URL
 - `NODE_ENV` → `production`
@@ -207,7 +210,7 @@ Vercel builds and deploys automatically on every push to `main`.
 
 ## Birthday Email Cron
 
-The birthday cron is a protected API route — it does **not** run automatically on Vercel. Set up a free daily trigger at [cron-job.org](https://cron-job.org):
+The birthday cron is a protected API route - it does **not** run automatically on Vercel. Set up a free daily trigger at [cron-job.org](https://cron-job.org):
 
 - **URL:** `https://your-vercel-url.vercel.app/api/cron/birthdays`
 - **Method:** GET
@@ -218,13 +221,13 @@ The birthday cron is a protected API route — it does **not** run automatically
 
 ## Roles & Permissions
 
-| Role | Access |
-|---|---|
-| `super_admin` | Full access to everything |
-| `hr_admin` | Full HR module access |
-| `hr_manager` | HR management with limited admin |
-| `employee` | Self-service (own profile, leave, payslips) |
-| `viewer` | Read-only access |
+| Role          | Access                                      |
+| ------------- | ------------------------------------------- |
+| `super_admin` | Full access to everything                   |
+| `hr_admin`    | Full HR module access                       |
+| `hr_manager`  | HR management with limited admin            |
+| `employee`    | Self-service (own profile, leave, payslips) |
+| `viewer`      | Read-only access                            |
 
 Custom roles can be created from Admin → Roles & Permissions.
 

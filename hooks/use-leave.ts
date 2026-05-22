@@ -134,7 +134,7 @@ async function deleteLeaveType(id: string): Promise<{ message: string }> {
 
 async function fetchLeaveBalances(
   employeeId?: string,
-  year?: number
+  year?: number,
 ): Promise<{ data: LeaveBalance[] }> {
   const params = new URLSearchParams()
   if (employeeId) params.set("employeeId", employeeId)
@@ -167,7 +167,7 @@ async function allocateLeave(body: {
 }
 
 async function fetchLeaveRequests(
-  filters: LeaveRequestFilters
+  filters: LeaveRequestFilters,
 ): Promise<PaginatedResponse<LeaveRequest>> {
   const params = new URLSearchParams()
   if (filters.status) params.set("status", filters.status)
@@ -185,9 +185,11 @@ async function fetchLeaveRequests(
   return res.json()
 }
 
-async function fetchTeamLeaveRequests(
-  filters: { status?: string; page?: number; limit?: number }
-): Promise<PaginatedResponse<LeaveRequest>> {
+async function fetchTeamLeaveRequests(filters: {
+  status?: string
+  page?: number
+  limit?: number
+}): Promise<PaginatedResponse<LeaveRequest>> {
   const params = new URLSearchParams()
   if (filters.status) params.set("status", filters.status)
   if (filters.page) params.set("page", String(filters.page))
@@ -205,6 +207,7 @@ async function applyLeave(body: {
   startDate: string
   endDate: string
   reason?: string
+  isHalfDay?: boolean
 }): Promise<{ data: LeaveRequest }> {
   const res = await fetch("/api/leave/requests", {
     method: "POST",
@@ -298,7 +301,7 @@ export function useMyLeaveRequests(filters: Omit<LeaveRequestFilters, "employeeI
 }
 
 export function useTeamLeaveRequests(
-  filters: { status?: string; page?: number; limit?: number } = {}
+  filters: { status?: string; page?: number; limit?: number } = {},
 ) {
   return useQuery({
     queryKey: ["team-leave-requests", filters],

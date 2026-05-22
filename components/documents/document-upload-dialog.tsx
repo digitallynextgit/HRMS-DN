@@ -133,8 +133,7 @@ export function DocumentUploadDialog({
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="doc-description">
-              Description{" "}
-              <span className="text-xs text-muted-foreground">(optional)</span>
+              Description <span className="text-muted-foreground text-xs">(optional)</span>
             </Label>
             <Textarea
               id="doc-description"
@@ -149,12 +148,7 @@ export function DocumentUploadDialog({
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={!canSubmit}>

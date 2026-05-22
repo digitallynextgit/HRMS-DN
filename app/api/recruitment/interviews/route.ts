@@ -10,7 +10,9 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, _session:
       where: { ...(applicantId && { applicantId }) },
       orderBy: { scheduledAt: "asc" },
       include: {
-        applicant: { select: { firstName: true, lastName: true, jobPosting: { select: { title: true } } } },
+        applicant: {
+          select: { firstName: true, lastName: true, jobPosting: { select: { title: true } } },
+        },
         interviewer: { select: { firstName: true, lastName: true } },
       },
     })

@@ -1,4 +1,3 @@
-import * as React from "react"
 import { cn } from "@/lib/utils"
 
 type Role = "employee" | "manager" | "hr" | "admin"
@@ -29,10 +28,12 @@ const roleConfig: Record<Role, { label: string; className: string }> = {
 export function RoleBadge({ role }: RoleBadgeProps) {
   const config = roleConfig[role]
   return (
-    <span className={cn(
-      "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
-      config.className
-    )}>
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
+        config.className,
+      )}
+    >
       {config.label}
     </span>
   )

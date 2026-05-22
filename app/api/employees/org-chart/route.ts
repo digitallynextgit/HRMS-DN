@@ -16,7 +16,7 @@ function buildTree(
     department: { name: string } | null
     profilePhoto: string | null
   }>,
-  managerId: string | null
+  managerId: string | null,
 ): OrgNode[] {
   return employees
     .filter((e) => e.managerId === managerId)
@@ -57,5 +57,5 @@ export const GET = withAuth(
       console.error("[ORG_CHART_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

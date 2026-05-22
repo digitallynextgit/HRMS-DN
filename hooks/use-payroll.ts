@@ -109,7 +109,9 @@ async function fetchSalaryStructure(id: string): Promise<{ data: SalaryStructure
   return res.json()
 }
 
-async function createSalaryStructure(body: Record<string, unknown>): Promise<{ data: SalaryStructure }> {
+async function createSalaryStructure(
+  body: Record<string, unknown>,
+): Promise<{ data: SalaryStructure }> {
   const res = await fetch("/api/payroll/salary-structures", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -241,7 +243,7 @@ async function fetchMyPayslip(id: string): Promise<{ data: PayrollRecord }> {
 
 async function fetchPayrollSummary(
   month?: number,
-  year?: number
+  year?: number,
 ): Promise<{ data: PayrollSummary }> {
   const params = new URLSearchParams()
   if (month) params.set("month", String(month))
@@ -345,9 +347,7 @@ export function useGeneratePayroll() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["payroll-records"] })
       queryClient.invalidateQueries({ queryKey: ["payroll-summary"] })
-      toast.success(
-        `Payroll generated: ${data.created} records created, ${data.skipped} skipped`
-      )
+      toast.success(`Payroll generated: ${data.created} records created, ${data.skipped} skipped`)
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to generate payroll")

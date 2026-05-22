@@ -13,7 +13,6 @@ import {
   ChevronDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -77,7 +76,7 @@ export default function PayrollPage() {
   const { data: recordsData, isLoading: recordsLoading } = usePayrollRecords(recordFilters)
   const { data: summaryData, isLoading: summaryLoading } = usePayrollSummary(
     month ? Number(month) : undefined,
-    year ? Number(year) : undefined
+    year ? Number(year) : undefined,
   )
 
   const updateStatus = useUpdatePayrollStatus()
@@ -142,7 +141,12 @@ export default function PayrollPage() {
     setDeleteId(null)
   }
 
-  const statusBreakdown = summary?.statusBreakdown ?? { DRAFT: 0, PROCESSING: 0, APPROVED: 0, PAID: 0 }
+  const statusBreakdown = summary?.statusBreakdown ?? {
+    DRAFT: 0,
+    PROCESSING: 0,
+    APPROVED: 0,
+    PAID: 0,
+  }
 
   return (
     <div className="space-y-6">
@@ -175,21 +179,19 @@ export default function PayrollPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {summaryLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 rounded-lg" />
-          ))
+          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded" />)
         ) : (
           <>
             <Card>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Employees</p>
-                    <p className="text-3xl font-bold mt-1">{summary?.employeeCount ?? 0}</p>
+                    <p className="text-muted-foreground text-sm">Total Employees</p>
+                    <p className="mt-1 text-3xl font-bold">{summary?.employeeCount ?? 0}</p>
                   </div>
-                  <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded bg-blue-50">
                     <Users className="h-5 w-5 text-blue-600" />
                   </div>
                 </div>
@@ -200,10 +202,10 @@ export default function PayrollPage() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Gross</p>
-                    <p className="text-2xl font-bold mt-1">{fmt(summary?.totalGross ?? 0)}</p>
+                    <p className="text-muted-foreground text-sm">Total Gross</p>
+                    <p className="mt-1 text-2xl font-bold">{fmt(summary?.totalGross ?? 0)}</p>
                   </div>
-                  <div className="h-10 w-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded bg-emerald-50">
                     <TrendingUp className="h-5 w-5 text-emerald-600" />
                   </div>
                 </div>
@@ -214,10 +216,10 @@ export default function PayrollPage() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Deductions</p>
-                    <p className="text-2xl font-bold mt-1">{fmt(summary?.totalDeductions ?? 0)}</p>
+                    <p className="text-muted-foreground text-sm">Total Deductions</p>
+                    <p className="mt-1 text-2xl font-bold">{fmt(summary?.totalDeductions ?? 0)}</p>
                   </div>
-                  <div className="h-10 w-10 rounded-lg bg-red-50 flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded bg-red-50">
                     <TrendingDown className="h-5 w-5 text-red-600" />
                   </div>
                 </div>
@@ -228,10 +230,10 @@ export default function PayrollPage() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Net</p>
-                    <p className="text-2xl font-bold mt-1">{fmt(summary?.totalNet ?? 0)}</p>
+                    <p className="text-muted-foreground text-sm">Total Net</p>
+                    <p className="mt-1 text-2xl font-bold">{fmt(summary?.totalNet ?? 0)}</p>
                   </div>
-                  <div className="h-10 w-10 rounded-lg bg-violet-50 flex items-center justify-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded bg-violet-50">
                     <DollarSign className="h-5 w-5 text-violet-600" />
                   </div>
                 </div>
@@ -250,7 +252,10 @@ export default function PayrollPage() {
             return (
               <span
                 key={s}
-                className={cn("inline-flex items-center rounded-full px-3 py-1 text-xs font-medium gap-1.5", color)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium",
+                  color,
+                )}
               >
                 <span className="font-bold">{count}</span>
                 {label}
@@ -262,7 +267,7 @@ export default function PayrollPage() {
 
       {/* Bulk actions */}
       {selectedIds.size > 0 && can(PERMISSIONS.PAYROLL_PROCESS) && (
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/30 px-4 py-2">
+        <div className="bg-muted/30 flex items-center gap-3 rounded border px-4 py-2">
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -283,11 +288,7 @@ export default function PayrollPage() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedIds(new Set())}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
             Clear selection
           </Button>
         </div>
@@ -297,7 +298,7 @@ export default function PayrollPage() {
       {recordsLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 rounded-lg" />
+            <Skeleton key={i} className="h-14 rounded" />
           ))}
         </div>
       ) : records.length === 0 ? (
@@ -311,36 +312,41 @@ export default function PayrollPage() {
           )}
         </div>
       ) : (
-        <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="bg-card rounded border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
+              <tr className="bg-muted/40 border-b">
                 {can(PERMISSIONS.PAYROLL_PROCESS) && (
-                  <th className="px-4 py-3 w-10">
+                  <th className="w-10 px-4 py-3">
                     <Checkbox
                       checked={selectedIds.size === records.length && records.length > 0}
                       onCheckedChange={toggleSelectAll}
                     />
                   </th>
                 )}
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Employee</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Department</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Gross</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Deductions</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Net</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employee</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  Department
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Gross</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">
+                  Deductions
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Net</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {records.map((record: PayrollRecord) => {
-                const statusColor = PAYROLL_STATUS_COLORS[record.status] ?? "bg-gray-100 text-gray-700"
+                const statusColor =
+                  PAYROLL_STATUS_COLORS[record.status] ?? "bg-gray-100 text-gray-700"
                 const statusLabel = PAYROLL_STATUS_LABELS[record.status] ?? record.status
 
                 return (
                   <tr
                     key={record.id}
-                    className="hover:bg-muted/20 transition-colors cursor-pointer"
+                    className="hover:bg-muted/20 cursor-pointer transition-colors"
                     onClick={() => router.push(`/payroll/records/${record.id}`)}
                   >
                     {can(PERMISSIONS.PAYROLL_PROCESS) && (
@@ -362,14 +368,18 @@ export default function PayrollPage() {
                         <p className="font-medium">
                           {record.employee.firstName} {record.employee.lastName}
                         </p>
-                        <p className="text-xs text-muted-foreground">{record.employee.employeeNo}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {record.employee.employeeNo}
+                        </p>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {record.employee.department?.name ?? "—"}
+                    <td className="text-muted-foreground px-4 py-3">
+                      {record.employee.department?.name ?? "-"}
                     </td>
                     <td className="px-4 py-3 text-right font-medium">{fmt(record.grossSalary)}</td>
-                    <td className="px-4 py-3 text-right text-red-600">{fmt(record.totalDeductions)}</td>
+                    <td className="px-4 py-3 text-right text-red-600">
+                      {fmt(record.totalDeductions)}
+                    </td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600">
                       {fmt(record.netSalary)}
                     </td>
@@ -377,16 +387,13 @@ export default function PayrollPage() {
                       <span
                         className={cn(
                           "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                          statusColor
+                          statusColor,
                         )}
                       >
                         {statusLabel}
                       </span>
                     </td>
-                    <td
-                      className="px-4 py-3 text-right"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         <Button
                           variant="ghost"
@@ -401,7 +408,7 @@ export default function PayrollPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            className="text-destructive hover:text-destructive h-8 w-8"
                             onClick={() => setDeleteId(record.id)}
                             title="Delete"
                           >

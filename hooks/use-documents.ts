@@ -143,7 +143,7 @@ export function useDocumentUrl(id: string | null) {
       return json.data as DocumentUrlData
     },
     enabled: Boolean(id),
-    staleTime: 10 * 60 * 1000, // 10 min — URL valid for 15 min
+    staleTime: 10 * 60 * 1000, // 10 min - URL valid for 15 min
     gcTime: 12 * 60 * 1000,
   })
 }

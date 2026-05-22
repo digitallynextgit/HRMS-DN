@@ -81,19 +81,11 @@ export default function HolidaysPage() {
 
       {/* Year selector */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setYear((y) => y - 1)}
-        >
+        <Button variant="outline" size="sm" onClick={() => setYear((y) => y - 1)}>
           &larr; {year - 1}
         </Button>
-        <span className="px-3 py-1 rounded-md bg-muted text-sm font-medium">{year}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setYear((y) => y + 1)}
-        >
+        <span className="bg-muted rounded px-3 py-1 text-sm font-medium">{year}</span>
+        <Button variant="outline" size="sm" onClick={() => setYear((y) => y + 1)}>
           {year + 1} &rarr;
         </Button>
       </div>
@@ -101,15 +93,13 @@ export default function HolidaysPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 rounded-lg" />
+            <Skeleton key={i} className="h-14 rounded" />
           ))}
         </div>
       ) : holidays.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border bg-card">
-          <CalendarDays className="h-10 w-10 text-muted-foreground/40 mb-3" />
-          <p className="text-muted-foreground text-sm">
-            No holidays configured for {year}.
-          </p>
+        <div className="bg-card flex flex-col items-center justify-center rounded border py-20 text-center">
+          <CalendarDays className="text-muted-foreground/40 mb-3 h-10 w-10" />
+          <p className="text-muted-foreground text-sm">No holidays configured for {year}.</p>
           {canWrite && (
             <Button className="mt-4 gap-2" onClick={() => setAddOpen(true)}>
               <Plus className="h-4 w-4" />
@@ -118,16 +108,18 @@ export default function HolidaysPage() {
           )}
         </div>
       ) : (
-        <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="bg-card rounded border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Date</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Description</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Type</th>
+              <tr className="bg-muted/40 border-b">
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Name</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Date</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  Description
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Type</th>
                 {canWrite && (
-                  <th className="px-4 py-3 text-right font-medium text-muted-foreground">
+                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">
                     Actions
                   </th>
                 )}
@@ -137,11 +129,11 @@ export default function HolidaysPage() {
               {holidays.map((holiday) => (
                 <tr key={holiday.id} className="hover:bg-muted/20 transition-colors">
                   <td className="px-4 py-3 font-medium">{holiday.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                  <td className="text-muted-foreground px-4 py-3 whitespace-nowrap">
                     {formatDate(holiday.date, "EEE, dd MMM yyyy")}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground max-w-[300px] truncate">
-                    {holiday.description ?? "—"}
+                  <td className="text-muted-foreground max-w-[300px] truncate px-4 py-3">
+                    {holiday.description ?? "-"}
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -149,7 +141,7 @@ export default function HolidaysPage() {
                         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
                         holiday.isOptional
                           ? "bg-amber-100 text-amber-700"
-                          : "bg-blue-100 text-blue-700"
+                          : "bg-blue-100 text-blue-700",
                       )}
                     >
                       {holiday.isOptional ? "Optional" : "Mandatory"}
@@ -160,7 +152,7 @@ export default function HolidaysPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive h-8 w-8"
                         onClick={() => setDeleteId(holiday.id)}
                         title="Delete holiday"
                       >
@@ -245,13 +237,8 @@ export default function HolidaysPage() {
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={createHoliday.isPending || !name || !date}
-              >
-                {createHoliday.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                )}
+              <Button type="submit" disabled={createHoliday.isPending || !name || !date}>
+                {createHoliday.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Add Holiday
               </Button>
             </DialogFooter>

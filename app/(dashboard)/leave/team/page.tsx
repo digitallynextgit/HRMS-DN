@@ -90,7 +90,13 @@ export default function TeamLeavePage() {
       />
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={(v) => { setTab(v as "PENDING" | "ALL"); setPage(1) }}>
+      <Tabs
+        value={tab}
+        onValueChange={(v) => {
+          setTab(v as "PENDING" | "ALL")
+          setPage(1)
+        }}
+      >
         <TabsList>
           <TabsTrigger value="PENDING">Pending</TabsTrigger>
           <TabsTrigger value="ALL">All Requests</TabsTrigger>
@@ -107,7 +113,13 @@ export default function TeamLeavePage() {
           />
         </div>
 
-        <Select value={leaveTypeId} onValueChange={(v) => { setLeaveTypeId(v); setPage(1) }}>
+        <Select
+          value={leaveTypeId}
+          onValueChange={(v) => {
+            setLeaveTypeId(v)
+            setPage(1)
+          }}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Leave type" />
           </SelectTrigger>
@@ -125,16 +137,22 @@ export default function TeamLeavePage() {
           <Input
             type="date"
             value={from}
-            onChange={(e) => { setFrom(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setFrom(e.target.value)
+              setPage(1)
+            }}
             className="w-[150px]"
             placeholder="From"
           />
-          <span className="text-muted-foreground text-sm">—</span>
+          <span className="text-muted-foreground text-sm">-</span>
           <Input
             type="date"
             value={to}
             min={from || undefined}
-            onChange={(e) => { setTo(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setTo(e.target.value)
+              setPage(1)
+            }}
             className="w-[150px]"
             placeholder="To"
           />
@@ -152,7 +170,7 @@ export default function TeamLeavePage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 rounded-lg" />
+            <Skeleton key={i} className="h-14 rounded" />
           ))}
         </div>
       ) : (
@@ -167,7 +185,7 @@ export default function TeamLeavePage() {
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Page {pagination.page} of {pagination.totalPages} &middot; {pagination.total} total
           </p>
           <div className="flex items-center gap-2">

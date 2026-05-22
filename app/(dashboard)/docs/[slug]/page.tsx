@@ -1,6 +1,5 @@
 "use client"
 
-import * as React from "react"
 import { useRouter, useParams } from "next/navigation"
 import { ArrowLeft, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -80,13 +79,14 @@ export default function GuideDetailPage() {
   if (!guide) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-          <BookOpen className="h-8 w-8 text-muted-foreground" />
+        <div className="bg-muted flex h-16 w-16 items-center justify-center rounded-full">
+          <BookOpen className="text-muted-foreground h-8 w-8" />
         </div>
         <div className="space-y-1">
-          <h3 className="text-lg font-semibold text-foreground">Guide not found</h3>
-          <p className="text-sm text-muted-foreground">
-            The guide you are looking for does not exist. It may have been moved or the link is incorrect.
+          <h3 className="text-foreground text-lg font-semibold">Guide not found</h3>
+          <p className="text-muted-foreground text-sm">
+            The guide you are looking for does not exist. It may have been moved or the link is
+            incorrect.
           </p>
         </div>
         <Button variant="outline" onClick={() => router.push("/docs")}>
@@ -105,7 +105,7 @@ export default function GuideDetailPage() {
           variant="ghost"
           size="sm"
           onClick={() => router.push("/docs")}
-          className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
+          className="text-muted-foreground hover:text-foreground -ml-2 gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
           Back to Help Center
@@ -117,7 +117,7 @@ export default function GuideDetailPage() {
         <PageHeader title={guide.title} description={guide.description} />
         {/* Role badges */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs text-muted-foreground">For:</span>
+          <span className="text-muted-foreground text-xs">For:</span>
           {guide.roles.map((role) => (
             <RoleBadge key={role} role={role} />
           ))}
@@ -125,7 +125,7 @@ export default function GuideDetailPage() {
       </div>
 
       {/* Divider */}
-      <div className="border-t border-border" />
+      <div className="border-border border-t" />
 
       {/* Guide content */}
       <div className="max-w-3xl">

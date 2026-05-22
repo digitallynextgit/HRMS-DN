@@ -50,12 +50,26 @@ export const PERMISSIONS = {
 export type PermissionScope = (typeof PERMISSIONS)[keyof typeof PERMISSIONS]
 
 export const SYSTEM_ROLES = {
+  /** Hidden role reserved for the CEO. Never shown in any UI listing or
+   *  dropdown, and actions performed by accounts with this role are not
+   *  written to the audit log. */
   SUPER_ADMIN: "super_admin",
-  HR_ADMIN: "hr_admin",
+  ADMIN: "admin",
   HR_MANAGER: "hr_manager",
+  HR_EMPLOYEE: "hr_employee",
   EMPLOYEE: "employee",
-  VIEWER: "viewer",
 } as const
+
+/** Role names that must never appear in any user-facing listing or selector. */
+export const HIDDEN_ROLES = ["super_admin"] as const
+
+/** Role display labels for UIs (super_admin intentionally omitted). */
+export const ROLE_LABELS: Record<string, string> = {
+  admin: "Admin",
+  hr_manager: "HR Manager",
+  hr_employee: "HR Employee",
+  employee: "Employee",
+}
 
 export const MODULES = [
   "employee",
@@ -76,38 +90,168 @@ export const MODULES = [
 ] as const
 
 export const PERMISSION_DEFINITIONS = [
-  { scope: "employee:read", module: "employee", action: "read", description: "View employee profiles and directory" },
-  { scope: "employee:write", module: "employee", action: "write", description: "Create and edit employees" },
-  { scope: "employee:delete", module: "employee", action: "delete", description: "Delete or deactivate employees" },
-  { scope: "document:read", module: "document", action: "read", description: "View and download documents" },
+  {
+    scope: "employee:read",
+    module: "employee",
+    action: "read",
+    description: "View employee profiles and directory",
+  },
+  {
+    scope: "employee:write",
+    module: "employee",
+    action: "write",
+    description: "Create and edit employees",
+  },
+  {
+    scope: "employee:delete",
+    module: "employee",
+    action: "delete",
+    description: "Delete or deactivate employees",
+  },
+  {
+    scope: "document:read",
+    module: "document",
+    action: "read",
+    description: "View and download documents",
+  },
   { scope: "document:write", module: "document", action: "write", description: "Upload documents" },
-  { scope: "document:delete", module: "document", action: "delete", description: "Delete documents" },
-  { scope: "role:read", module: "role", action: "read", description: "View roles and permission matrix" },
-  { scope: "role:write", module: "role", action: "write", description: "Create, edit, and assign roles" },
+  {
+    scope: "document:delete",
+    module: "document",
+    action: "delete",
+    description: "Delete documents",
+  },
+  {
+    scope: "role:read",
+    module: "role",
+    action: "read",
+    description: "View roles and permission matrix",
+  },
+  {
+    scope: "role:write",
+    module: "role",
+    action: "write",
+    description: "Create, edit, and assign roles",
+  },
   { scope: "audit:read", module: "audit", action: "read", description: "View audit logs" },
-  { scope: "email_template:read", module: "email_template", action: "read", description: "View email templates" },
-  { scope: "email_template:write", module: "email_template", action: "write", description: "Create and edit email templates" },
-  { scope: "dashboard:read", module: "dashboard", action: "read", description: "View dashboard statistics" },
-  { scope: "attendance:read", module: "attendance", action: "read", description: "View attendance records" },
-  { scope: "attendance:write", module: "attendance", action: "write", description: "Create and edit attendance records" },
-  { scope: "leave:read", module: "leave", action: "read", description: "View leave requests and balances" },
+  {
+    scope: "email_template:read",
+    module: "email_template",
+    action: "read",
+    description: "View email templates",
+  },
+  {
+    scope: "email_template:write",
+    module: "email_template",
+    action: "write",
+    description: "Create and edit email templates",
+  },
+  {
+    scope: "dashboard:read",
+    module: "dashboard",
+    action: "read",
+    description: "View dashboard statistics",
+  },
+  {
+    scope: "attendance:read",
+    module: "attendance",
+    action: "read",
+    description: "View attendance records",
+  },
+  {
+    scope: "attendance:write",
+    module: "attendance",
+    action: "write",
+    description: "Create and edit attendance records",
+  },
+  {
+    scope: "leave:read",
+    module: "leave",
+    action: "read",
+    description: "View leave requests and balances",
+  },
   { scope: "leave:write", module: "leave", action: "write", description: "Apply for leave" },
-  { scope: "leave:approve", module: "leave", action: "approve", description: "Approve or reject leave requests" },
+  {
+    scope: "leave:approve",
+    module: "leave",
+    action: "approve",
+    description: "Approve or reject leave requests",
+  },
   { scope: "wfh:read", module: "wfh", action: "read", description: "View work-from-home requests" },
   { scope: "wfh:write", module: "wfh", action: "write", description: "Apply for work-from-home" },
-  { scope: "wfh:approve", module: "wfh", action: "approve", description: "Approve or reject WFH requests" },
-  { scope: "payroll:read", module: "payroll", action: "read", description: "View payroll records and payslips" },
-  { scope: "payroll:write", module: "payroll", action: "write", description: "Create and edit salary structures" },
-  { scope: "payroll:process", module: "payroll", action: "process", description: "Process and approve payroll runs" },
-  { scope: "project:read", module: "project", action: "read", description: "View projects and tasks" },
-  { scope: "project:write", module: "project", action: "write", description: "Create and edit projects and tasks" },
+  {
+    scope: "wfh:approve",
+    module: "wfh",
+    action: "approve",
+    description: "Approve or reject WFH requests",
+  },
+  {
+    scope: "payroll:read",
+    module: "payroll",
+    action: "read",
+    description: "View payroll records and payslips",
+  },
+  {
+    scope: "payroll:write",
+    module: "payroll",
+    action: "write",
+    description: "Create and edit salary structures",
+  },
+  {
+    scope: "payroll:process",
+    module: "payroll",
+    action: "process",
+    description: "Process and approve payroll runs",
+  },
+  {
+    scope: "project:read",
+    module: "project",
+    action: "read",
+    description: "View projects and tasks",
+  },
+  {
+    scope: "project:write",
+    module: "project",
+    action: "write",
+    description: "Create and edit projects and tasks",
+  },
   { scope: "project:delete", module: "project", action: "delete", description: "Delete projects" },
-  { scope: "performance:read", module: "performance", action: "read", description: "View performance reviews" },
-  { scope: "performance:write", module: "performance", action: "write", description: "Submit self-assessment and goals" },
-  { scope: "performance:review", module: "performance", action: "review", description: "Conduct manager reviews" },
-  { scope: "recruitment:read", module: "recruitment", action: "read", description: "View job postings and applicants" },
-  { scope: "recruitment:write", module: "recruitment", action: "write", description: "Manage job postings and applicants" },
-  { scope: "analytics:read", module: "analytics", action: "read", description: "View analytics and reports" },
+  {
+    scope: "performance:read",
+    module: "performance",
+    action: "read",
+    description: "View performance reviews",
+  },
+  {
+    scope: "performance:write",
+    module: "performance",
+    action: "write",
+    description: "Submit self-assessment and goals",
+  },
+  {
+    scope: "performance:review",
+    module: "performance",
+    action: "review",
+    description: "Conduct manager reviews",
+  },
+  {
+    scope: "recruitment:read",
+    module: "recruitment",
+    action: "read",
+    description: "View job postings and applicants",
+  },
+  {
+    scope: "recruitment:write",
+    module: "recruitment",
+    action: "write",
+    description: "Manage job postings and applicants",
+  },
+  {
+    scope: "analytics:read",
+    module: "analytics",
+    action: "read",
+    description: "View analytics and reports",
+  },
 ] as const
 
 export const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
@@ -205,8 +349,18 @@ export const PAYROLL_STATUS_COLORS: Record<string, string> = {
 }
 
 export const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ]
 
 export const PROJECT_STATUS_LABELS: Record<string, string> = {

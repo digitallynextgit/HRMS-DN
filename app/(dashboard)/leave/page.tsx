@@ -16,7 +16,7 @@ export default function LeaveDashboardPage() {
 
   const { data: balancesData, isLoading: balancesLoading } = useLeaveBalances(
     undefined,
-    currentYear
+    currentYear,
   )
   const { data: requestsData, isLoading: requestsLoading } = useMyLeaveRequests({
     page: 1,
@@ -43,27 +43,25 @@ export default function LeaveDashboardPage() {
 
       {/* Leave Balances */}
       <section className="space-y-4">
-        <h2 className="text-base font-semibold text-foreground">
-          Leave Balances — {currentYear}
-        </h2>
+        <h2 className="text-foreground text-base font-semibold">Leave Balances - {currentYear}</h2>
 
         {balancesLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-40 rounded-lg" />
+              <Skeleton key={i} className="h-40 rounded" />
             ))}
           </div>
         ) : balances.length === 0 ? (
-          <div className="rounded-lg border bg-muted/30 py-12 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="bg-muted/30 rounded border py-12 text-center">
+            <p className="text-muted-foreground text-sm">
               No leave balances have been allocated for {currentYear}.
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-xs">
               Contact your HR administrator to set up your leave balance.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {balances.map((balance) => (
               <LeaveBalanceCard key={balance.id} balance={balance} />
             ))}
@@ -74,13 +72,13 @@ export default function LeaveDashboardPage() {
       {/* Recent Requests */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">Recent Requests</h2>
+          <h2 className="text-foreground text-base font-semibold">Recent Requests</h2>
         </div>
 
         {requestsLoading ? (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 rounded-lg" />
+              <Skeleton key={i} className="h-14 rounded" />
             ))}
           </div>
         ) : (

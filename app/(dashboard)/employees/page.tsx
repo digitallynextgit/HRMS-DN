@@ -1,27 +1,14 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import Link from "next/link"
-import {
-  LayoutGrid,
-  List,
-  Plus,
-  MoreHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-} from "lucide-react"
+import { LayoutGrid, List, Plus, Pencil, Trash2, Download, X, UserCheck, UserX } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,11 +23,16 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/page-header"
 import { EmployeeCard } from "@/components/employees/employee-card"
 import { EmployeeFilters } from "@/components/employees/employee-filters"
-import { useEmployees, useDeleteEmployee } from "@/hooks/use-employees"
+import {
+  useEmployees,
+  useDeleteEmployee,
+  useActivateEmployee,
+  useHardDeleteEmployee,
+} from "@/hooks/use-employees"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useDebounce } from "@/hooks/use-debounce"
 import { cn, getInitials, getAvatarColor, formatDate } from "@/lib/utils"
-import { EMPLOYEE_STATUS_COLORS, EMPLOYEE_STATUS_LABELS, PERMISSIONS } from "@/lib/constants"
+import { EMPLOYEE_STATUS_LABELS, PERMISSIONS } from "@/lib/constants"
 
 type ViewMode = "card" | "table"
 
@@ -53,9 +45,17 @@ export default function EmployeesPage() {
   // ── View mode ────────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState<ViewMode>("card")
 
-  // ── Delete dialog state ───────────────────────────────────────────────────
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const deleteEmployee = useDeleteEmployee()
+  // ── Row action state ──────────────────────────────────────────────────────
+  const [hardDeleteId, setHardDeleteId] = useState<string | null>(null)
+  const deactivateEmployee = useDeleteEmployee()
+  const activateEmployee = useActivateEmployee()
+  const hardDeleteEmployee = useHardDeleteEmployee()
+
+  // ── Bulk-selection state ──────────────────────────────────────────────────
+  const queryClient = useQueryClient()
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false)
+  const [bulkBusy, setBulkBusy] = useState(false)
 
   // ── URL-synced filters ────────────────────────────────────────────────────
   const [search, setSearchRaw] = useState(searchParams.get("search") ?? "")
@@ -84,7 +84,7 @@ export default function EmployeesPage() {
       })
       router.replace(`${pathname}?${params.toString()}`)
     },
-    [debouncedSearch, departmentId, status, page, router, pathname]
+    [debouncedSearch, departmentId, status, page, router, pathname],
   )
 
   function handleSearchChange(v: string) {
@@ -124,11 +124,105 @@ export default function EmployeesPage() {
   const employees = data?.data ?? []
   const pagination = data?.pagination
 
-  // ── Delete handler ────────────────────────────────────────────────────────
-  async function confirmDelete() {
-    if (!deleteId) return
-    await deleteEmployee.mutateAsync(deleteId)
-    setDeleteId(null)
+  // ── Row action handlers ───────────────────────────────────────────────────
+  async function confirmHardDelete() {
+    if (!hardDeleteId) return
+    await hardDeleteEmployee.mutateAsync(hardDeleteId)
+    setHardDeleteId(null)
+  }
+
+  // ── Selection helpers ─────────────────────────────────────────────────────
+  const pageIds = useMemo(() => employees.map((e) => e.id), [employees])
+  const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
+  const someOnPageSelected = pageIds.some((id) => selectedIds.has(id)) && !allOnPageSelected
+
+  // Reset selection when filters change (different page contents).
+  useEffect(() => {
+    setSelectedIds(new Set())
+  }, [debouncedSearch, departmentId, status, page])
+
+  function toggleRow(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAllOnPage() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (allOnPageSelected) pageIds.forEach((id) => next.delete(id))
+      else pageIds.forEach((id) => next.add(id))
+      return next
+    })
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  // CSV export of the currently selected rows.
+  function exportSelectedCsv() {
+    const selected = employees.filter((e) => selectedIds.has(e.id))
+    if (selected.length === 0) return
+    const cols = ["Employee No", "Name", "Email", "Department", "Designation", "Status", "Joined"]
+    const rows = selected.map((e) => [
+      e.employeeNo,
+      `${e.firstName} ${e.lastName}`,
+      e.email,
+      e.department?.name ?? "",
+      e.designation?.title ?? "",
+      EMPLOYEE_STATUS_LABELS[e.status] ?? e.status,
+      e.dateOfJoining ? formatDate(e.dateOfJoining) : "",
+    ])
+    const csv = [cols, ...rows]
+      .map((row) =>
+        row
+          .map((cell) => {
+            const s = String(cell ?? "")
+            return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+          })
+          .join(","),
+      )
+      .join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `employees-${new Date().toISOString().slice(0, 10)}.csv`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    toast.success(`Exported ${selected.length} employee${selected.length !== 1 ? "s" : ""}`)
+  }
+
+  // Bulk terminate via the new DELETE /api/employees endpoint.
+  async function confirmBulkDelete() {
+    if (selectedIds.size === 0) return
+    setBulkBusy(true)
+    try {
+      const res = await fetch("/api/employees", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Bulk terminate failed" }))
+        throw new Error(err.error || "Bulk terminate failed")
+      }
+      const body = await res.json()
+      toast.success(`Terminated ${body?.data?.count ?? selectedIds.size} employees`)
+      queryClient.invalidateQueries({ queryKey: ["employees"] })
+      clearSelection()
+      setBulkDeleteOpen(false)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Bulk terminate failed")
+    } finally {
+      setBulkBusy(false)
+    }
   }
 
   return (
@@ -154,7 +248,7 @@ export default function EmployeesPage() {
 
       {/* Filters + view toggle */}
       <div className="flex flex-wrap items-start gap-3">
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <EmployeeFilters
             search={search}
             onSearchChange={handleSearchChange}
@@ -167,14 +261,14 @@ export default function EmployeesPage() {
         </div>
 
         {/* View toggle */}
-        <div className="flex items-center rounded-md border bg-background">
+        <div className="bg-background flex items-center rounded border">
           <button
             onClick={() => setViewMode("card")}
             className={cn(
-              "flex items-center justify-center h-9 w-9 rounded-l-md transition-colors",
+              "flex h-9 w-9 items-center justify-center rounded-l-md transition-colors",
               viewMode === "card"
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
             title="Card view"
           >
@@ -183,10 +277,10 @@ export default function EmployeesPage() {
           <button
             onClick={() => setViewMode("table")}
             className={cn(
-              "flex items-center justify-center h-9 w-9 rounded-r-md transition-colors",
+              "flex h-9 w-9 items-center justify-center rounded-r-md transition-colors",
               viewMode === "table"
                 ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
             title="Table view"
           >
@@ -196,21 +290,20 @@ export default function EmployeesPage() {
       </div>
 
       {/* Loading state */}
-      {isLoading && (
-        viewMode === "card" ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {isLoading &&
+        (viewMode === "card" ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-48 rounded-lg" />
+              <Skeleton key={i} className="h-48 rounded" />
             ))}
           </div>
         ) : (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="h-14 rounded-lg" />
+              <Skeleton key={i} className="h-14 rounded" />
             ))}
           </div>
-        )
-      )}
+        ))}
 
       {/* Empty state */}
       {!isLoading && employees.length === 0 && (
@@ -226,111 +319,210 @@ export default function EmployeesPage() {
 
       {/* Card View */}
       {!isLoading && employees.length > 0 && viewMode === "card" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {employees.map((emp) => (
             <EmployeeCard
               key={emp.id}
               employee={emp}
               canEdit={can(PERMISSIONS.EMPLOYEE_WRITE)}
               canDelete={can(PERMISSIONS.EMPLOYEE_DELETE)}
-              onDelete={(id) => setDeleteId(id)}
+              onDelete={(id) => deactivateEmployee.mutate(id)}
             />
           ))}
         </div>
       )}
 
+      {/* Bulk action bar — visible when at least one row is selected */}
+      {viewMode === "table" && selectedIds.size > 0 && (
+        <div className="bg-accent/50 border-border flex flex-wrap items-center justify-between gap-3 rounded border px-3 py-2">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="font-medium">{selectedIds.size} selected</span>
+            <Button variant="ghost" size="sm" onClick={clearSelection} className="h-7 gap-1">
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={exportSelectedCsv} className="gap-1.5">
+              <Download className="h-3.5 w-3.5" />
+              Export CSV
+            </Button>
+            {can(PERMISSIONS.EMPLOYEE_DELETE) && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setBulkDeleteOpen(true)}
+                className="gap-1.5"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Terminate
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Table View */}
       {!isLoading && employees.length > 0 && viewMode === "table" && (
-        <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="bg-card rounded border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Employee</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Department</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Designation</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Joined</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+              <tr className="bg-muted/40 border-b">
+                <th className="w-10 px-3 py-3 text-left">
+                  <Checkbox
+                    checked={
+                      allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false
+                    }
+                    onCheckedChange={toggleAllOnPage}
+                    aria-label="Select all on this page"
+                  />
+                </th>
+                <th className="text-muted-foreground w-12 px-2 py-3 text-left font-medium">
+                  S.No.
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employee</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  Department
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  Designation
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Joined</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {employees.map((emp) => {
+              {employees.map((emp, idx) => {
                 const fullName = `${emp.firstName} ${emp.lastName}`
                 const initials = getInitials(emp.firstName, emp.lastName)
                 const avatarBg = getAvatarColor(fullName)
-                const statusColor = EMPLOYEE_STATUS_COLORS[emp.status] ?? "bg-gray-100 text-gray-700"
-                const statusLabel = EMPLOYEE_STATUS_LABELS[emp.status] ?? emp.status
+                const isActive = emp.isActive
+                const sno = ((pagination?.page ?? 1) - 1) * (pagination?.limit ?? 20) + idx + 1
+                const isSelected = selectedIds.has(emp.id)
 
                 return (
-                  <tr key={emp.id} className="hover:bg-muted/20 transition-colors">
+                  <tr
+                    key={emp.id}
+                    className={cn(
+                      "hover:bg-muted/20 transition-colors",
+                      isSelected && "bg-accent/30",
+                    )}
+                  >
+                    <td className="px-3 py-3">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleRow(emp.id)}
+                        aria-label={`Select ${fullName}`}
+                      />
+                    </td>
+                    <td className="text-muted-foreground px-2 py-3 text-xs tabular-nums">{sno}</td>
                     {/* Employee column */}
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                      <Link href={`/employees/${emp.id}`} className="group flex items-center gap-3">
                         <Avatar className="h-8 w-8 shrink-0">
                           {emp.profilePhoto ? (
                             <AvatarImage src={emp.profilePhoto} alt={fullName} />
                           ) : null}
-                          <AvatarFallback className={cn("text-white text-xs font-semibold", avatarBg)}>
+                          <AvatarFallback
+                            className={cn("text-xs font-semibold text-white", avatarBg)}
+                          >
                             {initials}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="font-medium truncate">{fullName}</p>
-                          <p className="text-xs text-muted-foreground">{emp.employeeNo}</p>
+                          <p className="truncate font-medium underline-offset-4 group-hover:underline">
+                            {fullName}
+                          </p>
+                          <p className="text-muted-foreground text-xs">{emp.employeeNo}</p>
                         </div>
-                      </div>
+                      </Link>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {emp.department?.name ?? "—"}
+                    <td className="text-muted-foreground px-4 py-3">
+                      {emp.department?.name ?? "-"}
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {emp.designation?.title ?? "—"}
+                    <td className="text-muted-foreground px-4 py-3">
+                      {emp.designation?.title ?? "-"}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", statusColor)}>
-                        {statusLabel}
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                          isActive
+                            ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                            : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">
+                    <td className="text-muted-foreground px-4 py-3">
                       {formatDate(emp.dateOfJoining)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Actions</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={`/employees/${emp.id}`} className="flex items-center gap-2 cursor-pointer">
-                              <Eye className="h-4 w-4" />
-                              View Profile
-                            </Link>
-                          </DropdownMenuItem>
-                          {can(PERMISSIONS.EMPLOYEE_WRITE) && (
-                            <DropdownMenuItem asChild>
-                              <Link href={`/employees/${emp.id}/edit`} className="flex items-center gap-2 cursor-pointer">
-                                <Pencil className="h-4 w-4" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                          )}
-                          {can(PERMISSIONS.EMPLOYEE_DELETE) && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive flex items-center gap-2 cursor-pointer"
-                                onClick={() => setDeleteId(emp.id)}
+                      <div className="flex items-center justify-end gap-1">
+                        {isActive ? (
+                          <>
+                            {can(PERMISSIONS.EMPLOYEE_WRITE) && (
+                              <Button
+                                asChild
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-foreground h-8 w-8"
+                                title="Edit"
+                              >
+                                <Link
+                                  href={`/employees/${emp.id}/edit`}
+                                  aria-label={`Edit ${fullName}`}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            )}
+                            {can(PERMISSIONS.EMPLOYEE_DELETE) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-muted-foreground hover:text-destructive h-8 w-8"
+                                onClick={() => deactivateEmployee.mutate(emp.id)}
+                                disabled={deactivateEmployee.isPending}
+                                title="Deactivate"
+                                aria-label={`Deactivate ${fullName}`}
+                              >
+                                <UserX className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {can(PERMISSIONS.EMPLOYEE_WRITE) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-green-600 hover:bg-green-500/10 hover:text-green-600 dark:text-green-400 dark:hover:text-green-400"
+                                onClick={() => activateEmployee.mutate(emp.id)}
+                                disabled={activateEmployee.isPending}
+                                title="Reactivate"
+                                aria-label={`Reactivate ${fullName}`}
+                              >
+                                <UserCheck className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {can(PERMISSIONS.EMPLOYEE_DELETE) && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive h-8 w-8"
+                                onClick={() => setHardDeleteId(emp.id)}
+                                title="Delete permanently"
+                                aria-label={`Delete ${fullName}`}
                               >
                                 <Trash2 className="h-4 w-4" />
-                                Terminate
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -343,7 +535,7 @@ export default function EmployeesPage() {
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Page {pagination.page} of {pagination.totalPages} &middot; {pagination.total} total
           </p>
           <div className="flex items-center gap-2">
@@ -367,23 +559,47 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Delete confirmation dialog */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+      {/* Hard-delete confirmation dialog */}
+      <AlertDialog open={!!hardDeleteId} onOpenChange={(open) => !open && setHardDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Terminate Employee</AlertDialogTitle>
+            <AlertDialogTitle>Delete employee permanently?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will mark the employee as terminated and deactivate their account. This action can be
-              reversed by editing the employee.
+              This permanently removes the employee record and cannot be undone. Their attendance,
+              leave, payroll and document history will be detached or removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={hardDeleteEmployee.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDelete}
+              onClick={confirmHardDelete}
+              disabled={hardDeleteEmployee.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Terminate
+              {hardDeleteEmployee.isPending ? "Deleting..." : "Delete permanently"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Bulk terminate confirmation dialog */}
+      <AlertDialog open={bulkDeleteOpen} onOpenChange={setBulkDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Terminate {selectedIds.size} employees?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Each selected employee will be marked as terminated and deactivated. You can reverse
+              this individually from their profile. Your own account, if selected, will be skipped.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkBusy}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkDelete}
+              disabled={bulkBusy}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {bulkBusy ? "Terminating..." : "Terminate"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

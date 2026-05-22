@@ -8,17 +8,17 @@ import { db } from "@/lib/db"
 // Header: Authorization: Bearer <CRON_SECRET>
 
 const EL_MONTHLY_ACCRUAL = 1.16
-const EL_MAX_ACCUMULATED  = 22
+const EL_MAX_ACCUMULATED = 22
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization")
-  const expected   = `Bearer ${process.env.CRON_SECRET}`
+  const expected = `Bearer ${process.env.CRON_SECRET}`
   if (authHeader !== expected) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
   try {
-    const now         = new Date()
+    const now = new Date()
     const currentYear = now.getFullYear()
 
     // Find the EL leave type
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
     const eligibleEmployees = await db.employee.findMany({
       where: {
         isActive: true,
-        status:   "ACTIVE",
+        status: "ACTIVE",
         OR: [
           // Has explicit probationEndDate and 6 months have passed since it
           { probationEndDate: { lte: sixMonthsAgo } },
@@ -46,48 +46,43 @@ export async function GET(req: NextRequest) {
     })
 
     let accrued = 0
-    let capped  = 0
+    let capped = 0
 
     for (const emp of eligibleEmployees) {
       const existing = await db.leaveBalance.findUnique({
         where: {
           employeeId_leaveTypeId_year: {
-            employeeId:  emp.id,
+            employeeId: emp.id,
             leaveTypeId: elType.id,
-            year:        currentYear,
+            year: currentYear,
           },
         },
       })
 
       if (existing) {
         const currentTotal = existing.allocated + existing.carried
-        const newAllocated = Math.min(
-          existing.allocated + EL_MONTHLY_ACCRUAL,
-          // Cap so total (allocated + carried) never exceeds EL_MAX_ACCUMULATED
-          EL_MAX_ACCUMULATED - existing.carried + existing.used
-        )
 
         if (currentTotal >= EL_MAX_ACCUMULATED) {
-          // Already at cap — skip accrual but record as capped
+          // Already at cap - skip accrual but record as capped
           capped++
           continue
         }
 
         await db.leaveBalance.update({
           where: { id: existing.id },
-          data:  { allocated: { increment: EL_MONTHLY_ACCRUAL } },
+          data: { allocated: { increment: EL_MONTHLY_ACCRUAL } },
         })
       } else {
         // Create new balance record for this year
         await db.leaveBalance.create({
           data: {
-            employeeId:  emp.id,
+            employeeId: emp.id,
             leaveTypeId: elType.id,
-            year:        currentYear,
-            allocated:   EL_MONTHLY_ACCRUAL,
-            used:        0,
-            pending:     0,
-            carried:     0,
+            year: currentYear,
+            allocated: EL_MONTHLY_ACCRUAL,
+            used: 0,
+            pending: 0,
+            carried: 0,
           },
         })
       }
@@ -95,14 +90,12 @@ export async function GET(req: NextRequest) {
       accrued++
     }
 
-    console.log(`[EL_ACCRUAL] ${now.toISOString()} — accrued for ${accrued} employees, ${capped} at max cap`)
-
     return NextResponse.json({
-      success:   true,
-      runAt:     now.toISOString(),
+      success: true,
+      runAt: now.toISOString(),
       accrued,
       capped,
-      skipped:   eligibleEmployees.length - accrued - capped,
+      skipped: eligibleEmployees.length - accrued - capped,
       accrualRate: EL_MONTHLY_ACCRUAL,
     })
   } catch (error) {

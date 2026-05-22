@@ -6,7 +6,6 @@ import type { Session } from "next-auth"
 export const GET = withSession(async (_req: NextRequest, _ctx: unknown, _session: Session) => {
   try {
     const now = new Date()
-    const startOfYear = new Date(now.getFullYear(), 0, 1)
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0)
@@ -43,16 +42,22 @@ export const GET = withSession(async (_req: NextRequest, _ctx: unknown, _session
 
     // Payroll stats (aggregate from last month)
     const payrollThisMonth = await db.payrollRecord.aggregate({
-      where: { month: now.getMonth() === 0 ? 12 : now.getMonth(), year: now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear() },
+      where: {
+        month: now.getMonth() === 0 ? 12 : now.getMonth(),
+        year: now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear(),
+      },
       _sum: { grossSalary: true, netSalary: true },
       _count: { id: true },
     })
-    const lastPayroll = payrollThisMonth._count.id > 0 ? {
-      totalGross: payrollThisMonth._sum.grossSalary ?? 0,
-      totalNet: payrollThisMonth._sum.netSalary ?? 0,
-      count: payrollThisMonth._count.id,
-      periodLabel: `${now.toLocaleString("default", { month: "short" })} ${now.getFullYear()}`,
-    } : null
+    const lastPayroll =
+      payrollThisMonth._count.id > 0
+        ? {
+            totalGross: payrollThisMonth._sum.grossSalary ?? 0,
+            totalNet: payrollThisMonth._sum.netSalary ?? 0,
+            count: payrollThisMonth._count.id,
+            periodLabel: `${now.toLocaleString("default", { month: "short" })} ${now.getFullYear()}`,
+          }
+        : null
 
     // Recruitment stats
     const [openJobs, applicantsThisMonth] = await Promise.all([
@@ -77,11 +82,11 @@ export const GET = withSession(async (_req: NextRequest, _ctx: unknown, _session
       Array.from({ length: 6 }, (_, i) => {
         const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
         const end = new Date(now.getFullYear(), now.getMonth() - (5 - i) + 1, 0)
-        return db.employee.count({ where: { createdAt: { gte: d, lte: end } } }).then(count => ({
+        return db.employee.count({ where: { createdAt: { gte: d, lte: end } } }).then((count) => ({
           month: d.toLocaleString("default", { month: "short" }),
           count,
         }))
-      })
+      }),
     )
 
     // Employee status distribution
@@ -93,14 +98,24 @@ export const GET = withSession(async (_req: NextRequest, _ctx: unknown, _session
     return NextResponse.json({
       data: {
         employees: { total: totalEmployees, active: activeEmployees, newThisMonth, newLastMonth },
-        departments: deptHeadcount.map(d => ({ name: d.name, count: d._count.employees })),
+        departments: deptHeadcount.map((d) => ({ name: d.name, count: d._count.employees })),
         leave: { pending: pendingLeaves, approvedThisMonth: approvedLeavesThisMonth },
-        attendance: attendanceThisMonth.reduce((acc, g) => ({ ...acc, [g.status]: g._count.id }), {} as Record<string, number>),
+        attendance: attendanceThisMonth.reduce(
+          (acc, g) => ({ ...acc, [g.status]: g._count.id }),
+          {} as Record<string, number>,
+        ),
         payroll: lastPayroll,
-        recruitment: { openJobs, applicantsThisMonth, byStage: applicantsByStage.map(a => ({ stage: a.stage, count: a._count.id })) },
+        recruitment: {
+          openJobs,
+          applicantsThisMonth,
+          byStage: applicantsByStage.map((a) => ({ stage: a.stage, count: a._count.id })),
+        },
         projects: { active: activeProjects, tasksCompletedThisMonth: tasksCompleted },
         trends: { hires: hireTrend },
-        statusDistribution: statusDistribution.map(s => ({ status: s.status, count: s._count.id })),
+        statusDistribution: statusDistribution.map((s) => ({
+          status: s.status,
+          count: s._count.id,
+        })),
       },
     })
   } catch (error) {

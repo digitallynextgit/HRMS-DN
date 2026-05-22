@@ -129,8 +129,7 @@ export function LeaveTypeForm({ open, onOpenChange, leaveType }: LeaveTypeFormPr
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="lt-desc">
-              Description{" "}
-              <span className="text-muted-foreground font-normal">(optional)</span>
+              Description <span className="text-muted-foreground font-normal">(optional)</span>
             </Label>
             <Textarea
               id="lt-desc"
@@ -152,7 +151,7 @@ export function LeaveTypeForm({ open, onOpenChange, leaveType }: LeaveTypeFormPr
               value={form.maxDaysPerYear}
               onChange={(e) => setField("maxDaysPerYear", Number(e.target.value))}
             />
-            <p className="text-xs text-muted-foreground">Set to 0 for unlimited.</p>
+            <p className="text-muted-foreground text-xs">Set to 0 for unlimited.</p>
           </div>
 
           {/* Switches */}
@@ -184,9 +183,9 @@ export function LeaveTypeForm({ open, onOpenChange, leaveType }: LeaveTypeFormPr
               />
             </div>
 
-            {/* Max carry days — only shown when carryForward is enabled */}
+            {/* Max carry days - only shown when carryForward is enabled */}
             {form.carryForward && (
-              <div className="space-y-1.5 pl-4 border-l-2 border-muted">
+              <div className="border-muted space-y-1.5 border-l-2 pl-4">
                 <Label htmlFor="lt-max-carry">Max Days to Carry Forward</Label>
                 <Input
                   id="lt-max-carry"
@@ -195,7 +194,7 @@ export function LeaveTypeForm({ open, onOpenChange, leaveType }: LeaveTypeFormPr
                   value={form.maxCarryDays}
                   onChange={(e) => setField("maxCarryDays", Number(e.target.value))}
                 />
-                <p className="text-xs text-muted-foreground">Set to 0 for unlimited carry.</p>
+                <p className="text-muted-foreground text-xs">Set to 0 for unlimited carry.</p>
               </div>
             )}
           </div>

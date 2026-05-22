@@ -1,4 +1,3 @@
-import * as React from "react"
 import { Loader2 } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
@@ -44,7 +43,7 @@ export function ConfirmDialog({
           <AlertDialogTitle className="text-sm font-semibold tracking-tight">
             {title}
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm text-muted-foreground">
+          <AlertDialogDescription className="text-muted-foreground text-sm">
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -58,10 +57,7 @@ export function ConfirmDialog({
               onConfirm()
             }}
             disabled={isLoading}
-            className={cn(
-              variant === "destructive" &&
-                buttonVariants({ variant: "destructive" })
-            )}
+            className={cn(variant === "destructive" && buttonVariants({ variant: "destructive" }))}
           >
             {isLoading && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
             {confirmLabel}

@@ -20,14 +20,14 @@ export const POST = withAuth(
       if (file.size > MAX_FILE_SIZE) {
         return NextResponse.json(
           { error: `File size exceeds the ${MAX_FILE_SIZE / (1024 * 1024)}MB limit` },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
       if (!ALLOWED_FILE_TYPES.includes(file.type)) {
         return NextResponse.json(
           { error: `File type '${file.type}' is not allowed` },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -43,17 +43,13 @@ export const POST = withAuth(
       if (!metaResult.success) {
         return NextResponse.json(
           { error: "Invalid metadata", details: metaResult.error.flatten() },
-          { status: 422 }
+          { status: 422 },
         )
       }
 
       const meta = metaResult.data
       const id = crypto.randomUUID()
-      const objectKey = getObjectKey(
-        `documents/${meta.employeeId || "company"}`,
-        file.name,
-        id
-      )
+      const objectKey = getObjectKey(`documents/${meta.employeeId || "company"}`, file.name, id)
 
       const buffer = Buffer.from(await file.arrayBuffer())
       await uploadFile(objectKey, buffer, file.type, file.size)
@@ -92,7 +88,8 @@ export const POST = withAuth(
             employeeId: document.employeeId,
             isCompanyDoc: document.isCompanyDoc,
           },
-          ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
+          ipAddress:
+            req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
           userAgent: req.headers.get("user-agent") ?? undefined,
         },
       })
@@ -102,5 +99,5 @@ export const POST = withAuth(
       console.error("[documents/upload] POST error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

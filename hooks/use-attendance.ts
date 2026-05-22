@@ -104,7 +104,7 @@ interface PaginatedResponse<T> {
 // ─── Fetch helpers ─────────────────────────────────────────────────────────────
 
 async function fetchAttendanceLogs(
-  filters: AttendanceFilters
+  filters: AttendanceFilters,
 ): Promise<PaginatedResponse<AttendanceLog>> {
   const params = new URLSearchParams()
   if (filters.employeeId) params.set("employeeId", filters.employeeId)
@@ -123,7 +123,7 @@ async function fetchAttendanceLogs(
 }
 
 async function fetchMyAttendance(
-  filters: MyAttendanceFilters
+  filters: MyAttendanceFilters,
 ): Promise<PaginatedResponse<AttendanceLog>> {
   const params = new URLSearchParams()
   if (filters.days) params.set("days", String(filters.days))
@@ -142,7 +142,7 @@ async function fetchMyAttendance(
 async function fetchAttendanceSummary(
   employeeId: string,
   month: number,
-  year: number
+  year: number,
 ): Promise<{ data: AttendanceSummary }> {
   const params = new URLSearchParams({ employeeId, month: String(month), year: String(year) })
   const res = await fetch(`/api/attendance/summary?${params.toString()}`)
@@ -154,7 +154,7 @@ async function fetchAttendanceSummary(
 }
 
 async function createAttendanceLog(
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
 ): Promise<{ data: AttendanceLog }> {
   const res = await fetch("/api/attendance", {
     method: "POST",
@@ -205,9 +205,7 @@ async function fetchDevices(): Promise<{ data: HikvisionDevice[] }> {
   return res.json()
 }
 
-async function createDevice(
-  body: Record<string, unknown>
-): Promise<{ data: HikvisionDevice }> {
+async function createDevice(body: Record<string, unknown>): Promise<{ data: HikvisionDevice }> {
   const res = await fetch("/api/attendance/devices", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -268,9 +266,7 @@ async function fetchHolidays(year?: number): Promise<{ data: Holiday[] }> {
   return res.json()
 }
 
-async function createHoliday(
-  body: Record<string, unknown>
-): Promise<{ data: Holiday }> {
+async function createHoliday(body: Record<string, unknown>): Promise<{ data: Holiday }> {
   const res = await fetch("/api/attendance/holidays", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -313,7 +309,7 @@ export function useMyAttendance(filters: MyAttendanceFilters = {}) {
 export function useAttendanceSummary(
   employeeId: string | null | undefined,
   month: number,
-  year: number
+  year: number,
 ) {
   return useQuery({
     queryKey: ["attendance-summary", employeeId, month, year],
@@ -442,7 +438,11 @@ export function useSyncDevice() {
   })
 }
 
-async function testDevice(id: string): Promise<{ success: boolean; message: string; info?: { deviceName: string; model: string; firmwareVersion: string } }> {
+async function testDevice(id: string): Promise<{
+  success: boolean
+  message: string
+  info?: { deviceName: string; model: string; firmwareVersion: string }
+}> {
   const res = await fetch(`/api/attendance/devices/${id}/test`, { method: "POST" })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Failed to test device" }))
@@ -456,7 +456,7 @@ export function useTestDevice() {
     mutationFn: testDevice,
     onSuccess: (data) => {
       if (data.success) {
-        const detail = data.info ? ` — ${data.info.deviceName} (${data.info.model})` : ""
+        const detail = data.info ? ` - ${data.info.deviceName} (${data.info.model})` : ""
         toast.success(`Connection successful${detail}`)
       } else {
         toast.error(data.message || "Connection failed")

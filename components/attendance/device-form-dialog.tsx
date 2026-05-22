@@ -21,11 +21,7 @@ interface DeviceFormDialogProps {
   editDevice?: HikvisionDevice | null
 }
 
-export function DeviceFormDialog({
-  open,
-  onOpenChange,
-  editDevice,
-}: DeviceFormDialogProps) {
+export function DeviceFormDialog({ open, onOpenChange, editDevice }: DeviceFormDialogProps) {
   const isEdit = !!editDevice
 
   const [name, setName] = useState("")
@@ -88,9 +84,7 @@ export function DeviceFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Edit Device" : "Add Hikvision Device"}
-          </DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Device" : "Add Hikvision Device"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
@@ -172,14 +166,10 @@ export function DeviceFormDialog({
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center px-3"
                 tabIndex={-1}
               >
-                {showPassword ? (
-                  <EyeOff className="h-4 w-4" />
-                ) : (
-                  <Eye className="h-4 w-4" />
-                )}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>

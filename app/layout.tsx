@@ -5,16 +5,12 @@ import { Providers } from "@/components/providers/providers"
 export const metadata: Metadata = {
   title: {
     template: "%s | HRMS",
-    default: "HRMS — Human Resource Management System",
+    default: "HRMS - Human Resource Management System",
   },
   description: "Modern HRMS for managing your workforce",
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

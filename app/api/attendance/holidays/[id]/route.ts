@@ -43,12 +43,12 @@ export const PATCH = withAuth(
       ) {
         return NextResponse.json(
           { error: "A holiday with this name already exists on that date" },
-          { status: 409 }
+          { status: 409 },
         )
       }
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const DELETE = withAuth(
@@ -69,5 +69,5 @@ export const DELETE = withAuth(
       console.error("[HOLIDAY_ID_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

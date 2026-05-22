@@ -36,7 +36,7 @@ export const GET = withSession(
       console.error("[LEAVE_BALANCES_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withAuth(
@@ -49,7 +49,7 @@ export const POST = withAuth(
       if (!employeeId || !leaveTypeId || !year) {
         return NextResponse.json(
           { error: "employeeId, leaveTypeId, and year are required" },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -106,5 +106,5 @@ export const POST = withAuth(
       console.error("[LEAVE_BALANCES_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

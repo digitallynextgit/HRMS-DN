@@ -13,7 +13,9 @@ function parseTimeOnDate(dateStr: string, timeStr: string): Date | null {
     const d = new Date(dateStr)
     d.setHours(h, m, 0, 0)
     return d
-  } catch { return null }
+  } catch {
+    return null
+  }
 }
 
 export const POST = withSession(async (req: NextRequest, _ctx: unknown, session: Session) => {
@@ -28,19 +30,28 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
     const results: { row: number; success: boolean; error?: string; employeeNo?: string }[] = []
 
     if (preview) {
-      // Validate only — don't write
+      // Validate only - don't write
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]
         const emp = await db.employee.findFirst({ where: { employeeNo: row.employee_no } })
         if (!emp) {
-          results.push({ row: i + 1, success: false, error: `Employee ${row.employee_no} not found` })
+          results.push({
+            row: i + 1,
+            success: false,
+            error: `Employee ${row.employee_no} not found`,
+          })
         } else if (!row.date) {
           results.push({ row: i + 1, success: false, error: "Date is required" })
         } else {
           results.push({ row: i + 1, success: true, employeeNo: row.employee_no })
         }
       }
-      return NextResponse.json({ preview: true, results, total: rows.length, valid: results.filter(r => r.success).length })
+      return NextResponse.json({
+        preview: true,
+        results,
+        total: rows.length,
+        valid: results.filter((r) => r.success).length,
+      })
     }
 
     // Actually import
@@ -49,7 +60,14 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
       const row = rows[i]
       try {
         const emp = await db.employee.findFirst({ where: { employeeNo: row.employee_no } })
-        if (!emp) { results.push({ row: i + 1, success: false, error: `Employee ${row.employee_no} not found` }); continue }
+        if (!emp) {
+          results.push({
+            row: i + 1,
+            success: false,
+            error: `Employee ${row.employee_no} not found`,
+          })
+          continue
+        }
 
         const date = new Date(row.date)
         date.setHours(0, 0, 0, 0)
@@ -60,7 +78,11 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
         if (existing) {
           await db.attendanceLog.update({
             where: { id: existing.id },
-            data: { checkIn: checkIn ?? existing.checkIn, checkOut: checkOut ?? existing.checkOut, source: "CSV" } as never,
+            data: {
+              checkIn: checkIn ?? existing.checkIn,
+              checkOut: checkOut ?? existing.checkOut,
+              source: "CSV",
+            } as never,
           })
         } else {
           await db.attendanceLog.create({

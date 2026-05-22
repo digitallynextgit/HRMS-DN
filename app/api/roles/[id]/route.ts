@@ -18,29 +18,26 @@ type RouteContext = { params: { id: string } }
 // ---------------------------------------------------------------------------
 // GET /api/roles/:id
 // ---------------------------------------------------------------------------
-export const GET = withAuth(
-  PERMISSIONS.ROLE_READ,
-  async (_req: NextRequest, ctx: RouteContext) => {
-    const { id } = ctx.params
+export const GET = withAuth(PERMISSIONS.ROLE_READ, async (_req: NextRequest, ctx: RouteContext) => {
+  const { id } = ctx.params
 
-    const role = await db.role.findUnique({
-      where: { id },
-      include: {
-        rolePermissions: {
-          include: { permission: true },
-          orderBy: { permission: { scope: "asc" } },
-        },
-        _count: { select: { employeeRoles: true } },
+  const role = await db.role.findUnique({
+    where: { id },
+    include: {
+      rolePermissions: {
+        include: { permission: true },
+        orderBy: { permission: { scope: "asc" } },
       },
-    })
+      _count: { select: { employeeRoles: true } },
+    },
+  })
 
-    if (!role) {
-      return NextResponse.json({ error: "Role not found" }, { status: 404 })
-    }
-
-    return NextResponse.json({ data: role })
+  if (!role) {
+    return NextResponse.json({ error: "Role not found" }, { status: 404 })
   }
-)
+
+  return NextResponse.json({ data: role })
+})
 
 // ---------------------------------------------------------------------------
 // PATCH /api/roles/:id
@@ -62,19 +59,18 @@ export const PATCH = withAuth(
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
     }
 
-    const { name, displayName, description, permissionIds } =
-      body as {
-        name?: string
-        displayName?: string
-        description?: string
-        permissionIds?: string[]
-      }
+    const { name, displayName, description, permissionIds } = body as {
+      name?: string
+      displayName?: string
+      description?: string
+      permissionIds?: string[]
+    }
 
     // Block renaming the internal `name` slug of system roles.
     if (role.isSystem && name && name !== role.name) {
       return NextResponse.json(
         { error: "The internal name of a system role cannot be changed" },
-        { status: 422 }
+        { status: 422 },
       )
     }
 
@@ -89,7 +85,7 @@ export const PATCH = withAuth(
         if (conflict) {
           return NextResponse.json(
             { error: `A role with name "${normalizedName}" already exists` },
-            { status: 409 }
+            { status: 409 },
           )
         }
       }
@@ -115,7 +111,7 @@ export const PATCH = withAuth(
         }),
         db.rolePermission.deleteMany({ where: { roleId: id } }),
         ...permissionIds.map((permissionId) =>
-          db.rolePermission.create({ data: { roleId: id, permissionId } })
+          db.rolePermission.create({ data: { roleId: id, permissionId } }),
         ),
       ])
 
@@ -164,7 +160,7 @@ export const PATCH = withAuth(
     })
 
     return NextResponse.json({ data: updatedRole })
-  }
+  },
 )
 
 // ---------------------------------------------------------------------------
@@ -181,10 +177,7 @@ export const DELETE = withAuth(
     }
 
     if (role.isSystem) {
-      return NextResponse.json(
-        { error: "System roles cannot be deleted" },
-        { status: 422 }
-      )
+      return NextResponse.json({ error: "System roles cannot be deleted" }, { status: 422 })
     }
 
     // Check if there are employees currently assigned to this role.
@@ -194,7 +187,7 @@ export const DELETE = withAuth(
         {
           error: `Cannot delete role: ${employeeCount} employee(s) are currently assigned to it`,
         },
-        { status: 422 }
+        { status: 422 },
       )
     }
 
@@ -212,5 +205,5 @@ export const DELETE = withAuth(
     })
 
     return NextResponse.json({ data: { id } })
-  }
+  },
 )

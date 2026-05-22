@@ -87,7 +87,9 @@ interface PaginatedResponse<T> {
 
 // ─── Fetch helpers ─────────────────────────────────────────────────────────────
 
-async function fetchEmployees(filters: EmployeeFilters): Promise<PaginatedResponse<EmployeeListItem>> {
+async function fetchEmployees(
+  filters: EmployeeFilters,
+): Promise<PaginatedResponse<EmployeeListItem>> {
   const params = new URLSearchParams()
   if (filters.search) params.set("search", filters.search)
   if (filters.departmentId) params.set("departmentId", filters.departmentId)
@@ -148,6 +150,24 @@ async function updateEmployee({
 
 async function deleteEmployee(id: string): Promise<{ message: string }> {
   const res = await fetch(`/api/employees/${id}`, { method: "DELETE" })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Failed to deactivate employee" }))
+    throw new Error(err.error || "Failed to deactivate employee")
+  }
+  return res.json()
+}
+
+async function activateEmployee(id: string): Promise<{ message: string }> {
+  const res = await fetch(`/api/employees/${id}/activate`, { method: "POST" })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Failed to reactivate employee" }))
+    throw new Error(err.error || "Failed to reactivate employee")
+  }
+  return res.json()
+}
+
+async function hardDeleteEmployee(id: string): Promise<{ message: string }> {
+  const res = await fetch(`/api/employees/${id}?permanent=true`, { method: "DELETE" })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Failed to delete employee" }))
     throw new Error(err.error || "Failed to delete employee")
@@ -239,10 +259,40 @@ export function useDeleteEmployee() {
     mutationFn: deleteEmployee,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] })
-      toast.success("Employee terminated successfully")
+      toast.success("Employee deactivated")
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to terminate employee")
+      toast.error(error.message || "Failed to deactivate employee")
+    },
+  })
+}
+
+export function useActivateEmployee() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: activateEmployee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] })
+      toast.success("Employee reactivated")
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to reactivate employee")
+    },
+  })
+}
+
+export function useHardDeleteEmployee() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: hardDeleteEmployee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employees"] })
+      toast.success("Employee deleted permanently")
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete employee")
     },
   })
 }

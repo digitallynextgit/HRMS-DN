@@ -57,5 +57,5 @@ export const GET = withAuth(
       console.error("[PAYROLL_SUMMARY_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

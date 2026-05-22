@@ -1,5 +1,6 @@
 "use client"
 
+import { use } from "react"
 import Link from "next/link"
 import {
   ChevronLeft,
@@ -20,7 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { useEmployee } from "@/hooks/use-employees"
@@ -41,8 +42,8 @@ interface InfoRowProps {
 function InfoRow({ label, value }: InfoRowProps) {
   return (
     <div className="space-y-0.5">
-      <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-      <p className="text-sm font-medium">{value || "—"}</p>
+      <p className="text-muted-foreground text-xs tracking-wide uppercase">{label}</p>
+      <p className="text-sm font-medium">{value || "-"}</p>
     </div>
   )
 }
@@ -50,7 +51,7 @@ function InfoRow({ label, value }: InfoRowProps) {
 function SectionHeader({ children }: { children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-sm font-semibold text-foreground/80 uppercase tracking-wider mb-3">
+      <h3 className="text-foreground/80 mb-3 text-sm font-semibold tracking-wider uppercase">
         {children}
       </h3>
       <Separator className="mb-4" />
@@ -61,18 +62,14 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 function ProfileSkeleton() {
   return (
     <div className="space-y-6">
-      <Skeleton className="h-48 rounded-xl" />
-      <Skeleton className="h-96 rounded-xl" />
+      <Skeleton className="h-48 rounded" />
+      <Skeleton className="h-96 rounded" />
     </div>
   )
 }
 
-export default function EmployeeProfilePage({
-  params,
-}: {
-  params: { id: string }
-}) {
-  const { id } = params
+export default function EmployeeProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const { data, isLoading, error } = useEmployee(id)
   const { can } = usePermissions()
 
@@ -80,11 +77,11 @@ export default function EmployeeProfilePage({
 
   if (error || !data?.data) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
+      <div className="flex flex-col items-center justify-center gap-4 py-20">
         <p className="text-muted-foreground">Employee not found.</p>
         <Button variant="outline" asChild>
           <Link href="/employees">
-            <ChevronLeft className="h-4 w-4 mr-1" />
+            <ChevronLeft className="mr-1 h-4 w-4" />
             Back to Employees
           </Link>
         </Button>
@@ -104,7 +101,7 @@ export default function EmployeeProfilePage({
   const ec = (emp.emergencyContact ?? {}) as Record<string, string>
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6">
       {/* Back link */}
       <Button variant="ghost" size="sm" asChild className="-ml-2">
         <Link href="/employees" className="flex items-center gap-1.5">
@@ -116,26 +113,26 @@ export default function EmployeeProfilePage({
       {/* Top profile card */}
       <Card>
         <CardContent className="pt-6 pb-6">
-          <div className="flex flex-col sm:flex-row items-start gap-6">
+          <div className="flex flex-col items-start gap-6 sm:flex-row">
             {/* Avatar */}
             <Avatar className="h-24 w-24 shrink-0">
               {emp.profilePhoto ? (
-                <AvatarFallback className={cn("text-white text-2xl font-bold", avatarBg)}>
+                <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
                   {initials}
                 </AvatarFallback>
               ) : (
-                <AvatarFallback className={cn("text-white text-2xl font-bold", avatarBg)}>
+                <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
                   {initials}
                 </AvatarFallback>
               )}
             </Avatar>
 
             {/* Name block */}
-            <div className="flex-1 min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <h1 className="text-2xl font-bold tracking-tight">{fullName}</h1>
-                  <div className="mt-1 flex flex-wrap items-center gap-2 text-muted-foreground text-sm">
+                  <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-sm">
                     {emp.designation?.title && (
                       <span className="flex items-center gap-1">
                         <Briefcase className="h-3.5 w-3.5" />
@@ -169,7 +166,7 @@ export default function EmployeeProfilePage({
                 <span
                   className={cn(
                     "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    statusColor
+                    statusColor,
                   )}
                 >
                   {statusLabel}
@@ -177,13 +174,19 @@ export default function EmployeeProfilePage({
               </div>
 
               {/* Contact row */}
-              <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <a href={`mailto:${emp.email}`} className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+              <div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-4 text-sm">
+                <a
+                  href={`mailto:${emp.email}`}
+                  className="hover:text-foreground flex items-center gap-1.5 transition-colors"
+                >
                   <Mail className="h-3.5 w-3.5 shrink-0" />
                   {emp.email}
                 </a>
                 {emp.phone && (
-                  <a href={`tel:${emp.phone}`} className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+                  <a
+                    href={`tel:${emp.phone}`}
+                    className="hover:text-foreground flex items-center gap-1.5 transition-colors"
+                  >
                     <Phone className="h-3.5 w-3.5 shrink-0" />
                     {emp.phone}
                   </a>
@@ -225,7 +228,7 @@ export default function EmployeeProfilePage({
           <Card>
             <CardContent className="pt-6">
               <SectionHeader>Personal Information</SectionHeader>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <InfoRow label="First Name" value={emp.firstName} />
                 <InfoRow label="Last Name" value={emp.lastName} />
                 <InfoRow label="Work Email" value={emp.email} />
@@ -244,7 +247,7 @@ export default function EmployeeProfilePage({
           <Card>
             <CardContent className="pt-6">
               <SectionHeader>Employment Details</SectionHeader>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <InfoRow label="Employee No" value={emp.employeeNo} />
                 <InfoRow label="Department" value={emp.department?.name} />
                 <InfoRow label="Designation" value={emp.designation?.title} />
@@ -259,15 +262,10 @@ export default function EmployeeProfilePage({
                 <InfoRow
                   label="Manager"
                   value={
-                    emp.manager
-                      ? `${emp.manager.firstName} ${emp.manager.lastName}`
-                      : undefined
+                    emp.manager ? `${emp.manager.firstName} ${emp.manager.lastName}` : undefined
                   }
                 />
-                <InfoRow
-                  label="Subordinates"
-                  value={String(emp._count?.subordinates ?? 0)}
-                />
+                <InfoRow label="Subordinates" value={String(emp._count?.subordinates ?? 0)} />
               </div>
             </CardContent>
           </Card>
@@ -277,10 +275,12 @@ export default function EmployeeProfilePage({
             <Card>
               <CardContent className="pt-6">
                 <SectionHeader>Address</SectionHeader>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   {ca.line1 && (
                     <div className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Current Address</p>
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Current Address
+                      </p>
                       <p className="text-sm font-medium">
                         {[ca.line1, ca.line2, ca.city, ca.state, ca.zip].filter(Boolean).join(", ")}
                       </p>
@@ -288,7 +288,9 @@ export default function EmployeeProfilePage({
                   )}
                   {pa.line1 && (
                     <div className="space-y-0.5">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Permanent Address</p>
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Permanent Address
+                      </p>
                       <p className="text-sm font-medium">
                         {[pa.line1, pa.line2, pa.city, pa.state, pa.zip].filter(Boolean).join(", ")}
                       </p>
@@ -304,7 +306,7 @@ export default function EmployeeProfilePage({
             <Card>
               <CardContent className="pt-6">
                 <SectionHeader>Emergency Contact</SectionHeader>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <InfoRow label="Name" value={ec.name} />
                   <InfoRow label="Relation" value={ec.relation} />
                   <InfoRow label="Phone" value={ec.phone} />
@@ -318,7 +320,7 @@ export default function EmployeeProfilePage({
         <TabsContent value="documents">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <FileText className="h-4 w-4" />
                 Documents
                 {emp._count?.documents != null && (
@@ -327,7 +329,7 @@ export default function EmployeeProfilePage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Documents will load here. The Documents module (M3) will populate this tab.
               </p>
             </CardContent>
@@ -349,15 +351,13 @@ export default function EmployeeProfilePage({
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
                   <ShieldCheck className="h-4 w-4" />
                   Assigned Roles
                 </CardTitle>
                 {can(PERMISSIONS.ROLE_WRITE) && (
                   <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/roles?employeeId=${emp.id}`}>
-                      Manage Roles
-                    </Link>
+                    <Link href={`/admin/roles?employeeId=${emp.id}`}>Manage Roles</Link>
                   </Button>
                 )}
               </div>
@@ -366,13 +366,13 @@ export default function EmployeeProfilePage({
               {emp.employeeRoles && emp.employeeRoles.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
                   {emp.employeeRoles.map((er) => (
-                    <Badge key={er.id} variant="secondary" className="text-sm px-3 py-1">
+                    <Badge key={er.id} variant="secondary" className="px-3 py-1 text-sm">
                       {er.role.displayName}
                     </Badge>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground">No roles assigned.</p>
+                <p className="text-muted-foreground text-sm">No roles assigned.</p>
               )}
             </CardContent>
           </Card>

@@ -30,5 +30,5 @@ export const GET = withSession(
       console.error("[PAYROLL_ME_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

@@ -27,98 +27,93 @@ import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Prisma } from "@prisma/client"
 
-export const GET = withAuth(
-  PERMISSIONS.AUDIT_READ,
-  async (req: NextRequest) => {
-    const { searchParams } = req.nextUrl
+export const GET = withAuth(PERMISSIONS.AUDIT_READ, async (req: NextRequest) => {
+  const { searchParams } = req.nextUrl
 
-    // -----------------------------------------------------------------------
-    // Parse query parameters
-    // -----------------------------------------------------------------------
-    const rawPage = parseInt(searchParams.get("page") ?? "1", 10)
-    const rawLimit = parseInt(searchParams.get("limit") ?? "20", 10)
+  // -----------------------------------------------------------------------
+  // Parse query parameters
+  // -----------------------------------------------------------------------
+  const rawPage = parseInt(searchParams.get("page") ?? "1", 10)
+  const rawLimit = parseInt(searchParams.get("limit") ?? "20", 10)
 
-    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1
-    const limit = Number.isFinite(rawLimit) && rawLimit > 0
-      ? Math.min(rawLimit, 100)
-      : 20
-    const skip = (page - 1) * limit
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : 20
+  const skip = (page - 1) * limit
 
-    const moduleFilter = searchParams.get("module") ?? undefined
-    const actorIdFilter = searchParams.get("actorId") ?? undefined
-    const actionFilter = searchParams.get("action") ?? undefined
-    const dateFrom = searchParams.get("dateFrom") ?? undefined
-    const dateTo = searchParams.get("dateTo") ?? undefined
+  const moduleFilter = searchParams.get("module") ?? undefined
+  const actorIdFilter = searchParams.get("actorId") ?? undefined
+  const actionFilter = searchParams.get("action") ?? undefined
+  const dateFrom = searchParams.get("dateFrom") ?? undefined
+  const dateTo = searchParams.get("dateTo") ?? undefined
 
-    // -----------------------------------------------------------------------
-    // Build Prisma where clause
-    // -----------------------------------------------------------------------
-    const where: Prisma.AuditLogWhereInput = {}
+  // -----------------------------------------------------------------------
+  // Build Prisma where clause
+  // -----------------------------------------------------------------------
+  const where: Prisma.AuditLogWhereInput = {}
 
-    if (moduleFilter) {
-      where.module = moduleFilter
-    }
+  if (moduleFilter) {
+    where.module = moduleFilter
+  }
 
-    if (actorIdFilter) {
-      where.actorId = actorIdFilter
-    }
+  if (actorIdFilter) {
+    where.actorId = actorIdFilter
+  }
 
-    if (actionFilter) {
-      where.action = { contains: actionFilter, mode: "insensitive" }
-    }
+  if (actionFilter) {
+    where.action = { contains: actionFilter, mode: "insensitive" }
+  }
 
-    if (dateFrom || dateTo) {
-      where.createdAt = {}
-      if (dateFrom) {
-        const from = new Date(dateFrom)
-        if (!isNaN(from.getTime())) {
-          ;(where.createdAt as Prisma.DateTimeFilter).gte = from
-        }
-      }
-      if (dateTo) {
-        // Include the entire `dateTo` day by setting time to end of day.
-        const to = new Date(dateTo)
-        if (!isNaN(to.getTime())) {
-          to.setHours(23, 59, 59, 999)
-          ;(where.createdAt as Prisma.DateTimeFilter).lte = to
-        }
+  if (dateFrom || dateTo) {
+    where.createdAt = {}
+    if (dateFrom) {
+      const from = new Date(dateFrom)
+      if (!isNaN(from.getTime())) {
+        ;(where.createdAt as Prisma.DateTimeFilter).gte = from
       }
     }
+    if (dateTo) {
+      // Include the entire `dateTo` day by setting time to end of day.
+      const to = new Date(dateTo)
+      if (!isNaN(to.getTime())) {
+        to.setHours(23, 59, 59, 999)
+        ;(where.createdAt as Prisma.DateTimeFilter).lte = to
+      }
+    }
+  }
 
-    // -----------------------------------------------------------------------
-    // Run count + page query in parallel
-    // -----------------------------------------------------------------------
-    const [total, entries] = await Promise.all([
-      db.auditLog.count({ where }),
-      db.auditLog.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        skip,
-        take: limit,
-        include: {
-          actor: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              employeeNo: true,
-              profilePhoto: true,
-            },
+  // -----------------------------------------------------------------------
+  // Run count + page query in parallel
+  // -----------------------------------------------------------------------
+  const [total, entries] = await Promise.all([
+    db.auditLog.count({ where }),
+    db.auditLog.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      include: {
+        actor: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            employeeNo: true,
+            profilePhoto: true,
           },
         },
-      }),
-    ])
-
-    const totalPages = Math.ceil(total / limit)
-
-    return NextResponse.json({
-      data: entries,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
       },
-    })
-  }
-)
+    }),
+  ])
+
+  const totalPages = Math.ceil(total / limit)
+
+  return NextResponse.json({
+    data: entries,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  })
+})

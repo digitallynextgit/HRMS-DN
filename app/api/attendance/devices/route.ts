@@ -17,7 +17,7 @@ export const GET = withAuth(
       console.error("[DEVICES_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const POST = withAuth(
@@ -30,7 +30,7 @@ export const POST = withAuth(
       if (!name || !deviceSerial || !ipAddress || !password) {
         return NextResponse.json(
           { error: "name, deviceSerial, ipAddress, and password are required" },
-          { status: 400 }
+          { status: 400 },
         )
       }
 
@@ -58,10 +58,10 @@ export const POST = withAuth(
       ) {
         return NextResponse.json(
           { error: "A device with this serial number already exists" },
-          { status: 409 }
+          { status: 409 },
         )
       }
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

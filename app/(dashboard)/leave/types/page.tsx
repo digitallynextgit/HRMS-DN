@@ -96,29 +96,33 @@ export default function LeaveTypesPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 rounded-lg" />
+            <Skeleton key={i} className="h-14 rounded" />
           ))}
         </div>
       ) : leaveTypes.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center rounded-lg border bg-muted/30">
+        <div className="bg-muted/30 flex flex-col items-center justify-center rounded border py-20 text-center">
           <p className="text-muted-foreground text-sm">No leave types configured yet.</p>
           <Button onClick={openCreate} className="mt-4">
             Create First Leave Type
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border bg-card overflow-x-auto">
+        <div className="bg-card rounded border">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/40">
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Name</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Code</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Type</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Max Days / Year</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Carry Forward</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Approval</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-3 text-right font-medium text-muted-foreground">Actions</th>
+              <tr className="bg-muted/40 border-b">
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Name</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Code</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Type</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  Max Days / Year
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  Carry Forward
+                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Approval</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -127,13 +131,13 @@ export default function LeaveTypesPage() {
                   <td className="px-4 py-3">
                     <p className="font-medium">{type.name}</p>
                     {type.description && (
-                      <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                      <p className="text-muted-foreground max-w-[200px] truncate text-xs">
                         {type.description}
                       </p>
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <code className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">
+                    <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs">
                       {type.code}
                     </code>
                   </td>
@@ -141,39 +145,35 @@ export default function LeaveTypesPage() {
                     <Badge
                       className={cn(
                         "border-0 text-xs",
-                        type.isPaid
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-700"
+                        type.isPaid ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700",
                       )}
                     >
                       {type.isPaid ? "Paid" : "Unpaid"}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="text-muted-foreground px-4 py-3">
                     {type.maxDaysPerYear === 0 ? "Unlimited" : `${type.maxDaysPerYear} days`}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="text-muted-foreground px-4 py-3">
                     {type.carryForward ? (
                       <span>
                         Yes
                         {type.maxCarryDays > 0 && (
-                          <span className="text-xs ml-1">(max {type.maxCarryDays}d)</span>
+                          <span className="ml-1 text-xs">(max {type.maxCarryDays}d)</span>
                         )}
                       </span>
                     ) : (
                       "No"
                     )}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="text-muted-foreground px-4 py-3">
                     {type.requiresApproval ? "Required" : "Auto-approved"}
                   </td>
                   <td className="px-4 py-3">
                     <Badge
                       className={cn(
                         "border-0 text-xs",
-                        type.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-700"
+                        type.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700",
                       )}
                     >
                       {type.isActive ? "Active" : "Inactive"}
@@ -189,14 +189,14 @@ export default function LeaveTypesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem
-                          className="flex items-center gap-2 cursor-pointer"
+                          className="flex cursor-pointer items-center gap-2"
                           onClick={() => openEdit(type)}
                         >
                           <Pencil className="h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className="flex items-center gap-2 cursor-pointer"
+                          className="flex cursor-pointer items-center gap-2"
                           onClick={() => handleToggleActive(type)}
                         >
                           {type.isActive ? (
@@ -213,7 +213,7 @@ export default function LeaveTypesPage() {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
-                          className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+                          className="text-destructive focus:text-destructive flex cursor-pointer items-center gap-2"
                           onClick={() => setDeleteId(type.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -229,11 +229,7 @@ export default function LeaveTypesPage() {
         </div>
       )}
 
-      <LeaveTypeForm
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        leaveType={editingType}
-      />
+      <LeaveTypeForm open={formOpen} onOpenChange={setFormOpen} leaveType={editingType} />
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

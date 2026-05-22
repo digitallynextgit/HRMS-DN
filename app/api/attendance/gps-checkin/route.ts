@@ -19,19 +19,30 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
     const { latitude, longitude, accuracy, type } = body // type: "IN" | "OUT"
 
     if (!latitude || !longitude || !type) {
-      return NextResponse.json({ error: "latitude, longitude, and type are required" }, { status: 400 })
+      return NextResponse.json(
+        { error: "latitude, longitude, and type are required" },
+        { status: 400 },
+      )
     }
 
     // Get attendance policy for geofence
     const policy = await db.attendancePolicy.findFirst({ orderBy: { createdAt: "desc" } })
 
     if (policy?.officeLatitude && policy?.officeLongitude) {
-      const distance = haversineDistance(latitude, longitude, policy.officeLatitude, policy.officeLongitude)
+      const distance = haversineDistance(
+        latitude,
+        longitude,
+        policy.officeLatitude,
+        policy.officeLongitude,
+      )
       const radius = policy.geoFenceRadius ?? 200
       if (distance > radius) {
-        return NextResponse.json({
-          error: `You are ${Math.round(distance)}m away from the office. Must be within ${radius}m.`,
-        }, { status: 400 })
+        return NextResponse.json(
+          {
+            error: `You are ${Math.round(distance)}m away from the office. Must be within ${radius}m.`,
+          },
+          { status: 400 },
+        )
       }
     }
 
@@ -73,7 +84,9 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
       })
     }
 
-    return NextResponse.json({ message: type === "IN" ? "Checked in successfully" : "Checked out successfully" })
+    return NextResponse.json({
+      message: type === "IN" ? "Checked in successfully" : "Checked out successfully",
+    })
   } catch (error) {
     console.error("[GPS_CHECKIN]", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -95,7 +108,11 @@ export const GET = withSession(async (_req: NextRequest, _ctx: unknown, session:
       data: {
         todayLog,
         geofence: policy?.officeLatitude
-          ? { lat: policy.officeLatitude, lng: policy.officeLongitude, radius: policy.geoFenceRadius ?? 200 }
+          ? {
+              lat: policy.officeLatitude,
+              lng: policy.officeLongitude,
+              radius: policy.geoFenceRadius ?? 200,
+            }
           : null,
       },
     })

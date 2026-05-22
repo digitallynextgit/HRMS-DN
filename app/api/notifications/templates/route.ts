@@ -5,7 +5,7 @@ import { emailTemplateSchema } from "@/lib/schemas/email-template"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
-// GET — list all email templates
+// GET - list all email templates
 export const GET = withAuth(
   PERMISSIONS.EMAIL_TEMPLATE_READ,
   async (_req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
@@ -18,10 +18,10 @@ export const GET = withAuth(
       console.error("[notifications/templates] GET error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// POST — create a new email template
+// POST - create a new email template
 export const POST = withAuth(
   PERMISSIONS.EMAIL_TEMPLATE_WRITE,
   async (req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
@@ -32,7 +32,7 @@ export const POST = withAuth(
       if (!result.success) {
         return NextResponse.json(
           { error: "Validation failed", details: result.error.flatten() },
-          { status: 422 }
+          { status: 422 },
         )
       }
 
@@ -45,7 +45,7 @@ export const POST = withAuth(
       if (existing) {
         return NextResponse.json(
           { error: `A template with slug '${data.slug}' already exists` },
-          { status: 409 }
+          { status: 409 },
         )
       }
 
@@ -67,10 +67,10 @@ export const POST = withAuth(
       console.error("[notifications/templates] POST error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// PATCH — update an existing template (id must be in body)
+// PATCH - update an existing template (id must be in body)
 export const PATCH = withAuth(
   PERMISSIONS.EMAIL_TEMPLATE_WRITE,
   async (req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
@@ -87,12 +87,12 @@ export const PATCH = withAuth(
         return NextResponse.json({ error: "Template not found" }, { status: 404 })
       }
 
-      // Partial parse — allow partial updates
+      // Partial parse - allow partial updates
       const result = emailTemplateSchema.partial().safeParse(rest)
       if (!result.success) {
         return NextResponse.json(
           { error: "Validation failed", details: result.error.flatten() },
-          { status: 422 }
+          { status: 422 },
         )
       }
 
@@ -106,7 +106,7 @@ export const PATCH = withAuth(
         if (conflict) {
           return NextResponse.json(
             { error: `A template with slug '${data.slug}' already exists` },
-            { status: 409 }
+            { status: 409 },
           )
         }
       }
@@ -130,5 +130,5 @@ export const PATCH = withAuth(
       console.error("[notifications/templates] PATCH error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

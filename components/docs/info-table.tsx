@@ -1,5 +1,3 @@
-import * as React from "react"
-
 interface InfoTableRow {
   term: string
   description: string
@@ -11,20 +9,18 @@ interface InfoTableProps {
 
 export function InfoTable({ rows }: InfoTableProps) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border">
+    <div className="border-border overflow-hidden rounded border">
       <table className="w-full text-sm">
         <tbody>
           {rows.map((row, index) => (
             <tr
               key={index}
-              className="border-b border-border last:border-0 odd:bg-muted/40 even:bg-card"
+              className="border-border odd:bg-muted/40 even:bg-card border-b last:border-0"
             >
-              <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap w-40 align-top">
+              <td className="text-foreground w-40 px-4 py-3 align-top font-medium whitespace-nowrap">
                 {row.term}
               </td>
-              <td className="px-4 py-3 text-muted-foreground leading-relaxed">
-                {row.description}
-              </td>
+              <td className="text-muted-foreground px-4 py-3 leading-relaxed">{row.description}</td>
             </tr>
           ))}
         </tbody>

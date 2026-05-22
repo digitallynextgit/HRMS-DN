@@ -47,10 +47,7 @@ const roleFormSchema = z.object({
   name: z
     .string()
     .min(1, "Name is required")
-    .regex(
-      /^[a-z0-9_]+$/,
-      "Only lowercase letters, numbers, and underscores are allowed"
-    ),
+    .regex(/^[a-z0-9_]+$/, "Only lowercase letters, numbers, and underscores are allowed"),
   displayName: z.string().min(1, "Display name is required").max(80),
   description: z.string().max(500).optional(),
 })
@@ -141,7 +138,7 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
         if (roleRes && roleRes.ok) {
           const roleJson = await roleRes.json()
           const existingIds: string[] = (roleJson.data?.rolePermissions ?? []).map(
-            (rp: { permission: Permission }) => rp.permission.id
+            (rp: { permission: Permission }) => rp.permission.id,
           )
           setSelectedIds(new Set(existingIds))
         } else if (role?.rolePermissions) {
@@ -174,10 +171,7 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
   }
 
   function isModulePartiallySelected(group: PermissionGroup) {
-    return (
-      group.permissions.some((p) => selectedIds.has(p.id)) &&
-      !isModuleFullySelected(group)
-    )
+    return group.permissions.some((p) => selectedIds.has(p.id)) && !isModuleFullySelected(group)
   }
 
   function toggleModule(group: PermissionGroup) {
@@ -231,9 +225,7 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
       }
 
       toast.success(
-        isEditing
-          ? `Role "${values.displayName}" updated`
-          : `Role "${values.displayName}" created`
+        isEditing ? `Role "${values.displayName}" updated` : `Role "${values.displayName}" created`,
       )
       onSuccess()
     } catch (err) {
@@ -247,7 +239,6 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-
         {/* Name slug */}
         <FormField
           control={form.control}
@@ -263,14 +254,12 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
                     handleNameInput(e)
                   }}
                   placeholder="e.g. hr_manager"
-                  disabled={
-                    isSubmitting || (isEditing && role?.isSystem === true)
-                  }
+                  disabled={isSubmitting || (isEditing && role?.isSystem === true)}
                 />
               </FormControl>
               <FormDescription>
-                Lowercase letters, numbers, and underscores only. Cannot be
-                changed for system roles.
+                Lowercase letters, numbers, and underscores only. Cannot be changed for system
+                roles.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -285,11 +274,7 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
             <FormItem>
               <FormLabel>Display name</FormLabel>
               <FormControl>
-                <Input
-                  {...field}
-                  placeholder="e.g. HR Manager"
-                  disabled={isSubmitting}
-                />
+                <Input {...field} placeholder="e.g. HR Manager" disabled={isSubmitting} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -322,8 +307,8 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-foreground">Permissions</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-foreground text-sm font-medium">Permissions</p>
+              <p className="text-muted-foreground mt-0.5 text-xs">
                 {selectedIds.size} permission
                 {selectedIds.size !== 1 ? "s" : ""} selected
               </p>
@@ -339,9 +324,7 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
                   setSelectedIds(() => {
                     const next = new Set<string>()
                     if (checked) {
-                      permissionGroups.forEach((g) =>
-                        g.permissions.forEach((p) => next.add(p.id))
-                      )
+                      permissionGroups.forEach((g) => g.permissions.forEach((p) => next.add(p.id)))
                     }
                     return next
                   })
@@ -350,7 +333,7 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
               />
               <label
                 htmlFor="select-all-permissions"
-                className="text-sm font-medium text-foreground cursor-pointer select-none"
+                className="text-foreground cursor-pointer text-sm font-medium select-none"
               >
                 Select All
               </label>
@@ -358,7 +341,7 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
           </div>
 
           {loadingPermissions ? (
-            <div className="flex items-center gap-2 text-muted-foreground py-4">
+            <div className="text-muted-foreground flex items-center gap-2 py-4">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading permissions…
             </div>
@@ -375,16 +358,14 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
                       <Checkbox
                         id={`module-${group.module}`}
                         checked={fullySelected}
-                        data-state={
-                          partiallySelected ? "indeterminate" : undefined
-                        }
+                        data-state={partiallySelected ? "indeterminate" : undefined}
                         onCheckedChange={() => toggleModule(group)}
                         disabled={isSubmitting}
                         aria-label={`Select all ${group.module} permissions`}
                       />
                       <label
                         htmlFor={`module-${group.module}`}
-                        className="text-sm font-semibold text-foreground capitalize cursor-pointer select-none"
+                        className="text-foreground cursor-pointer text-sm font-semibold capitalize select-none"
                       >
                         {group.module.replace("_", " ")}
                       </label>
@@ -393,16 +374,11 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
                     {/* Individual permissions */}
                     <div className="ml-6 space-y-1.5">
                       {group.permissions.map((permission) => (
-                        <div
-                          key={permission.id}
-                          className="flex items-start gap-2"
-                        >
+                        <div key={permission.id} className="flex items-start gap-2">
                           <Checkbox
                             id={`perm-${permission.id}`}
                             checked={selectedIds.has(permission.id)}
-                            onCheckedChange={() =>
-                              togglePermission(permission.id)
-                            }
+                            onCheckedChange={() => togglePermission(permission.id)}
                             disabled={isSubmitting}
                             className="mt-0.5"
                           />
@@ -410,11 +386,11 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
                             htmlFor={`perm-${permission.id}`}
                             className="cursor-pointer select-none"
                           >
-                            <span className="text-sm text-foreground font-mono">
+                            <span className="text-foreground font-mono text-sm">
                               {permission.scope}
                             </span>
                             {permission.description && (
-                              <span className="block text-xs text-muted-foreground">
+                              <span className="text-muted-foreground block text-xs">
                                 {permission.description}
                               </span>
                             )}
@@ -433,25 +409,18 @@ export function RoleForm({ role, onSuccess, onCancel }: RoleFormProps) {
 
         {/* Footer buttons */}
         <div className="flex justify-end gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting || loadingPermissions}>
-            {isSubmitting && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting
               ? isEditing
                 ? "Saving…"
                 : "Creating…"
               : isEditing
-              ? "Save changes"
-              : "Create role"}
+                ? "Save changes"
+                : "Create role"}
           </Button>
         </div>
       </form>

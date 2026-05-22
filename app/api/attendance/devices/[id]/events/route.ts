@@ -24,10 +24,15 @@ export const GET = withAuth(
       startDate.setDate(startDate.getDate() - days)
 
       const { events, error } = await fetchAttendanceEvents(
-        { ipAddress: device.ipAddress, port: device.port, username: device.username, password: device.password },
+        {
+          ipAddress: device.ipAddress,
+          port: device.port,
+          username: device.username,
+          password: device.password,
+        },
         startDate,
         endDate,
-        major
+        major,
       )
 
       const employees = await db.employee.findMany({
@@ -48,9 +53,9 @@ export const GET = withAuth(
           : null,
       }))
 
-      const unmatchedNos = [...new Set(
-        enriched.filter((e) => !e.matchedEmployee).map((e) => e.employeeNo)
-      )]
+      const unmatchedNos = [
+        ...new Set(enriched.filter((e) => !e.matchedEmployee).map((e) => e.employeeNo)),
+      ]
 
       return NextResponse.json({
         totalEvents: events.length,
@@ -65,5 +70,5 @@ export const GET = withAuth(
       console.error("[DEVICE_EVENTS_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

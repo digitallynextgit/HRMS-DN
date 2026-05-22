@@ -42,8 +42,8 @@ export function AttendanceFilters({
   return (
     <div className="flex flex-wrap items-end gap-3">
       {/* Employee search */}
-      <div className="flex flex-col gap-1.5 flex-1 min-w-[180px] max-w-xs">
-        <Label className="text-xs text-muted-foreground">Employee</Label>
+      <div className="flex max-w-xs min-w-[180px] flex-1 flex-col gap-1.5">
+        <Label className="text-muted-foreground text-xs">Employee</Label>
         <Input
           placeholder="Search by name or ID..."
           value={employeeSearch}
@@ -54,7 +54,7 @@ export function AttendanceFilters({
 
       {/* Date from */}
       <div className="flex flex-col gap-1.5">
-        <Label className="text-xs text-muted-foreground">From</Label>
+        <Label className="text-muted-foreground text-xs">From</Label>
         <Input
           type="date"
           value={dateFrom}
@@ -65,7 +65,7 @@ export function AttendanceFilters({
 
       {/* Date to */}
       <div className="flex flex-col gap-1.5">
-        <Label className="text-xs text-muted-foreground">To</Label>
+        <Label className="text-muted-foreground text-xs">To</Label>
         <Input
           type="date"
           value={dateTo}
@@ -76,12 +76,9 @@ export function AttendanceFilters({
 
       {/* Status filter */}
       <div className="flex flex-col gap-1.5">
-        <Label className="text-xs text-muted-foreground">Status</Label>
-        <Select
-          value={status || "all"}
-          onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}
-        >
-          <SelectTrigger className="w-[140px] h-9">
+        <Label className="text-muted-foreground text-xs">Status</Label>
+        <Select value={status || "all"} onValueChange={(v) => onStatusChange(v === "all" ? "" : v)}>
+          <SelectTrigger className="h-9 w-[140px]">
             <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -97,12 +94,7 @@ export function AttendanceFilters({
 
       {/* Clear button */}
       {hasActiveFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onClear}
-          className="h-9 gap-1.5 self-end"
-        >
+        <Button variant="ghost" size="sm" onClick={onClear} className="h-9 gap-1.5 self-end">
           <X className="h-3.5 w-3.5" />
           Clear
         </Button>

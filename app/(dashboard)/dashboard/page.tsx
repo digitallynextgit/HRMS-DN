@@ -1,17 +1,8 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import {
-  Users,
-  UserPlus,
-  FileText,
-  Bell,
-  UserCircle,
-  Upload,
-  ClipboardList,
-} from "lucide-react"
+import { Users, UserPlus, FileText, Bell, UserCircle, Upload, ClipboardList } from "lucide-react"
 import {
   PieChart,
   Pie,
@@ -33,9 +24,7 @@ import { StatCard } from "@/components/shared/stat-card"
 import { PageHeader } from "@/components/shared/page-header"
 import { AvatarDisplay } from "@/components/shared/avatar-display"
 import { formatDate } from "@/lib/utils"
-import {
-  EMPLOYEE_STATUS_LABELS,
-} from "@/lib/constants"
+import { EMPLOYEE_STATUS_LABELS } from "@/lib/constants"
 
 interface DashboardStats {
   employees: {
@@ -79,9 +68,9 @@ async function fetchDashboardStats(): Promise<DashboardStats> {
 
 function StatCardSkeleton() {
   return (
-    <div className="rounded-[var(--radius)] border border-border bg-card p-5">
+    <div className="border-border bg-card rounded-[var(--radius)] border p-5">
       <div className="flex items-start justify-between">
-        <div className="space-y-2 flex-1">
+        <div className="flex-1 space-y-2">
           <Skeleton className="h-3 w-1/2" />
           <Skeleton className="h-7 w-1/3" />
           <Skeleton className="h-3 w-2/3" />
@@ -94,10 +83,7 @@ function StatCardSkeleton() {
 
 function ChartSkeleton({ height = 280 }: { height?: number }) {
   return (
-    <div
-      className="w-full rounded-[var(--radius)] bg-muted animate-pulse"
-      style={{ height }}
-    />
+    <div className="bg-muted w-full animate-pulse rounded-[var(--radius)]" style={{ height }} />
   )
 }
 
@@ -118,13 +104,10 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Dashboard"
-        description={dateString}
-      />
+      <PageHeader title="Dashboard" description={dateString} />
 
       {isError && (
-        <div className="rounded-[var(--radius)] border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+        <div className="border-destructive/30 bg-destructive/5 text-destructive rounded-[var(--radius)] border px-4 py-3 text-sm">
           {error?.message ?? "Something went wrong loading the dashboard."}
         </div>
       )}
@@ -170,7 +153,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <CardTitle className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
               Department Headcount
             </CardTitle>
           </CardHeader>
@@ -191,16 +174,13 @@ export default function DashboardPage() {
                     paddingAngle={3}
                   >
                     {(data?.employees.byDepartment ?? []).map((_, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={DEPT_COLORS[index % DEPT_COLORS.length]}
-                      />
+                      <Cell key={`cell-${index}`} fill={DEPT_COLORS[index % DEPT_COLORS.length]} />
                     ))}
                   </Pie>
                   <RechartsTooltip
-                    formatter={(value: number, name: string) => [
-                      `${value} employee${value !== 1 ? "s" : ""}`,
-                      name,
+                    formatter={(value, name) => [
+                      `${Number(value)} employee${Number(value) !== 1 ? "s" : ""}`,
+                      String(name ?? ""),
                     ]}
                     contentStyle={{
                       borderRadius: "var(--radius)",
@@ -212,11 +192,7 @@ export default function DashboardPage() {
                     itemStyle={{ color: "hsl(var(--foreground))" }}
                     labelStyle={{ color: "hsl(var(--foreground))" }}
                   />
-                  <Legend
-                    iconType="circle"
-                    iconSize={6}
-                    wrapperStyle={{ fontSize: "11px" }}
-                  />
+                  <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: "11px" }} />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -225,7 +201,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <CardTitle className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
               Employee Status
             </CardTitle>
           </CardHeader>
@@ -261,8 +237,8 @@ export default function DashboardPage() {
                   />
                   <RechartsTooltip
                     cursor={false}
-                    formatter={(value: number) => [
-                      `${value} employee${value !== 1 ? "s" : ""}`,
+                    formatter={(value) => [
+                      `${Number(value)} employee${Number(value) !== 1 ? "s" : ""}`,
                       "Count",
                     ]}
                     contentStyle={{
@@ -291,7 +267,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <CardTitle className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
               Recent Joiners
             </CardTitle>
           </CardHeader>
@@ -301,9 +277,9 @@ export default function DashboardPage() {
                 {Array.from({ length: 5 }).map((_, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-3 py-3 border-b border-border last:border-0"
+                    className="border-border flex items-center gap-3 border-b py-3 last:border-0"
                   >
-                    <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
                     <div className="flex-1 space-y-1.5">
                       <Skeleton className="h-3.5 w-32" />
                       <Skeleton className="h-3 w-24" />
@@ -313,16 +289,11 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : !data?.recentJoiners.length ? (
-              <p className="px-5 pb-5 text-sm text-muted-foreground">
-                No recent joiners found.
-              </p>
+              <p className="text-muted-foreground px-5 pb-5 text-sm">No recent joiners found.</p>
             ) : (
-              <div className="divide-y divide-border">
+              <div className="divide-border divide-y">
                 {data.recentJoiners.map((emp) => (
-                  <div
-                    key={emp.id}
-                    className="flex items-center gap-3 px-5 py-3"
-                  >
+                  <div key={emp.id} className="flex items-center gap-3 px-5 py-3">
                     <AvatarDisplay
                       src={emp.profilePhoto}
                       firstName={emp.firstName}
@@ -330,17 +301,15 @@ export default function DashboardPage() {
                       size="sm"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-foreground">
+                      <p className="text-foreground truncate text-sm font-medium">
                         {emp.firstName} {emp.lastName}
                       </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {emp.designation?.title ?? "—"}
-                        {emp.department?.name
-                          ? ` · ${emp.department.name}`
-                          : ""}
+                      <p className="text-muted-foreground truncate text-xs">
+                        {emp.designation?.title ?? "-"}
+                        {emp.department?.name ? ` · ${emp.department.name}` : ""}
                       </p>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground shrink-0 text-xs">
                       {formatDate(emp.dateOfJoining)}
                     </span>
                   </div>
@@ -352,40 +321,28 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+            <CardTitle className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
               Quick Actions
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Button
-              asChild
-              variant="outline"
-              className="w-full justify-start gap-2 h-9 text-sm"
-            >
+            <Button asChild variant="outline" className="h-9 w-full justify-start gap-2 text-sm">
               <Link href="/employees/new">
-                <UserCircle className="h-4 w-4 text-muted-foreground" />
+                <UserCircle className="text-muted-foreground h-4 w-4" />
                 <span>Add New Employee</span>
               </Link>
             </Button>
 
-            <Button
-              asChild
-              variant="outline"
-              className="w-full justify-start gap-2 h-9 text-sm"
-            >
+            <Button asChild variant="outline" className="h-9 w-full justify-start gap-2 text-sm">
               <Link href="/documents/upload">
-                <Upload className="h-4 w-4 text-muted-foreground" />
+                <Upload className="text-muted-foreground h-4 w-4" />
                 <span>Upload Document</span>
               </Link>
             </Button>
 
-            <Button
-              asChild
-              variant="outline"
-              className="w-full justify-start gap-2 h-9 text-sm"
-            >
+            <Button asChild variant="outline" className="h-9 w-full justify-start gap-2 text-sm">
               <Link href="/admin/audit-log">
-                <ClipboardList className="h-4 w-4 text-muted-foreground" />
+                <ClipboardList className="text-muted-foreground h-4 w-4" />
                 <span>View Audit Log</span>
               </Link>
             </Button>

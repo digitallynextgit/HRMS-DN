@@ -13,16 +13,10 @@ export function PageHeader({ title, description, actions, className }: PageHeade
   return (
     <div className={cn("flex items-center justify-between py-4", className)}>
       <div className="space-y-0.5">
-        <h1 className="text-lg font-semibold tracking-tight text-foreground">
-          {title}
-        </h1>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
-        )}
+        <h1 className="text-foreground text-lg font-semibold tracking-tight">{title}</h1>
+        {description && <p className="text-muted-foreground text-sm">{description}</p>}
       </div>
-      {actions && (
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
-      )}
+      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
   )
 }

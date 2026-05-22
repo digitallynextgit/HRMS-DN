@@ -44,11 +44,23 @@ export const PATCH = withSession(async (req: NextRequest, _ctx: unknown, session
 
     // Password change
     if (body.currentPassword && body.newPassword) {
-      const employee = await db.employee.findUnique({ where: { id: session.user.id }, select: { passwordHash: true } })
-      if (!employee?.passwordHash) return NextResponse.json({ error: "Cannot change password for this account" }, { status: 400 })
+      const employee = await db.employee.findUnique({
+        where: { id: session.user.id },
+        select: { passwordHash: true },
+      })
+      if (!employee?.passwordHash)
+        return NextResponse.json(
+          { error: "Cannot change password for this account" },
+          { status: 400 },
+        )
       const valid = await bcrypt.compare(body.currentPassword, employee.passwordHash)
-      if (!valid) return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 })
-      if (body.newPassword.length < 8) return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 })
+      if (!valid)
+        return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 })
+      if (body.newPassword.length < 8)
+        return NextResponse.json(
+          { error: "Password must be at least 8 characters" },
+          { status: 400 },
+        )
       data.passwordHash = await bcrypt.hash(body.newPassword, 12)
     }
 

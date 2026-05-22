@@ -34,7 +34,7 @@ export function TipBox({ children, variant = "tip" }: TipBoxProps) {
 
   return (
     <div className={cn("flex items-start gap-3 rounded-[var(--radius)] border p-4", config.bg)}>
-      <Icon className={cn("h-4 w-4 shrink-0 mt-0.5", config.iconColor)} />
+      <Icon className={cn("mt-0.5 h-4 w-4 shrink-0", config.iconColor)} />
       <p className={cn("text-sm leading-relaxed", config.textColor)}>{children}</p>
     </div>
   )

@@ -3,7 +3,7 @@ import { withSession } from "@/lib/permissions"
 import { db } from "@/lib/db"
 import type { Session } from "next-auth"
 
-// GET — paginated notifications for the current user
+// GET - paginated notifications for the current user
 export const GET = withSession(
   async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -50,10 +50,10 @@ export const GET = withSession(
       console.error("[notifications/inbox] GET error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// PATCH — mark notifications as read
+// PATCH - mark notifications as read
 export const PATCH = withSession(
   async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -86,13 +86,10 @@ export const PATCH = withSession(
         return NextResponse.json({ data: { updated: ownedIds.length } })
       }
 
-      return NextResponse.json(
-        { error: "Provide 'ids' array or 'all: true'" },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Provide 'ids' array or 'all: true'" }, { status: 400 })
     } catch (error) {
       console.error("[notifications/inbox] PATCH error:", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

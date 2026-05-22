@@ -2,15 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import {
-  Rocket,
-  Users,
-  Clock,
-  CalendarDays,
-  DollarSign,
-  FileText,
-  Shield,
-} from "lucide-react"
+import { Rocket, Users, Clock, CalendarDays, DollarSign, FileText, Shield } from "lucide-react"
 import { PageHeader } from "@/components/shared/page-header"
 import { SearchInput } from "@/components/shared/search-input"
 import { Button } from "@/components/ui/button"
@@ -108,8 +100,7 @@ export default function DocsPage() {
   const filtered = React.useMemo(() => {
     const query = search.toLowerCase().trim()
     return MODULE_CARDS.filter((card) => {
-      const matchesRole =
-        activeRole === "all" || card.tags.includes(activeRole)
+      const matchesRole = activeRole === "all" || card.tags.includes(activeRole)
       const matchesSearch =
         !query ||
         card.title.toLowerCase().includes(query) ||
@@ -121,10 +112,7 @@ export default function DocsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Help & Guide"
-        description="Everything you need to know about using HRMS"
-      />
+      <PageHeader title="Help & Guide" description="Everything you need to know about using HRMS" />
 
       {/* Search + filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -134,10 +122,7 @@ export default function DocsPage() {
           placeholder="Search guides..."
           className="w-full sm:max-w-xs"
         />
-        <Tabs
-          value={activeRole}
-          onValueChange={(v) => setActiveRole(v as RoleFilter)}
-        >
+        <Tabs value={activeRole} onValueChange={(v) => setActiveRole(v as RoleFilter)}>
           <TabsList>
             {ROLE_TABS.map((tab) => (
               <TabsTrigger key={tab.value} value={tab.value}>
@@ -152,7 +137,7 @@ export default function DocsPage() {
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
           <p className="text-base font-medium text-slate-700">No guides found</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Try a different search term or role filter.
           </p>
           <Button
@@ -185,29 +170,21 @@ export default function DocsPage() {
 // Module card
 // ---------------------------------------------------------------------------
 
-function ModuleCardItem({
-  card,
-  onRead,
-}: {
-  card: ModuleCard
-  onRead: () => void
-}) {
+function ModuleCardItem({ card, onRead }: { card: ModuleCard; onRead: () => void }) {
   const Icon = card.icon
 
   return (
-    <Card className="flex flex-col hover:shadow-md transition-shadow">
-      <CardContent className="flex flex-col gap-4 p-6 flex-1">
+    <Card className="flex flex-col transition-shadow hover:shadow-md">
+      <CardContent className="flex flex-1 flex-col gap-4 p-6">
         {/* Icon */}
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-          <Icon className="h-5 w-5 text-primary" />
+        <div className="bg-primary/10 flex h-11 w-11 items-center justify-center rounded">
+          <Icon className="text-primary h-5 w-5" />
         </div>
 
         {/* Text */}
         <div className="flex-1 space-y-1">
-          <h3 className="font-semibold text-foreground">{card.title}</h3>
-          <p className="text-sm text-muted-foreground leading-snug">
-            {card.description}
-          </p>
+          <h3 className="text-foreground font-semibold">{card.title}</h3>
+          <p className="text-muted-foreground text-sm leading-snug">{card.description}</p>
         </div>
 
         {/* Tags + action */}
@@ -221,7 +198,7 @@ function ModuleCardItem({
                   tag === "employee" && "bg-blue-100 text-blue-700",
                   tag === "manager" && "bg-purple-100 text-purple-700",
                   tag === "hr" && "bg-green-100 text-green-700",
-                  tag === "admin" && "bg-red-100 text-red-700"
+                  tag === "admin" && "bg-red-100 text-red-700",
                 )}
               >
                 {tag}

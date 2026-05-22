@@ -19,12 +19,14 @@ export const PATCH = withAuth(
       const updateData: Record<string, unknown> = {}
       if (body.name !== undefined) updateData.name = String(body.name).trim()
       if (body.code !== undefined) updateData.code = String(body.code).trim().toUpperCase()
-      if (body.description !== undefined) updateData.description = body.description ? String(body.description).trim() : null
+      if (body.description !== undefined)
+        updateData.description = body.description ? String(body.description).trim() : null
       if (body.isPaid !== undefined) updateData.isPaid = Boolean(body.isPaid)
       if (body.maxDaysPerYear !== undefined) updateData.maxDaysPerYear = Number(body.maxDaysPerYear)
       if (body.carryForward !== undefined) updateData.carryForward = Boolean(body.carryForward)
       if (body.maxCarryDays !== undefined) updateData.maxCarryDays = Number(body.maxCarryDays)
-      if (body.requiresApproval !== undefined) updateData.requiresApproval = Boolean(body.requiresApproval)
+      if (body.requiresApproval !== undefined)
+        updateData.requiresApproval = Boolean(body.requiresApproval)
       if (body.isActive !== undefined) updateData.isActive = Boolean(body.isActive)
 
       const leaveType = await db.leaveType.update({
@@ -54,12 +56,12 @@ export const PATCH = withAuth(
       ) {
         return NextResponse.json(
           { error: "A leave type with that name or code already exists" },
-          { status: 409 }
+          { status: 409 },
         )
       }
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const DELETE = withAuth(
@@ -94,5 +96,5 @@ export const DELETE = withAuth(
       console.error("[LEAVE_TYPE_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

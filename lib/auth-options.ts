@@ -32,9 +32,9 @@ async function getUserWithPermissions(employeeId: string) {
   const permissions = Array.from(
     new Set(
       employee.employeeRoles.flatMap((er) =>
-        er.role.rolePermissions.map((rp) => rp.permission.scope)
-      )
-    )
+        er.role.rolePermissions.map((rp) => rp.permission.scope),
+      ),
+    ),
   )
 
   return { employee, roles, permissions }
@@ -75,10 +75,7 @@ export const authOptions: NextAuthConfig = {
           return null
         }
 
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          employee.passwordHash
-        )
+        const isValid = await bcrypt.compare(credentials.password as string, employee.passwordHash)
         if (!isValid) return null
 
         // Return a minimal user object; JWT callback hydrates the rest.

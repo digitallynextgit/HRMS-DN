@@ -26,7 +26,17 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, _session:
 export const POST = withSession(async (req: NextRequest, _ctx: unknown, session: Session) => {
   try {
     const body = await req.json()
-    const { title, description, departmentId, location, type, salaryMin, salaryMax, closingDate, status } = body
+    const {
+      title,
+      description,
+      departmentId,
+      location,
+      type,
+      salaryMin,
+      salaryMax,
+      closingDate,
+      status,
+    } = body
 
     const job = await db.jobPosting.create({
       data: {

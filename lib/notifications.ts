@@ -12,7 +12,7 @@ interface CreateNotificationOptions {
 
 /**
  * Creates a single in-app notification for an employee.
- * Always non-blocking — errors are swallowed so the caller's main operation
+ * Always non-blocking - errors are swallowed so the caller's main operation
  * is never disrupted by a notification failure.
  */
 export async function createNotification(opts: CreateNotificationOptions): Promise<void> {
@@ -35,7 +35,7 @@ export async function createNotification(opts: CreateNotificationOptions): Promi
  * Creates in-app notifications for multiple employees at once.
  */
 export async function createNotifications(
-  notifications: CreateNotificationOptions[]
+  notifications: CreateNotificationOptions[],
 ): Promise<void> {
   try {
     await db.notification.createMany({

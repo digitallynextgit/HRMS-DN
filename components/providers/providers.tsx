@@ -16,13 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <QueryProvider>
           {children}
-          <Toaster
-            position="top-right"
-            duration={3000}
-            richColors
-            closeButton
-            theme="system"
-          />
+          <Toaster position="top-right" duration={3000} richColors closeButton theme="system" />
         </QueryProvider>
       </ThemeProvider>
     </SessionProvider>

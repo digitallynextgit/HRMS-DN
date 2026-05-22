@@ -1,7 +1,9 @@
 /**
- * Next.js Edge Middleware – authentication guard for the HRMS.
+ * Next.js Edge Proxy – authentication guard for the HRMS.
  *
- * Uses the NextAuth v5 `auth` helper (which runs on the Edge runtime) to
+ * Renamed from `middleware.ts` to `proxy.ts` (Next.js 16 convention).
+ *
+ * Uses the Auth.js v5 `auth` helper (which runs on the Edge runtime) to
  * inspect the JWT session cookie.  Public paths are allowed through
  * unconditionally; all other routes require an authenticated session.
  *
@@ -17,17 +19,12 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
 // Paths that are accessible without a session.
-const PUBLIC_PREFIXES = [
-  "/login",
-  "/api/auth",
-  "/_next",
-  "/favicon.ico",
-  "/public",
-]
+const PUBLIC_PREFIXES = ["/login", "/api/auth", "/_next", "/favicon.ico", "/public"]
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(prefix + "/") || pathname.startsWith(prefix + "?")
+    (prefix) =>
+      pathname === prefix || pathname.startsWith(prefix + "/") || pathname.startsWith(prefix + "?"),
   )
 }
 

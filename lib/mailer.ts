@@ -32,7 +32,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
 
 export function renderTemplate(
   template: Pick<EmailTemplate, "subject" | "bodyHtml">,
-  data: Record<string, string>
+  data: Record<string, string>,
 ): { subject: string; html: string } {
   let subject = template.subject
   let html = template.bodyHtml

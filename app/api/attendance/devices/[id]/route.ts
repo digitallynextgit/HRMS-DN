@@ -20,7 +20,7 @@ export const GET = withAuth(
       console.error("[DEVICE_ID_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const PATCH = withAuth(
@@ -62,12 +62,12 @@ export const PATCH = withAuth(
       ) {
         return NextResponse.json(
           { error: "A device with this serial number already exists" },
-          { status: 409 }
+          { status: 409 },
         )
       }
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 export const DELETE = withAuth(
@@ -88,5 +88,5 @@ export const DELETE = withAuth(
       console.error("[DEVICE_ID_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

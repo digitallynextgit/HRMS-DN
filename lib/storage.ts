@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js"
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
 const BUCKET = process.env.SUPABASE_STORAGE_BUCKET || "hrms-documents"
@@ -13,7 +13,6 @@ export async function ensureBucket(): Promise<void> {
     if (!data) {
       const { error } = await supabase.storage.createBucket(BUCKET, { public: false })
       if (error) console.error("Failed to create Supabase bucket:", error.message)
-      else console.log(`Created Supabase storage bucket: ${BUCKET}`)
     }
   } catch (error) {
     console.error("Failed to ensure Supabase bucket:", error)
@@ -24,7 +23,7 @@ export async function uploadFile(
   objectKey: string,
   buffer: Buffer,
   contentType: string,
-  _size: number
+  _size: number,
 ): Promise<void> {
   const { error } = await supabase.storage
     .from(BUCKET)
@@ -32,10 +31,7 @@ export async function uploadFile(
   if (error) throw new Error(`Storage upload failed: ${error.message}`)
 }
 
-export async function getSignedUrl(
-  objectKey: string,
-  expirySeconds = 900
-): Promise<string> {
+export async function getSignedUrl(objectKey: string, expirySeconds = 900): Promise<string> {
   const { data, error } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(objectKey, expirySeconds)

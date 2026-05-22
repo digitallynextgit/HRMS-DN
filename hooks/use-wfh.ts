@@ -78,7 +78,11 @@ async function fetchWfhRequests(filters: WfhFilters): Promise<PaginatedResponse<
   return res.json()
 }
 
-async function applyWfh(body: { date: string; reason?: string; isEmergency?: boolean }): Promise<{ data: WfhRequest; tier: number }> {
+async function applyWfh(body: {
+  date: string
+  reason?: string
+  isEmergency?: boolean
+}): Promise<{ data: WfhRequest; tier: number }> {
   const res = await fetch("/api/wfh/requests", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -180,8 +184,15 @@ export function useApproveWfh() {
 export function useRejectWfh() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, rejectionReason, approverRole }: { id: string; rejectionReason: string; approverRole?: "MANAGER" | "HR" }) =>
-      patchWfh({ id, action: "REJECT", rejectionReason, approverRole }),
+    mutationFn: ({
+      id,
+      rejectionReason,
+      approverRole,
+    }: {
+      id: string
+      rejectionReason: string
+      approverRole?: "MANAGER" | "HR"
+    }) => patchWfh({ id, action: "REJECT", rejectionReason, approverRole }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["wfh-requests"] })
       toast.success("WFH request rejected")

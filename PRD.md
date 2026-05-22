@@ -1,9 +1,10 @@
-
 # Product Requirements Document (PRD)
-## HRMS — Human Resource Management System
+
+## HRMS - Human Resource Management System
+
 **Version:** 1.0  
 **Date:** April 2026  
-**Status:** Draft  
+**Status:** Draft
 
 ---
 
@@ -13,17 +14,17 @@
 2. [Goals & Success Metrics](#2-goals--success-metrics)
 3. [System Architecture Overview](#3-system-architecture-overview)
 4. [Module Breakdown](#4-module-breakdown)
-   - [M1 — Authentication & Permission-Based Access Control](#m1--authentication--permission-based-access-control-pbac)
-   - [M2 — Employee Management](#m2--employee-management)
-   - [M3 — Recruitment & Screening](#m3--recruitment--screening)
-   - [M4 — Attendance & Time Tracking](#m4--attendance--time-tracking)
-   - [M5 — Leave Management](#m5--leave-management)
-   - [M6 — Payroll](#m6--payroll)
-   - [M7 — Performance Evaluation](#m7--performance-evaluation)
-   - [M8 — Document Management](#m8--document-management)
-   - [M9 — Project & Task Management](#m9--project--task-management)
-   - [M10 — Notifications & Auto-Mailer](#m10--notifications--auto-mailer)
-   - [M11 — Analytics & Reporting Dashboard](#m11--analytics--reporting-dashboard)
+   - [M1 - Authentication & Permission-Based Access Control](#m1--authentication--permission-based-access-control-pbac)
+   - [M2 - Employee Management](#m2--employee-management)
+   - [M3 - Recruitment & Screening](#m3--recruitment--screening)
+   - [M4 - Attendance & Time Tracking](#m4--attendance--time-tracking)
+   - [M5 - Leave Management](#m5--leave-management)
+   - [M6 - Payroll](#m6--payroll)
+   - [M7 - Performance Evaluation](#m7--performance-evaluation)
+   - [M8 - Document Management](#m8--document-management)
+   - [M9 - Project & Task Management](#m9--project--task-management)
+   - [M10 - Notifications & Auto-Mailer](#m10--notifications--auto-mailer)
+   - [M11 - Analytics & Reporting Dashboard](#m11--analytics--reporting-dashboard)
 5. [UI/UX Design Guidelines](#5-uiux-design-guidelines)
 6. [Tech Stack Recommendation](#6-tech-stack-recommendation)
 7. [Integration Specifications](#7-integration-specifications)
@@ -35,26 +36,27 @@
 
 ## 1. Executive Summary
 
-This document defines the full product scope for a proprietary **Human Resource Management System (HRMS)** for the company. The system is designed to consolidate all HR operations — from hiring to exit — into a single, modular, web-based platform.
+This document defines the full product scope for a proprietary **Human Resource Management System (HRMS)** for the company. The system is designed to consolidate all HR operations - from hiring to exit - into a single, modular, web-based platform.
 
 Key differentiators from off-the-shelf solutions:
-- **Modular architecture** — every feature is an independent module; new features can be added without touching existing ones.
-- **Hikvision face-recognition integration** — automated attendance sync from the physical entry/exit machine.
-- **Project-aware HRMS** — built-in project management with PBAC and auto performance evaluation based on task completion rates.
-- **Auto-communication engine** — triggered emails for onboarding, shortlisting, birthdays, leave, and project events.
+
+- **Modular architecture** - every feature is an independent module; new features can be added without touching existing ones.
+- **Hikvision face-recognition integration** - automated attendance sync from the physical entry/exit machine.
+- **Project-aware HRMS** - built-in project management with PBAC and auto performance evaluation based on task completion rates.
+- **Auto-communication engine** - triggered emails for onboarding, shortlisting, birthdays, leave, and project events.
 
 ---
 
 ## 2. Goals & Success Metrics
 
-| Goal | KPI | Target |
-|------|-----|--------|
-| Eliminate manual attendance entry | % of attendance auto-imported | > 99% |
-| Reduce payroll processing time | Hours spent per payroll cycle | < 2 hours |
-| Centralize employee records | % of employee data digitized | 100% |
-| Improve recruitment visibility | Time-to-hire | Reduce by 40% |
-| Project delivery transparency | On-time project task completion rate | > 85% |
-| Remove unauthorized access | Role violation incidents | 0 |
+| Goal                              | KPI                                  | Target        |
+| --------------------------------- | ------------------------------------ | ------------- |
+| Eliminate manual attendance entry | % of attendance auto-imported        | > 99%         |
+| Reduce payroll processing time    | Hours spent per payroll cycle        | < 2 hours     |
+| Centralize employee records       | % of employee data digitized         | 100%          |
+| Improve recruitment visibility    | Time-to-hire                         | Reduce by 40% |
+| Project delivery transparency     | On-time project task completion rate | > 85%         |
+| Remove unauthorized access        | Role violation incidents             | 0             |
 
 ---
 
@@ -100,6 +102,7 @@ Key differentiators from off-the-shelf solutions:
 ```
 
 **Project structure:**
+
 ```
 /
 ├── app/
@@ -138,6 +141,7 @@ Key differentiators from off-the-shelf solutions:
 ```
 
 Each module exposes its own:
+
 - API route handlers under `app/api/<module>/route.ts`
 - Database schema (isolated Prisma models, foreign keyed to `Employee`)
 - Permission scopes consumed by M1 (PBAC) via `middleware.ts`
@@ -149,29 +153,30 @@ Each module exposes its own:
 
 ---
 
-### M1 — Authentication & Permission-Based Access Control (PBAC)
+### M1 - Authentication & Permission-Based Access Control (PBAC)
 
 **Purpose:** Control who can see and do what across the entire system. Every other module defers permission checks to M1.
 
 #### 4.1.1 Roles (Predefined)
 
-| Role | Description |
-|------|-------------|
-| `super_admin` | Full system access, manages all organizations/branches |
-| `hr_admin` | Full HR module access, no project finance visibility |
-| `hr_manager` | Manages recruitment, attendance, leave approvals |
-| `payroll_manager` | Payroll module only |
-| `project_manager` | Full project module access, read-only employee data |
-| `team_lead` | Assign/review tasks within assigned projects |
-| `employee` | Self-service: own profile, leaves, payslips, tasks |
-| `recruiter` | Recruitment module only |
-| `viewer` | Read-only across permitted modules |
+| Role              | Description                                            |
+| ----------------- | ------------------------------------------------------ |
+| `super_admin`     | Full system access, manages all organizations/branches |
+| `hr_admin`        | Full HR module access, no project finance visibility   |
+| `hr_manager`      | Manages recruitment, attendance, leave approvals       |
+| `payroll_manager` | Payroll module only                                    |
+| `project_manager` | Full project module access, read-only employee data    |
+| `team_lead`       | Assign/review tasks within assigned projects           |
+| `employee`        | Self-service: own profile, leaves, payslips, tasks     |
+| `recruiter`       | Recruitment module only                                |
+| `viewer`          | Read-only across permitted modules                     |
 
 #### 4.1.2 Permission Scopes
 
 Permissions follow the pattern: `<module>:<action>`
 
 Examples:
+
 - `employee:read`, `employee:write`, `employee:delete`
 - `payroll:run`, `payroll:view_own`
 - `attendance:edit`, `attendance:import`
@@ -187,7 +192,7 @@ Examples:
 
 - JWT-based authentication with refresh tokens (15min access / 7-day refresh)
 - OAuth2 SSO support (Google Workspace / Microsoft 365)
-- MFA (TOTP — Google Authenticator / Authy)
+- MFA (TOTP - Google Authenticator / Authy)
 - Session management: active sessions list, remote logout
 - Audit log: every permission-sensitive action logged with actor, timestamp, IP
 - Role assignment: assign multiple roles per employee
@@ -196,15 +201,15 @@ Examples:
 
 #### 4.1.5 UI Pages
 
-- `/login` — Clean login with SSO options
-- `/admin/roles` — Role management grid
-- `/admin/permissions` — Permission matrix (role × scope)
-- `/admin/audit-log` — Filterable audit trail table
-- `/admin/sessions` — Active sessions per user
+- `/login` - Clean login with SSO options
+- `/admin/roles` - Role management grid
+- `/admin/permissions` - Permission matrix (role × scope)
+- `/admin/audit-log` - Filterable audit trail table
+- `/admin/sessions` - Active sessions per user
 
 ---
 
-### M2 — Employee Management
+### M2 - Employee Management
 
 **Purpose:** Single source of truth for all employee data, from joining to exit.
 
@@ -213,6 +218,7 @@ Examples:
 Each employee record contains:
 
 **Personal Information**
+
 - Full name, date of birth, gender, nationality, blood group
 - Personal email, personal phone
 - Emergency contact (name, relation, phone)
@@ -220,6 +226,7 @@ Each employee record contains:
 - Profile photo
 
 **Employment Information**
+
 - Employee ID (auto-generated: `EMP-YYYY-XXXX`)
 - Department, designation, job grade, employment type (full-time / part-time / contract / intern)
 - Date of joining, probation end date, confirmation date
@@ -229,9 +236,11 @@ Each employee record contains:
 - Status: Active / On Leave / Suspended / Resigned / Terminated
 
 **Compensation (read-only; owned by Payroll module)**
+
 - CTC, base salary, allowances (linked from M6)
 
 **Linked Modules**
+
 - Documents (M8)
 - Projects assigned (M9)
 - Leave balance (M5)
@@ -258,6 +267,7 @@ Each employee record contains:
 #### 4.2.4 Self-Service Portal
 
 Employees can:
+
 - Update personal info, photo, bank details (pending HR approval)
 - View payslips, leave balance, attendance
 - Download their own documents
@@ -265,16 +275,16 @@ Employees can:
 
 #### 4.2.5 UI Pages
 
-- `/employees` — Directory (search, filter, view toggle)
-- `/employees/new` — Add employee form (multi-step wizard)
-- `/employees/:id` — Full profile (tabbed: Info / Docs / Attendance / Payroll / Projects / Performance)
-- `/employees/:id/edit` — Edit profile
-- `/org-chart` — Interactive org chart
-- `/profile` — Employee self-service (own profile)
+- `/employees` - Directory (search, filter, view toggle)
+- `/employees/new` - Add employee form (multi-step wizard)
+- `/employees/:id` - Full profile (tabbed: Info / Docs / Attendance / Payroll / Projects / Performance)
+- `/employees/:id/edit` - Edit profile
+- `/org-chart` - Interactive org chart
+- `/profile` - Employee self-service (own profile)
 
 ---
 
-### M3 — Recruitment & Screening
+### M3 - Recruitment & Screening
 
 **Purpose:** Track the full hiring funnel from job posting to offer acceptance.
 
@@ -295,6 +305,7 @@ Applied → Screening → Phone Screen → Technical Round → HR Round
 ```
 
 Per candidate card:
+
 - Name, current CTC, expected CTC, notice period
 - Applied position, source (LinkedIn / Naukri / Referral / Walk-in / Portal)
 - Resume attachment
@@ -337,17 +348,17 @@ Per candidate card:
 
 #### 4.3.7 UI Pages
 
-- `/recruitment` — Dashboard (open JRs, pipeline summary)
-- `/recruitment/jobs` — Job Requisitions list
-- `/recruitment/jobs/:id` — JR detail + Kanban pipeline
-- `/recruitment/candidates` — Resume database
-- `/recruitment/candidates/:id` — Candidate full profile
-- `/recruitment/interviews` — Interview calendar view
-- `/recruitment/offers` — Offers sent and status
+- `/recruitment` - Dashboard (open JRs, pipeline summary)
+- `/recruitment/jobs` - Job Requisitions list
+- `/recruitment/jobs/:id` - JR detail + Kanban pipeline
+- `/recruitment/candidates` - Resume database
+- `/recruitment/candidates/:id` - Candidate full profile
+- `/recruitment/interviews` - Interview calendar view
+- `/recruitment/offers` - Offers sent and status
 
 ---
 
-### M4 — Attendance & Time Tracking
+### M4 - Attendance & Time Tracking
 
 **Purpose:** Accurate, automated attendance records with minimal manual intervention. Core integration point with Hikvision hardware.
 
@@ -357,27 +368,31 @@ The company uses a Hikvision face-recognition entry/exit terminal. Currently dat
 
 **Automated Sync Options (in priority order):**
 
-**Option A — Network SDK / ISAPI (Recommended)**
+**Option A - Network SDK / ISAPI (Recommended)**
+
 - Hikvision devices expose an HTTP-based ISAPI (Intelligent Security API)
 - Backend service polls the device every 15 minutes (or uses event push callback)
 - Extracts: Employee ID, timestamp, door direction (IN/OUT)
 - Auto-imports into attendance records without any manual step
 - Requires device to be on the same network as the server
 
-**Option B — SFTP Auto-Pull**
+**Option B - SFTP Auto-Pull**
+
 - Hikvision device exports logs to an FTP/SFTP folder at end of day
 - Scheduled job pulls the file, parses it, and imports records
 
-**Option C — USB/CSV Manual Import (Fallback)**
+**Option C - USB/CSV Manual Import (Fallback)**
+
 - HR uploads the exported CSV/Excel from the pen drive
 - System parses and maps records to employees
 - Duplicate detection (skip already-imported records)
 - Preview before confirm import
-- This is the current workflow — zero change for HR until Option A/B is live
+- This is the current workflow - zero change for HR until Option A/B is live
 
 #### 4.4.2 Attendance Record
 
 Per day per employee:
+
 - Date
 - First IN time, Last OUT time
 - Total hours worked
@@ -420,23 +435,24 @@ Per day per employee:
 
 #### 4.4.8 UI Pages
 
-- `/attendance` — Monthly attendance grid (all employees)
-- `/attendance/import` — CSV import wizard (Option C)
-- `/attendance/my` — Employee self-view
-- `/attendance/regularization` — Regularization requests queue
-- `/attendance/shifts` — Shift configuration
-- `/attendance/holidays` — Holiday calendar
-- `/attendance/reports` — Downloadable reports
+- `/attendance` - Monthly attendance grid (all employees)
+- `/attendance/import` - CSV import wizard (Option C)
+- `/attendance/my` - Employee self-view
+- `/attendance/regularization` - Regularization requests queue
+- `/attendance/shifts` - Shift configuration
+- `/attendance/holidays` - Holiday calendar
+- `/attendance/reports` - Downloadable reports
 
 ---
 
-### M5 — Leave Management
+### M5 - Leave Management
 
 **Purpose:** Track, approve, and report on all employee leaves.
 
 #### 4.5.1 Leave Types
 
 Configurable leave types:
+
 - Casual Leave (CL)
 - Sick Leave (SL)
 - Earned / Privilege Leave (EL/PL)
@@ -480,15 +496,15 @@ Employee applies → Manager notified → Manager approves/rejects
 
 #### 4.5.6 UI Pages
 
-- `/leave` — My leave balance + Apply leave
-- `/leave/calendar` — Team leave calendar
-- `/leave/approvals` — Manager approval queue
-- `/leave/history` — Leave history (filterable)
-- `/leave/admin` — HR admin: all leaves, policy configuration
+- `/leave` - My leave balance + Apply leave
+- `/leave/calendar` - Team leave calendar
+- `/leave/approvals` - Manager approval queue
+- `/leave/history` - Leave history (filterable)
+- `/leave/admin` - HR admin: all leaves, policy configuration
 
 ---
 
-### M6 — Payroll
+### M6 - Payroll
 
 **Purpose:** Accurate, auditable monthly payroll calculation with compliance support.
 
@@ -544,16 +560,16 @@ Employee applies → Manager notified → Manager approves/rejects
 
 #### 4.6.6 UI Pages
 
-- `/payroll` — Payroll dashboard (current month status)
-- `/payroll/run` — Payroll processing wizard
-- `/payroll/salary-structures` — Salary component templates
-- `/payroll/history` — Past payroll records
-- `/payroll/reports` — All compliance and summary reports
-- `/payroll/settings` — PF, ESI, PT configuration per state
+- `/payroll` - Payroll dashboard (current month status)
+- `/payroll/run` - Payroll processing wizard
+- `/payroll/salary-structures` - Salary component templates
+- `/payroll/history` - Past payroll records
+- `/payroll/reports` - All compliance and summary reports
+- `/payroll/settings` - PF, ESI, PT configuration per state
 
 ---
 
-### M7 — Performance Evaluation
+### M7 - Performance Evaluation
 
 **Purpose:** Structured, fair, and data-driven employee performance management.
 
@@ -569,6 +585,7 @@ Employee applies → Manager notified → Manager approves/rejects
 #### 4.7.2 Performance Review Form Builder
 
 HR Admin can build custom forms with:
+
 - Rating scales (1–5, 1–10, or custom labels)
 - Competency sections: Technical Skills, Communication, Leadership, Teamwork, Punctuality
 - Goal-based sections: set goals at start of cycle, rate achievement at end
@@ -618,27 +635,29 @@ HR initiates cycle → Employees submit self-assessment
 
 #### 4.7.8 UI Pages
 
-- `/performance` — Evaluation cycles list
-- `/performance/cycles/:id` — Cycle detail, employee status list
-- `/performance/review/:employeeId` — Review form (manager view)
-- `/performance/self-assessment` — Employee self-assessment form
-- `/performance/dashboard` — Analytics and distribution
-- `/performance/pip` — PIP management
+- `/performance` - Evaluation cycles list
+- `/performance/cycles/:id` - Cycle detail, employee status list
+- `/performance/review/:employeeId` - Review form (manager view)
+- `/performance/self-assessment` - Employee self-assessment form
+- `/performance/dashboard` - Analytics and distribution
+- `/performance/pip` - PIP management
 
 ---
 
-### M8 — Document Management
+### M8 - Document Management
 
 **Purpose:** Centralized, secure, access-controlled storage for all HR and employee documents.
 
 #### 4.8.1 Document Types
 
 **Company Documents**
+
 - HR policies, employee handbook
 - Offer letter templates, NDA templates
 - Compliance certificates, registrations
 
 **Employee Documents**
+
 - Identity: Aadhar, PAN, Passport, Driving License
 - Academic: Degree certificates, marksheets
 - Professional: Previous experience letters, relieving letters
@@ -669,16 +688,16 @@ HR initiates cycle → Employees submit self-assessment
 
 #### 4.8.5 UI Pages
 
-- `/documents` — HR's document library
-- `/documents/employee/:id` — Employee's document locker
-- `/documents/templates` — Template builder and library
-- `/documents/expiry-tracker` — Documents expiring within next 30/60/90 days
+- `/documents` - HR's document library
+- `/documents/employee/:id` - Employee's document locker
+- `/documents/templates` - Template builder and library
+- `/documents/expiry-tracker` - Documents expiring within next 30/60/90 days
 
 ---
 
-### M9 — Project & Task Management
+### M9 - Project & Task Management
 
-**Purpose:** Track all company projects with phase-level granularity, task assignments, and team performance visibility — integrated with PBAC and Performance Evaluation.
+**Purpose:** Track all company projects with phase-level granularity, task assignments, and team performance visibility - integrated with PBAC and Performance Evaluation.
 
 #### 4.9.1 Project Structure
 
@@ -760,40 +779,40 @@ Project
 
 #### 4.9.9 UI Pages
 
-- `/projects` — All projects grid/list (filterable by status, PM, date)
-- `/projects/new` — Create project wizard
-- `/projects/:id` — Project overview (phases, team, progress)
-- `/projects/:id/tasks` — Task board (Kanban/List/Gantt toggle)
-- `/projects/:id/team` — Team assignments
-- `/projects/:id/reports` — Project-specific performance report
-- `/tasks/my` — Cross-project personal task list
-- `/timesheets` — Weekly timesheet entry
+- `/projects` - All projects grid/list (filterable by status, PM, date)
+- `/projects/new` - Create project wizard
+- `/projects/:id` - Project overview (phases, team, progress)
+- `/projects/:id/tasks` - Task board (Kanban/List/Gantt toggle)
+- `/projects/:id/team` - Team assignments
+- `/projects/:id/reports` - Project-specific performance report
+- `/tasks/my` - Cross-project personal task list
+- `/timesheets` - Weekly timesheet entry
 
 ---
 
-### M10 — Notifications & Auto-Mailer
+### M10 - Notifications & Auto-Mailer
 
-**Purpose:** Trigger timely, templated, professional communications for key HR events — zero manual effort.
+**Purpose:** Trigger timely, templated, professional communications for key HR events - zero manual effort.
 
 #### 4.10.1 Trigger Events & Email Types
 
-| Trigger | Recipients | Template |
-|---------|-----------|---------|
-| Candidate shortlisted | Candidate | Shortlisting confirmation + next steps |
-| Offer letter sent | Candidate | Offer letter PDF attached |
-| Offer accepted | HR Admin, Hiring Manager | Offer acceptance alert |
-| New employee onboarded | Employee, Manager, IT, HR | Welcome email + onboarding checklist |
-| Employee birthday | Employee, Manager (optional) | Birthday greeting |
-| Leave application submitted | Manager | Leave approval request |
-| Leave approved/rejected | Employee | Leave decision notification |
-| Leave balance < threshold | Employee | Low leave balance alert |
-| Payslip generated | Employee | Payslip PDF attached |
-| Performance review initiated | Employee | Review form link |
-| Task assigned | Assignee | Task details + link |
-| Task overdue | Assignee, Manager | Overdue alert |
-| Document expiring (30/60 days) | HR Admin | Expiry reminder |
-| Probation ending (30 days) | HR Manager, Reporting Manager | Probation review reminder |
-| Work anniversary | Employee, HR | Work anniversary greeting |
+| Trigger                        | Recipients                    | Template                               |
+| ------------------------------ | ----------------------------- | -------------------------------------- |
+| Candidate shortlisted          | Candidate                     | Shortlisting confirmation + next steps |
+| Offer letter sent              | Candidate                     | Offer letter PDF attached              |
+| Offer accepted                 | HR Admin, Hiring Manager      | Offer acceptance alert                 |
+| New employee onboarded         | Employee, Manager, IT, HR     | Welcome email + onboarding checklist   |
+| Employee birthday              | Employee, Manager (optional)  | Birthday greeting                      |
+| Leave application submitted    | Manager                       | Leave approval request                 |
+| Leave approved/rejected        | Employee                      | Leave decision notification            |
+| Leave balance < threshold      | Employee                      | Low leave balance alert                |
+| Payslip generated              | Employee                      | Payslip PDF attached                   |
+| Performance review initiated   | Employee                      | Review form link                       |
+| Task assigned                  | Assignee                      | Task details + link                    |
+| Task overdue                   | Assignee, Manager             | Overdue alert                          |
+| Document expiring (30/60 days) | HR Admin                      | Expiry reminder                        |
+| Probation ending (30 days)     | HR Manager, Reporting Manager | Probation review reminder              |
+| Work anniversary               | Employee, HR                  | Work anniversary greeting              |
 
 #### 4.10.2 Email Template Engine
 
@@ -825,20 +844,21 @@ Project
 
 #### 4.10.6 UI Pages
 
-- `/notifications` — In-app notification center
-- `/admin/email-templates` — Template management
-- `/admin/notification-log` — Delivery log
-- `/admin/notification-settings` — Enable/disable per trigger
+- `/notifications` - In-app notification center
+- `/admin/email-templates` - Template management
+- `/admin/notification-log` - Delivery log
+- `/admin/notification-settings` - Enable/disable per trigger
 
 ---
 
-### M11 — Analytics & Reporting Dashboard
+### M11 - Analytics & Reporting Dashboard
 
 **Purpose:** Give leadership a bird's-eye view of organizational health across all modules.
 
 #### 4.11.1 Executive Dashboard (Home)
 
 Live cards:
+
 - Total Employees (active / on leave / WFH today)
 - Open Positions (from Recruitment)
 - Payroll cost this month
@@ -847,6 +867,7 @@ Live cards:
 - Top performers (from last evaluation cycle)
 
 Charts:
+
 - Headcount trend (12-month line chart)
 - Department-wise headcount (donut chart)
 - Attendance trend (bar chart, last 6 months)
@@ -856,15 +877,15 @@ Charts:
 
 Each module exports its own reports (described in each module section above). Reports available:
 
-| Module | Key Reports |
-|--------|------------|
-| M2 Employee | Headcount by dept/designation, Joiners/Leavers, Org chart |
-| M3 Recruitment | Pipeline report, source analysis, time-to-hire |
-| M4 Attendance | Monthly attendance sheet, LOP list, late arrivals |
-| M5 Leave | Utilization report, LOP impact |
-| M6 Payroll | Payroll summary, PF/ESI challan, Form 16, bank file |
-| M7 Performance | Score distribution, PIP list, top/bottom performers |
-| M9 Projects | Task completion rate per person, project health report |
+| Module         | Key Reports                                               |
+| -------------- | --------------------------------------------------------- |
+| M2 Employee    | Headcount by dept/designation, Joiners/Leavers, Org chart |
+| M3 Recruitment | Pipeline report, source analysis, time-to-hire            |
+| M4 Attendance  | Monthly attendance sheet, LOP list, late arrivals         |
+| M5 Leave       | Utilization report, LOP impact                            |
+| M6 Payroll     | Payroll summary, PF/ESI challan, Form 16, bank file       |
+| M7 Performance | Score distribution, PIP list, top/bottom performers       |
+| M9 Projects    | Task completion rate per person, project health report    |
 
 #### 4.11.3 Custom Report Builder
 
@@ -877,10 +898,10 @@ Each module exports its own reports (described in each module section above). Re
 
 #### 4.11.4 UI Pages
 
-- `/dashboard` — Executive home dashboard
-- `/reports` — Report catalog
-- `/reports/custom` — Custom report builder
-- `/reports/scheduled` — Scheduled reports list
+- `/dashboard` - Executive home dashboard
+- `/reports` - Report catalog
+- `/reports/custom` - Custom report builder
+- `/reports/scheduled` - Scheduled reports list
 
 ---
 
@@ -888,10 +909,10 @@ Each module exports its own reports (described in each module section above). Re
 
 ### 5.1 Design Language
 
-- **Style:** Modern SaaS — clean, minimal, data-forward
+- **Style:** Modern SaaS - clean, minimal, data-forward
 - **Color Palette:**
-  - Primary: `#2563EB` (Blue 600) — actions, CTAs
-  - Secondary: `#7C3AED` (Violet 600) — accents
+  - Primary: `#2563EB` (Blue 600) - actions, CTAs
+  - Secondary: `#7C3AED` (Violet 600) - accents
   - Success: `#16A34A` (Green 600)
   - Warning: `#D97706` (Amber 600)
   - Danger: `#DC2626` (Red 600)
@@ -901,7 +922,7 @@ Each module exports its own reports (described in each module section above). Re
   - Text Secondary: `#64748B` (Slate 500)
   - Border: `#E2E8F0` (Slate 200)
 
-- **Typography:** Inter (headings) + Inter (body) — system-ui fallback
+- **Typography:** Inter (headings) + Inter (body) - system-ui fallback
 - **Radius:** 8px cards, 6px buttons, 4px inputs
 - **Shadows:** Subtle (1–2px elevation only)
 - **Icons:** Lucide React (consistent, outlined)
@@ -914,6 +935,7 @@ Each module exports its own reports (described in each module section above). Re
 - **Breadcrumbs** on all inner pages
 
 Sidebar structure:
+
 ```
 🏠 Dashboard
 👥 Employees
@@ -955,69 +977,73 @@ Sidebar structure:
 
 ## 6. Tech Stack Recommendation
 
-Single Next.js 14 monorepo — frontend pages and backend API routes live together. No separate backend server.
+Single Next.js 14 monorepo - frontend pages and backend API routes live together. No separate backend server.
 
 ### Framework & Language
-| Layer | Choice | Reason |
-|-------|--------|--------|
+
+| Layer     | Choice                      | Reason                                                                            |
+| --------- | --------------------------- | --------------------------------------------------------------------------------- |
 | Framework | **Next.js 14 (App Router)** | Unified frontend + API in one project; Route Handlers replace a standalone server |
-| Language | TypeScript | End-to-end type safety across pages and API routes |
-| Runtime | Node.js 20 | Next.js API routes run as standard Node.js; no extra runtime needed |
+| Language  | TypeScript                  | End-to-end type safety across pages and API routes                                |
+| Runtime   | Node.js 20                  | Next.js API routes run as standard Node.js; no extra runtime needed               |
 
-### Frontend (UI layer — `/app/(dashboard)/`)
-| Layer | Choice | Reason |
-|-------|--------|--------|
-| UI Components | shadcn/ui + Tailwind CSS | Accessible, themeable, copy-paste component library |
-| State — server | TanStack Query (React Query v5) | Data fetching, caching, background refetch against `/api/` routes |
-| State — client | Zustand | Lightweight global UI state (sidebar, modals, user session) |
-| Charts | Recharts | React-native, composable charts |
-| Tables | TanStack Table v8 | Headless, virtual scroll, server-side pagination |
-| Rich Text Editor | Tiptap | Email template builder in M10 |
-| Forms | React Hook Form + Zod | Performant, schema-validated forms |
-| PDF Viewer | react-pdf | View uploaded PDFs in-browser |
-| Date utilities | date-fns | Lightweight date formatting and arithmetic |
+### Frontend (UI layer - `/app/(dashboard)/`)
 
-### Backend (API layer — `/app/api/`)
-| Layer | Choice | Reason |
-|-------|--------|--------|
-| API style | Next.js Route Handlers (`route.ts`) | Built into Next.js; no separate server process |
-| PBAC middleware | Next.js `middleware.ts` | Runs on Edge before every `/api/*` request; validates JWT + checks permission scope |
-| Auth | **next-auth v5 (Auth.js)** | Session management, JWT, OAuth (Google/Microsoft SSO), MFA support |
-| ORM | **Prisma** | Type-safe DB client, schema-first migrations, works perfectly in Next.js API routes |
-| Job Queue | **BullMQ** (Redis-backed) | Email jobs, scheduled crons (attendance sync, birthday emails); runs as a separate worker process (`worker.ts`) |
-| File Storage | **MinIO** (self-hosted S3-compatible) | Document/payslip/resume storage; signed URLs for secure download |
-| Email | Nodemailer + SendGrid | Nodemailer for SMTP; SendGrid as fallback via API |
-| PDF Generation | Puppeteer (headless) | Server-side payslip, offer letter, report PDF generation in API routes |
-| Validation | Zod | Shared schema validation used in both forms and API route request bodies |
-| HTTP client | Axios | Internal calls to Hikvision ISAPI from API routes |
+| Layer            | Choice                          | Reason                                                            |
+| ---------------- | ------------------------------- | ----------------------------------------------------------------- |
+| UI Components    | shadcn/ui + Tailwind CSS        | Accessible, themeable, copy-paste component library               |
+| State - server   | TanStack Query (React Query v5) | Data fetching, caching, background refetch against `/api/` routes |
+| State - client   | Zustand                         | Lightweight global UI state (sidebar, modals, user session)       |
+| Charts           | Recharts                        | React-native, composable charts                                   |
+| Tables           | TanStack Table v8               | Headless, virtual scroll, server-side pagination                  |
+| Rich Text Editor | Tiptap                          | Email template builder in M10                                     |
+| Forms            | React Hook Form + Zod           | Performant, schema-validated forms                                |
+| PDF Viewer       | react-pdf                       | View uploaded PDFs in-browser                                     |
+| Date utilities   | date-fns                        | Lightweight date formatting and arithmetic                        |
+
+### Backend (API layer - `/app/api/`)
+
+| Layer           | Choice                                | Reason                                                                                                          |
+| --------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| API style       | Next.js Route Handlers (`route.ts`)   | Built into Next.js; no separate server process                                                                  |
+| PBAC middleware | Next.js `middleware.ts`               | Runs on Edge before every `/api/*` request; validates JWT + checks permission scope                             |
+| Auth            | **next-auth v5 (Auth.js)**            | Session management, JWT, OAuth (Google/Microsoft SSO), MFA support                                              |
+| ORM             | **Prisma**                            | Type-safe DB client, schema-first migrations, works perfectly in Next.js API routes                             |
+| Job Queue       | **BullMQ** (Redis-backed)             | Email jobs, scheduled crons (attendance sync, birthday emails); runs as a separate worker process (`worker.ts`) |
+| File Storage    | **MinIO** (self-hosted S3-compatible) | Document/payslip/resume storage; signed URLs for secure download                                                |
+| Email           | Nodemailer + SendGrid                 | Nodemailer for SMTP; SendGrid as fallback via API                                                               |
+| PDF Generation  | Puppeteer (headless)                  | Server-side payslip, offer letter, report PDF generation in API routes                                          |
+| Validation      | Zod                                   | Shared schema validation used in both forms and API route request bodies                                        |
+| HTTP client     | Axios                                 | Internal calls to Hikvision ISAPI from API routes                                                               |
 
 ### Database
-| Layer | Choice |
-|-------|--------|
-| Primary DB | PostgreSQL 16 |
-| Cache + Queue store | Redis 7 (also used by BullMQ) |
-| Full-text search | PostgreSQL `tsvector` to start; migrate to Meilisearch if needed |
-| File storage | MinIO (S3-compatible, self-hosted) |
+
+| Layer               | Choice                                                           |
+| ------------------- | ---------------------------------------------------------------- |
+| Primary DB          | PostgreSQL 16                                                    |
+| Cache + Queue store | Redis 7 (also used by BullMQ)                                    |
+| Full-text search    | PostgreSQL `tsvector` to start; migrate to Meilisearch if needed |
+| File storage        | MinIO (S3-compatible, self-hosted)                               |
 
 ### DevOps
-| Layer | Choice |
-|-------|--------|
-| Containerization | Docker + Docker Compose (Next.js app + worker + PostgreSQL + Redis + MinIO) |
-| CI/CD | GitHub Actions |
-| Hosting | Hetzner VPS / AWS EC2 (self-hosted) |
-| Reverse Proxy | Nginx (SSL termination + static asset caching) |
-| SSL | Let's Encrypt (Certbot) |
-| Monitoring | Grafana + Prometheus |
-| Logs | Loki (or PM2 logs) |
-| Backups | Daily `pg_dump` → MinIO bucket with 30-day retention |
+
+| Layer         | Choice                                               |
+| ------------- | ---------------------------------------------------- |
+| CI/CD         | GitHub Actions                                       |
+| Hosting       | Hetzner VPS / AWS EC2 (self-hosted)                  |
+| Reverse Proxy | Nginx (SSL termination + static asset caching)       |
+| SSL           | Let's Encrypt (Certbot)                              |
+| Monitoring    | Grafana + Prometheus                                 |
+| Logs          | Loki (or PM2 logs)                                   |
+| Backups       | Daily `pg_dump` → MinIO bucket with 30-day retention |
 
 ### Key architectural notes
 
 - **No separate backend server.** Everything runs inside Next.js. The `/app/api/` Route Handlers ARE the backend.
-- **BullMQ worker** is the only separate process — it runs as `node worker.ts` alongside Next.js to process email jobs and cron tasks (Hikvision sync, birthday mailer, etc.) without blocking API responses.
+- **BullMQ worker** is the only separate process - it runs as `node worker.ts` alongside Next.js to process email jobs and cron tasks (Hikvision sync, birthday mailer, etc.) without blocking API responses.
 - **Prisma client** is instantiated as a singleton in `lib/db.ts` and imported directly into Route Handlers.
 - **PBAC** is enforced in `middleware.ts` (Edge runtime) for route-level guards, with fine-grained permission checks inside each Route Handler using `lib/auth.ts` helpers.
-- **Shared Zod schemas** live in `lib/schemas/` and are imported by both the form layer and API route handlers — single source of truth for validation.
+- **Shared Zod schemas** live in `lib/schemas/` and are imported by both the form layer and API route handlers - single source of truth for validation.
 
 ---
 
@@ -1033,7 +1059,7 @@ Single Next.js 14 monorepo — frontend pages and backend API routes live togeth
 Backend Cron (every 15 min):
   GET http://<device_ip>/ISAPI/AccessControl/AcsEvent?format=json
   Headers: Authorization: Digest <credentials>
-  
+
 Response: array of events
   {
     "employeeNoString": "EMP-2024-0042",
@@ -1050,11 +1076,13 @@ Deduplicates by (employee_id, timestamp)
 **Method 2: CSV Import Parser**
 
 Supported columns from Hikvision export:
+
 - `Card No` or `Employee No`
 - `Date Time`
 - `Event Description` (Entry / Exit)
 
 Mapping rules:
+
 - Employee No → matched against `employees.device_id` field
 - First event of day = IN, last event = OUT
 - Intermediate events discarded
@@ -1169,48 +1197,54 @@ kpis (id, employee_id FK, cycle_id FK, goal, target, achievement, weight)
 
 ## 9. Non-Functional Requirements
 
-| Requirement | Target |
-|-------------|--------|
-| **Performance** | Page load < 2s (P95); API response < 300ms (P95) |
-| **Availability** | 99.5% uptime (max ~44h downtime/year) |
-| **Scalability** | Support 1,000 concurrent users; 10,000 employee records |
-| **Security** | OWASP Top 10 compliance; all PII encrypted at rest (AES-256) |
-| **Data Backup** | Daily automated PostgreSQL backup; 30-day retention |
-| **Audit Trail** | All sensitive mutations logged with actor + timestamp |
-| **Session Security** | JWT expiry 15min; secure HttpOnly cookies; CSRF protection |
-| **File Security** | Signed URLs for document downloads (15-min expiry) |
-| **Browser Support** | Chrome 100+, Edge 100+, Firefox 100+, Safari 15+ |
-| **Localization** | INR currency; IST timezone default; date format DD/MM/YYYY |
+| Requirement          | Target                                                       |
+| -------------------- | ------------------------------------------------------------ |
+| **Performance**      | Page load < 2s (P95); API response < 300ms (P95)             |
+| **Availability**     | 99.5% uptime (max ~44h downtime/year)                        |
+| **Scalability**      | Support 1,000 concurrent users; 10,000 employee records      |
+| **Security**         | OWASP Top 10 compliance; all PII encrypted at rest (AES-256) |
+| **Data Backup**      | Daily automated PostgreSQL backup; 30-day retention          |
+| **Audit Trail**      | All sensitive mutations logged with actor + timestamp        |
+| **Session Security** | JWT expiry 15min; secure HttpOnly cookies; CSRF protection   |
+| **File Security**    | Signed URLs for document downloads (15-min expiry)           |
+| **Browser Support**  | Chrome 100+, Edge 100+, Firefox 100+, Safari 15+             |
+| **Localization**     | INR currency; IST timezone default; date format DD/MM/YYYY   |
 
 ---
 
 ## 10. Phased Rollout Plan
 
-### Phase 1 — Core Foundation (Months 1–2)
+### Phase 1 - Core Foundation (Months 1–2)
+
 - M1: Authentication + PBAC
 - M2: Employee Management (profiles, directory)
 - M8: Document Management (basic upload/view)
 - M10: Email engine (SMTP setup, basic templates)
 
-### Phase 2 — Attendance & Leave (Month 3)
-- M4: Attendance — CSV import (Option C) first, ISAPI integration (Option A) as stretch
+### Phase 2 - Attendance & Leave (Month 3)
+
+- M4: Attendance - CSV import (Option C) first, ISAPI integration (Option A) as stretch
 - M5: Leave Management
 - M10: Leave email triggers
 
-### Phase 3 — Payroll (Month 4)
+### Phase 3 - Payroll (Month 4)
+
 - M6: Payroll module
 - M10: Payslip auto-email
 
-### Phase 4 — Recruitment (Month 5)
+### Phase 4 - Recruitment (Month 5)
+
 - M3: Recruitment & Screening
 - M10: Candidate email triggers (shortlist, offer, onboarding)
 
-### Phase 5 — Projects & Performance (Months 6–7)
+### Phase 5 - Projects & Performance (Months 6–7)
+
 - M9: Project & Task Management
 - M7: Performance Evaluation (manual + auto from M9)
 - M10: Task and review triggers
 
-### Phase 6 — Analytics & Polish (Month 8)
+### Phase 6 - Analytics & Polish (Month 8)
+
 - M11: Analytics Dashboard
 - Custom report builder
 - UI polish, mobile responsiveness
@@ -1219,26 +1253,26 @@ kpis (id, employee_id FK, cycle_id FK, goal, target, achievement, weight)
 
 ---
 
-## Appendix A — Role-Permission Matrix (excerpt)
+## Appendix A - Role-Permission Matrix (excerpt)
 
-| Permission | super_admin | hr_admin | hr_manager | payroll_mgr | project_mgr | team_lead | employee |
-|-----------|:-----------:|:--------:|:----------:|:-----------:|:-----------:|:---------:|:--------:|
-| employee:read | ✓ | ✓ | ✓ | ✓ | ✓ (team) | ✓ (team) | ✗ |
-| employee:write | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| payroll:run | ✓ | ✗ | ✗ | ✓ | ✗ | ✗ | ✗ |
-| payroll:view_own | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| attendance:edit | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| attendance:import | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| project:create | ✓ | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ |
-| project:assign_task | ✓ | ✗ | ✗ | ✗ | ✓ | ✓ | ✗ |
-| task:update_own | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| recruitment:shortlist | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ |
-| performance:run_cycle | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| reports:all | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Permission            | super_admin | hr_admin | hr_manager | payroll_mgr | project_mgr | team_lead | employee |
+| --------------------- | :---------: | :------: | :--------: | :---------: | :---------: | :-------: | :------: |
+| employee:read         |      ✓      |    ✓     |     ✓      |      ✓      |  ✓ (team)   | ✓ (team)  |    ✗     |
+| employee:write        |      ✓      |    ✓     |     ✓      |      ✗      |      ✗      |     ✗     |    ✗     |
+| payroll:run           |      ✓      |    ✗     |     ✗      |      ✓      |      ✗      |     ✗     |    ✗     |
+| payroll:view_own      |      ✓      |    ✓     |     ✓      |      ✓      |      ✓      |     ✓     |    ✓     |
+| attendance:edit       |      ✓      |    ✓     |     ✓      |      ✗      |      ✗      |     ✗     |    ✗     |
+| attendance:import     |      ✓      |    ✓     |     ✓      |      ✗      |      ✗      |     ✗     |    ✗     |
+| project:create        |      ✓      |    ✗     |     ✗      |      ✗      |      ✓      |     ✗     |    ✗     |
+| project:assign_task   |      ✓      |    ✗     |     ✗      |      ✗      |      ✓      |     ✓     |    ✗     |
+| task:update_own       |      ✓      |    ✓     |     ✓      |      ✓      |      ✓      |     ✓     |    ✓     |
+| recruitment:shortlist |      ✓      |    ✓     |     ✓      |      ✗      |      ✗      |     ✗     |    ✗     |
+| performance:run_cycle |      ✓      |    ✓     |     ✗      |      ✗      |      ✗      |     ✗     |    ✗     |
+| reports:all           |      ✓      |    ✓     |     ✗      |      ✗      |      ✗      |     ✗     |    ✗     |
 
 ---
 
-## Appendix B — API Route Structure (Next.js Route Handlers)
+## Appendix B - API Route Structure (Next.js Route Handlers)
 
 All routes live under `app/api/` as `route.ts` files. Each file exports named HTTP method handlers (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
 
@@ -1306,5 +1340,5 @@ Every route handler calls `withAuth(req, requiredScope)` from `lib/auth.ts` as t
 
 ---
 
-*End of PRD — Version 1.0*  
-*Next step: Review with stakeholders → Prioritize Phase 1 → Define wireframes → Kick off development*
+_End of PRD - Version 1.0_  
+_Next step: Review with stakeholders → Prioritize Phase 1 → Define wireframes → Kick off development_

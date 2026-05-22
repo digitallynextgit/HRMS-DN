@@ -77,16 +77,8 @@ export function ManualAttendanceDialog({
     if (editLog) {
       setEmployeeId(editLog.employeeId)
       setDate(format(new Date(editLog.date), "yyyy-MM-dd"))
-      setCheckIn(
-        editLog.checkIn
-          ? new Date(editLog.checkIn).toISOString().slice(11, 16)
-          : ""
-      )
-      setCheckOut(
-        editLog.checkOut
-          ? new Date(editLog.checkOut).toISOString().slice(11, 16)
-          : ""
-      )
+      setCheckIn(editLog.checkIn ? new Date(editLog.checkIn).toISOString().slice(11, 16) : "")
+      setCheckOut(editLog.checkOut ? new Date(editLog.checkOut).toISOString().slice(11, 16) : "")
       setStatus(editLog.status)
       setNotes(editLog.notes ?? "")
     } else {
@@ -126,9 +118,7 @@ export function ManualAttendanceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {isEdit ? "Edit Attendance Record" : "Add Manual Attendance"}
-          </DialogTitle>
+          <DialogTitle>{isEdit ? "Edit Attendance Record" : "Add Manual Attendance"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
@@ -148,9 +138,7 @@ export function ManualAttendanceDialog({
                   {employees.map((emp) => (
                     <SelectItem key={emp.id} value={emp.id}>
                       {emp.firstName} {emp.lastName}{" "}
-                      <span className="text-muted-foreground text-xs">
-                        ({emp.employeeNo})
-                      </span>
+                      <span className="text-muted-foreground text-xs">({emp.employeeNo})</span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -195,9 +183,8 @@ export function ManualAttendanceDialog({
 
           {/* Work hours preview */}
           {workHoursPreview && (
-            <p className="text-sm text-muted-foreground">
-              Work hours:{" "}
-              <span className="font-medium text-foreground">{workHoursPreview}</span>
+            <p className="text-muted-foreground text-sm">
+              Work hours: <span className="text-foreground font-medium">{workHoursPreview}</span>
             </p>
           )}
 
@@ -239,10 +226,7 @@ export function ManualAttendanceDialog({
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isPending || (!isEdit && !employeeId) || !date}
-            >
+            <Button type="submit" disabled={isPending || (!isEdit && !employeeId) || !date}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {isEdit ? "Save Changes" : "Add Record"}
             </Button>
