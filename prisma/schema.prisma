@@ -302,15 +302,17 @@ model AuditLog {
 // =============================================================================
 
 model Department {
-  id          String   @id @default(uuid()) @map("id")
-  name        String   @unique @map("name")
-  code        String   @unique @map("code")
-  description String?  @map("description")
-  headId      String?  @map("head_id")
-  parentId    String?  @map("parent_id")
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid()) @map("id")
+  name             String   @unique @map("name")
+  code             String   @unique @map("code")
+  description      String?  @map("description")
+  headId           String?  @map("head_id")
+  parentId         String?  @map("parent_id")
+  isActive         Boolean  @default(true) @map("is_active")
+  careersTone      String?  @map("careers_tone")
+  careersJobsLabel String?  @map("careers_jobs_label")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   head        Employee?    @relation("DepartmentHead", fields: [headId], references: [id], onDelete: SetNull)
   parent      Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
@@ -1003,27 +1005,36 @@ model Goal {
 // =============================================================================
 
 model JobPosting {
-  id           String    @id @default(uuid()) @map("id")
-  title        String    @map("title")
-  departmentId String?   @map("department_id")
-  description  String?   @map("description") @db.Text
-  requirements String?   @map("requirements") @db.Text
-  location     String?   @map("location")
-  type         String    @default("FULL_TIME") @map("type")
-  salaryMin    Float?    @map("salary_min")
-  salaryMax    Float?    @map("salary_max")
-  status       JobStatus @default(DRAFT) @map("status")
-  openings     Int       @default(1) @map("openings")
-  closingDate  DateTime? @map("closing_date") @db.Date
-  postedById   String    @map("posted_by_id")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id               String    @id @default(uuid()) @map("id")
+  title            String    @map("title")
+  slug             String?   @map("slug")
+  departmentId     String?   @map("department_id")
+  description      String?   @map("description") @db.Text
+  requirements     String?   @map("requirements") @db.Text
+  location         String?   @map("location")
+  type             String    @default("FULL_TIME") @map("type")
+  salaryMin        Float?    @map("salary_min")
+  salaryMax        Float?    @map("salary_max")
+  status           JobStatus @default(DRAFT) @map("status")
+  openings         Int       @default(1) @map("openings")
+  closingDate      DateTime? @map("closing_date") @db.Date
+  postedById       String    @map("posted_by_id")
+  meta             String?   @map("meta")
+  summary          String?   @map("summary") @db.Text
+  intro            String?   @map("intro") @db.Text
+  jobEssence       String?   @map("job_essence") @db.Text
+  keyRequirements  String[]  @default([]) @map("key_requirements")
+  currentOpenings  String[]  @default([]) @map("current_openings")
+  publishToCareers Boolean   @default(false) @map("publish_to_careers")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   postedBy   Employee    @relation("PostingCreator", fields: [postedById], references: [id], onDelete: Restrict)
   applicants Applicant[]
 
   @@index([status])
+  @@index([publishToCareers, status])
   @@map("job_postings")
 }
 

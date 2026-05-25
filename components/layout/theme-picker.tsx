@@ -42,7 +42,9 @@ function ThemeCard({
       onClick={onSelect}
       className={cn(
         "group relative flex flex-col gap-2 rounded-md border p-3 text-left transition-all hover:shadow-md focus-visible:ring-2 focus-visible:outline-none",
-        selected ? "border-primary ring-primary/30 ring-2" : "border-border hover:border-foreground/30",
+        selected
+          ? "border-primary ring-primary/30 ring-2"
+          : "border-border hover:border-foreground/30",
       )}
       aria-pressed={selected}
     >
@@ -60,7 +62,7 @@ function ThemeCard({
             style={{ backgroundColor: theme.swatchAccent }}
           />
           <span
-            className="border-white/20 h-6 w-6 rounded-full border shadow-sm"
+            className="h-6 w-6 rounded-full border border-white/20 shadow-sm"
             style={{ backgroundColor: theme.swatchBg }}
           />
         </div>
@@ -120,7 +122,7 @@ export function ThemePicker() {
           </DialogHeader>
 
           <div className="flex flex-wrap items-center gap-2 border-b px-6 py-3">
-            <div className="relative flex-1 min-w-50">
+            <div className="relative min-w-50 flex-1">
               <Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
               <Input
                 value={search}
@@ -182,59 +184,59 @@ export function ThemePicker() {
                 <TooltipContent className="text-xs">System</TooltipContent>
               </Tooltip>
             </div>
-          {paletteId && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1.5"
-              onClick={() => clearPalette()}
-            >
-              <RotateCcw className="h-3 w-3" /> Reset
-            </Button>
-          )}
-        </div>
+            {paletteId && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5"
+                onClick={() => clearPalette()}
+              >
+                <RotateCcw className="h-3 w-3" /> Reset
+              </Button>
+            )}
+          </div>
 
-        <Tabs
-          value={activeTab}
-          onValueChange={(v) => setActiveTab(v as ThemeCategory | "all")}
-          className="flex min-h-0 flex-1 flex-col"
-        >
-          <div className="border-b px-6 py-3">
-            <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto">
-              <TabsTrigger value="all" className="text-xs">
-                All ({themes.length})
-              </TabsTrigger>
-              {CATEGORIES.map((cat) => (
-                <TabsTrigger key={cat} value={cat} className="text-xs">
-                  {categoryLabels[cat]} ({themesByCategory[cat].length})
+          <Tabs
+            value={activeTab}
+            onValueChange={(v) => setActiveTab(v as ThemeCategory | "all")}
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="border-b px-6 py-3">
+              <TabsList className="h-9 w-full justify-start gap-1 overflow-x-auto">
+                <TabsTrigger value="all" className="text-xs">
+                  All ({themes.length})
                 </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
+                {CATEGORIES.map((cat) => (
+                  <TabsTrigger key={cat} value={cat} className="text-xs">
+                    {categoryLabels[cat]} ({themesByCategory[cat].length})
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
-            <TabsContent value={activeTab} className="mt-0 outline-none">
-              {filtered.length === 0 ? (
-                <div className="text-muted-foreground py-12 text-center text-sm">
-                  No themes match &ldquo;{search}&rdquo;.
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                  {filtered.map((t) => (
-                    <ThemeCard
-                      key={t.id}
-                      theme={t}
-                      selected={paletteId === t.id}
-                      onSelect={() => setPalette(t.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
-          </div>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
+              <TabsContent value={activeTab} className="mt-0 outline-none">
+                {filtered.length === 0 ? (
+                  <div className="text-muted-foreground py-12 text-center text-sm">
+                    No themes match &ldquo;{search}&rdquo;.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                    {filtered.map((t) => (
+                      <ThemeCard
+                        key={t.id}
+                        theme={t}
+                        selected={paletteId === t.id}
+                        onSelect={() => setPalette(t.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </div>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   )
 }

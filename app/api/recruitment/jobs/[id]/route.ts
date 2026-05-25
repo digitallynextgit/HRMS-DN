@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession } from "@/lib/permissions"
+import { slugifyCareer } from "@/lib/careers-types"
 import type { Session } from "next-auth"
+
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return value.map((v) => (typeof v === "string" ? v.trim() : "")).filter((v) => v.length > 0)
+}
+
+function emptyToNull(value: unknown): string | null {
+  if (typeof value !== "string") return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
 
 export const GET = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
@@ -35,6 +47,11 @@ export const PATCH = withSession(
         where: { id: ctx.params.id },
         data: {
           ...(body.title !== undefined && { title: body.title }),
+          ...(body.slug !== undefined && {
+            slug:
+              emptyToNull(body.slug) ??
+              (typeof body.title === "string" ? slugifyCareer(body.title) : null),
+          }),
           ...(body.description !== undefined && { description: body.description }),
           ...(body.departmentId !== undefined && { departmentId: body.departmentId || null }),
           ...(body.location !== undefined && { location: body.location || null }),
@@ -49,6 +66,19 @@ export const PATCH = withSession(
             closingDate: body.closingDate ? new Date(body.closingDate) : null,
           }),
           ...(body.status !== undefined && { status: body.status as never }),
+          ...(body.meta !== undefined && { meta: emptyToNull(body.meta) }),
+          ...(body.summary !== undefined && { summary: emptyToNull(body.summary) }),
+          ...(body.intro !== undefined && { intro: emptyToNull(body.intro) }),
+          ...(body.jobEssence !== undefined && { jobEssence: emptyToNull(body.jobEssence) }),
+          ...(body.keyRequirements !== undefined && {
+            keyRequirements: asStringArray(body.keyRequirements),
+          }),
+          ...(body.currentOpenings !== undefined && {
+            currentOpenings: asStringArray(body.currentOpenings),
+          }),
+          ...(body.publishToCareers !== undefined && {
+            publishToCareers: Boolean(body.publishToCareers),
+          }),
         },
       })
       return NextResponse.json({ data: job })

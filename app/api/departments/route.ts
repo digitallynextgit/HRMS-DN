@@ -23,6 +23,8 @@ export const GET = withSession(
           code: true,
           description: true,
           headId: true,
+          careersTone: true,
+          careersJobsLabel: true,
         },
       })
 

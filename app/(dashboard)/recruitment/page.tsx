@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Plus, Loader2, Briefcase, Users, ExternalLink } from "lucide-react"
+import { Plus, Loader2, Briefcase, Users, ExternalLink, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/shared/page-header"
@@ -32,6 +32,8 @@ import { cn, formatDate } from "@/lib/utils"
 interface Department {
   id: string
   name: string
+  careersTone?: "red" | "teal" | null
+  careersJobsLabel?: string | null
 }
 interface JobPosting {
   id: string
@@ -87,6 +89,20 @@ const emptyForm = {
   closingDate: "",
   status: "OPEN",
   description: "",
+  meta: "",
+  summary: "",
+  intro: "",
+  jobEssence: "",
+  keyRequirements: "",
+  currentOpenings: "",
+  publishToCareers: false,
+}
+
+function splitLines(value: string): string[] {
+  return value
+    .split("\n")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
 }
 
 export default function RecruitmentPage() {
@@ -116,6 +132,95 @@ export default function RecruitmentPage() {
     },
     onError: () => toast.error("Failed to create job posting"),
   })
+
+  const selectedDept = depts.find((d) => d.id === form.departmentId)
+  const [deptTone, setDeptTone] = useState<"red" | "teal" | "">("")
+  const [deptJobsLabel, setDeptJobsLabel] = useState("")
+  const [deptSaving, setDeptSaving] = useState(false)
+
+  useEffect(() => {
+    setDeptTone(selectedDept?.careersTone ?? "")
+    setDeptJobsLabel(selectedDept?.careersJobsLabel ?? "")
+  }, [selectedDept?.id, selectedDept?.careersTone, selectedDept?.careersJobsLabel])
+
+  const [aiGenerating, setAiGenerating] = useState(false)
+
+  const generateWithAI = async () => {
+    if (!form.title.trim()) {
+      toast.error("Enter a job title first")
+      return
+    }
+    setAiGenerating(true)
+    try {
+      const res = await fetch("/api/recruitment/jobs/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.title,
+          departmentName: selectedDept?.name,
+          type: form.type,
+          location: form.location,
+        }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        throw new Error(j.error ?? "AI request failed")
+      }
+      const { data } = (await res.json()) as {
+        data: {
+          meta?: string
+          summary?: string
+          intro?: string
+          jobEssence?: string
+          keyRequirements?: string[]
+          currentOpenings?: string[]
+        }
+      }
+
+      // Only fill empty fields — never overwrite the user's input.
+      setForm((f) => ({
+        ...f,
+        meta: f.meta.trim() ? f.meta : (data.meta ?? ""),
+        summary: f.summary.trim() ? f.summary : (data.summary ?? ""),
+        intro: f.intro.trim() ? f.intro : (data.intro ?? ""),
+        jobEssence: f.jobEssence.trim() ? f.jobEssence : (data.jobEssence ?? ""),
+        keyRequirements: f.keyRequirements.trim()
+          ? f.keyRequirements
+          : (data.keyRequirements ?? []).join("\n"),
+        currentOpenings: f.currentOpenings.trim()
+          ? f.currentOpenings
+          : (data.currentOpenings ?? []).join("\n"),
+        publishToCareers: f.publishToCareers || Boolean(data.intro),
+      }))
+      toast.success("Filled empty fields with AI suggestions")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "AI request failed")
+    } finally {
+      setAiGenerating(false)
+    }
+  }
+
+  const saveDeptSettings = async () => {
+    if (!selectedDept) return
+    setDeptSaving(true)
+    try {
+      const res = await fetch(`/api/departments/${selectedDept.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          careersTone: deptTone || null,
+          careersJobsLabel: deptJobsLabel || null,
+        }),
+      })
+      if (!res.ok) throw new Error()
+      await qc.invalidateQueries({ queryKey: ["departments"] })
+      toast.success("Department careers settings saved")
+    } catch {
+      toast.error("Failed to save department settings")
+    } finally {
+      setDeptSaving(false)
+    }
+  }
 
   const totalApplicants = jobs.reduce((sum, j) => sum + j._count.applicants, 0)
   const openJobs = jobs.filter((j) => j.status === "OPEN").length
@@ -257,11 +362,11 @@ export default function RecruitmentPage() {
 
       {/* Create Job Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="flex max-h-[90vh] flex-col sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>New Job Posting</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="-mx-6 max-h-[70vh] space-y-3 overflow-y-auto px-6">
             <div className="space-y-1.5">
               <Label>Job Title</Label>
               <Input
@@ -308,6 +413,56 @@ export default function RecruitmentPage() {
                 </Select>
               </div>
             </div>
+
+            {selectedDept && (
+              <div className="bg-muted/30 space-y-2.5 rounded border p-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium">
+                    Careers settings for &ldquo;{selectedDept.name}&rdquo;
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={saveDeptSettings}
+                    disabled={deptSaving}
+                  >
+                    {deptSaving && <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />} Save
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Tone</Label>
+                    <Select
+                      value={deptTone || "default"}
+                      onValueChange={(v) =>
+                        setDeptTone(v === "default" ? "" : (v as "red" | "teal"))
+                      }
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="default">Default (teal)</SelectItem>
+                        <SelectItem value="teal">Teal</SelectItem>
+                        <SelectItem value="red">Red</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Jobs label</Label>
+                    <Input
+                      className="h-8 text-sm"
+                      value={deptJobsLabel}
+                      onChange={(e) => setDeptJobsLabel(e.target.value)}
+                      placeholder="Explore Open Roles"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <Label>Location</Label>
               <Input
@@ -364,11 +519,117 @@ export default function RecruitmentPage() {
             <div className="space-y-1.5">
               <Label>Description (optional)</Label>
               <textarea
-                className="bg-background focus:ring-ring min-h-[80px] w-full resize-none rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                className="bg-background focus:ring-ring min-h-20 w-full resize-none rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                 placeholder="Job description, requirements..."
               />
+            </div>
+
+            <div className="space-y-3 rounded border border-dashed p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Publish to Careers Site</p>
+                  <p className="text-muted-foreground text-xs">
+                    Show this posting on the public careers page. Fill the title first, then use
+                    <span className="font-medium"> Auto-fill</span> to draft the rest.
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1.5 text-xs"
+                    onClick={generateWithAI}
+                    disabled={aiGenerating || !form.title.trim()}
+                    title={
+                      !form.title.trim()
+                        ? "Enter a job title first"
+                        : "Generate copy from the title with AI"
+                    }
+                  >
+                    {aiGenerating ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    Auto-fill
+                  </Button>
+                  <label className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={form.publishToCareers}
+                      onChange={(e) =>
+                        setForm((f) => ({ ...f, publishToCareers: e.target.checked }))
+                      }
+                    />
+                    <span>Publish</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Meta (optional)</Label>
+                  <Input
+                    value={form.meta}
+                    onChange={(e) => setForm((f) => ({ ...f, meta: e.target.value }))}
+                    placeholder="e.g. Mumbai · 3–5 yrs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Summary (optional)</Label>
+                  <Input
+                    value={form.summary}
+                    onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
+                    placeholder="One-line pitch"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Intro</Label>
+                <textarea
+                  className="bg-background focus:ring-ring min-h-20 w-full resize-none rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                  value={form.intro}
+                  onChange={(e) => setForm((f) => ({ ...f, intro: e.target.value }))}
+                  placeholder="Opening paragraph shown on the careers detail page."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Job Essence (optional)</Label>
+                <textarea
+                  className="bg-background focus:ring-ring min-h-17.5 w-full resize-none rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                  value={form.jobEssence}
+                  onChange={(e) => setForm((f) => ({ ...f, jobEssence: e.target.value }))}
+                  placeholder="The gist — what success in this role looks like."
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Key Requirements (one per line)</Label>
+                <textarea
+                  className="bg-background focus:ring-ring min-h-22.5 w-full resize-none rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                  value={form.keyRequirements}
+                  onChange={(e) => setForm((f) => ({ ...f, keyRequirements: e.target.value }))}
+                  placeholder={
+                    "3–5 years of experience\nStrong communication skills\nFamiliarity with AI tools"
+                  }
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Current Openings (one per line, optional)</Label>
+                <textarea
+                  className="bg-background focus:ring-ring min-h-17.5 w-full resize-none rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                  value={form.currentOpenings}
+                  onChange={(e) => setForm((f) => ({ ...f, currentOpenings: e.target.value }))}
+                  placeholder={"Junior (1-2 Years)\nSenior (3-5 Years)\nLead"}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -376,7 +637,13 @@ export default function RecruitmentPage() {
               Cancel
             </Button>
             <Button
-              onClick={() => createMut.mutate(form)}
+              onClick={() =>
+                createMut.mutate({
+                  ...form,
+                  keyRequirements: splitLines(form.keyRequirements),
+                  currentOpenings: splitLines(form.currentOpenings),
+                })
+              }
               disabled={createMut.isPending || !form.title}
             >
               {createMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Create Job
