@@ -18,7 +18,7 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
     if (mine) {
       where.OR = [
         { ownerId: session.user.id },
-        { members: { some: { employeeId: session.user.id } } },
+        { teams: { some: { members: { some: { employeeId: session.user.id } } } } },
       ]
     }
 
@@ -30,21 +30,31 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
         orderBy: { createdAt: "desc" },
         include: {
           owner: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
-          members: {
-            include: {
-              employee: {
-                select: { id: true, firstName: true, lastName: true, profilePhoto: true },
+          teams: {
+            select: {
+              id: true,
+              name: true,
+              members: {
+                select: {
+                  employee: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
+                },
               },
             },
           },
-          _count: { select: { tasks: true } },
+          _count: { select: { tasks: true, teams: true, resources: true } },
         },
       }),
       db.project.count({ where }),
     ])
 
+    // Flatten members across all teams for the list-card avatar display
+    const decorated = projects.map((p) => ({
+      ...p,
+      members: p.teams.flatMap((t) => t.members),
+    }))
+
     return NextResponse.json({
-      data: projects,
+      data: decorated,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     })
   } catch (error) {
@@ -58,36 +68,59 @@ export const POST = withAuth(
   async (req: NextRequest, _ctx: unknown, session: Session) => {
     try {
       const body = await req.json()
-      const { name, description, code, status, priority, startDate, endDate, budget, memberIds } =
-        body
+      const { name, description, status, priority, startDate, budget, accountManagerId, currentPhaseId } = body
+
+      // Validate Account Manager (formerly "owner") — falls back to creator if not supplied
+      const ownerId: string = accountManagerId || session.user.id
+      const accountManager = await db.employee.findUnique({ where: { id: ownerId }, select: { id: true, isActive: true } })
+      if (!accountManager) {
+        return NextResponse.json({ error: "Account Manager not found" }, { status: 422 })
+      }
+      if (!accountManager.isActive) {
+        return NextResponse.json({ error: "Account Manager is not an active employee" }, { status: 422 })
+      }
+
+      // Auto-generate code in DN## format (DN01, DN02, …). Looks at max existing DN-prefixed code.
+      const dnProjects = await db.project.findMany({
+        where: { code: { startsWith: "DN" } },
+        select: { code: true },
+      })
+      let maxNum = 0
+      for (const p of dnProjects) {
+        const m = p.code.match(/^DN(\d+)$/)
+        if (m) {
+          const n = parseInt(m[1], 10)
+          if (n > maxNum) maxNum = n
+        }
+      }
+      const nextNum = maxNum + 1
+      const code = `DN${nextNum.toString().padStart(2, "0")}`
 
       const project = await db.project.create({
         data: {
           name,
           description,
-          code: code.toUpperCase(),
+          code,
           status: status ?? "PLANNING",
           priority: priority ?? "MEDIUM",
-          ownerId: session.user.id,
+          ownerId,
+          currentPhaseId: currentPhaseId || null,
           startDate: startDate ? new Date(startDate) : null,
-          endDate: endDate ? new Date(endDate) : null,
           budget: budget ? parseFloat(budget) : null,
-          members: memberIds?.length
-            ? {
-                create: [
-                  { employeeId: session.user.id, role: "OWNER" },
-                  ...memberIds
-                    .filter((id: string) => id !== session.user.id)
-                    .map((id: string) => ({ employeeId: id, role: "MEMBER" })),
-                ],
-              }
-            : { create: [{ employeeId: session.user.id, role: "OWNER" }] },
         },
         include: {
           owner: { select: { id: true, firstName: true, lastName: true } },
-          members: {
-            include: { employee: { select: { id: true, firstName: true, lastName: true } } },
-          },
+        },
+      })
+
+      await db.auditLog.create({
+        data: {
+          actorId: session.user.id,
+          action: "CREATE",
+          module: "project",
+          entityType: "Project",
+          entityId: project.id,
+          changes: { name, code: project.code, status: project.status },
         },
       })
 

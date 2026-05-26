@@ -4,10 +4,13 @@
 // =============================================================================
 
 import { PrismaClient } from "@prisma/client"
+import { PrismaPg } from "@prisma/adapter-pg"
+import { Pool } from "pg"
 import bcrypt from "bcryptjs"
 import { PERMISSION_DEFINITIONS } from "../lib/constants"
 
-const prisma = new PrismaClient()
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
 
 async function main() {
   console.log("Starting HRMS database seed...")
@@ -26,7 +29,11 @@ async function main() {
   await prisma.performanceReview.deleteMany()
   await prisma.reviewCycle.deleteMany()
   await prisma.timesheet.deleteMany()
+  await prisma.projectResource.deleteMany()
   await prisma.projectTask.deleteMany()
+  await prisma.projectTeamMember.deleteMany()
+  await prisma.projectTeam.deleteMany()
+  await prisma.projectPhase.deleteMany()
   await prisma.projectMember.deleteMany()
   await prisma.project.deleteMany()
   await prisma.gpsCheckIn.deleteMany()
@@ -2127,150 +2134,258 @@ async function main() {
   // ===========================================================================
   console.log("Step 13: Creating projects & tasks...")
 
+  // Seed default project phases (PMI lifecycle)
+  await prisma.projectPhase.createMany({
+    data: [
+      { name: "Initiation",                 description: "Define the project, identify stakeholders, set initial scope", displayOrder: 1 },
+      { name: "Planning",                   description: "Detailed plan, timeline, resource allocation",                  displayOrder: 2 },
+      { name: "Executing",                  description: "Active delivery of project work",                                displayOrder: 3 },
+      { name: "Monitoring & Controlling",   description: "Track progress, manage changes, quality control",                displayOrder: 4 },
+      { name: "Closure",                    description: "Final delivery, retrospective, handover, archival",              displayOrder: 5 },
+    ],
+  })
+  const initiationPhase = await prisma.projectPhase.findUnique({ where: { name: "Initiation" } })
+  const executingPhase  = await prisma.projectPhase.findUnique({ where: { name: "Executing"  } })
+
   const adminId = employeeNoToId.get("EMP-001")!
   const rupamId = employeeNoToId.get("EMP-113")! // Rupam - senior active employee
   const shaileshId = employeeNoToId.get("EMP-125")! // Shailesh Patwal
   const praneetId = employeeNoToId.get("EMP-126")! // Praneet Nitin
   const vivekId = employeeNoToId.get("EMP-124")! // Vivek
 
+  // Additional employee IDs needed for diverse team membership
+  const aditiId       = employeeNoToId.get("EMP-112")! // Aditi
+  const shivamId      = employeeNoToId.get("EMP-119")! // Shivam
+  const saurabhId     = employeeNoToId.get("EMP-129")! // Saurabh Singh Rawat
+  const mridulId      = employeeNoToId.get("EMP-132")! // Mridul
+  const jatinId       = employeeNoToId.get("EMP-135")! // Jatin
+  const hemantId      = employeeNoToId.get("EMP-136")! // Hemant
+  const ayushiId      = employeeNoToId.get("EMP-137")! // Ayushi
+  const teeshaId      = employeeNoToId.get("EMP-143")! // Teesha
+  const diwakarId     = employeeNoToId.get("EMP-145")! // Diwakar
+  const komalId       = employeeNoToId.get("EMP-146")! // Komal
+
+  // Helper to create a team + members + manager + tasks
+  async function createTeamWithMembers(
+    projectId: string,
+    teamName: string,
+    description: string,
+    managerEmployeeId: string,
+    memberEmployeeIds: string[],
+    tasks: Array<{
+      title: string
+      description?: string
+      status: "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
+      priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT"
+      assigneeId: string
+      creatorId: string
+      dueDate?: Date
+      completedAt?: Date
+      approvalStatus?: "APPROVED" | "PENDING_APPROVAL" | "REJECTED"
+      isManagerCreated?: boolean
+      rejectionReason?: string
+    }>,
+  ) {
+    const team = await prisma.projectTeam.create({
+      data: {
+        projectId,
+        name: teamName,
+        description,
+        managerId: managerEmployeeId,
+      },
+    })
+
+    // Insert manager + members (manager included in member list)
+    const memberIds = [managerEmployeeId, ...memberEmployeeIds.filter((id) => id !== managerEmployeeId)]
+    await prisma.projectTeamMember.createMany({
+      data: memberIds.map((employeeId) => ({
+        teamId: team.id,
+        projectId,
+        employeeId,
+      })),
+    })
+
+    // Tasks
+    for (const t of tasks) {
+      await prisma.projectTask.create({
+        data: {
+          projectId,
+          teamId: team.id,
+          title: t.title,
+          description: t.description,
+          status: t.status,
+          priority: t.priority,
+          assigneeId: t.assigneeId,
+          creatorId: t.creatorId,
+          dueDate: t.dueDate,
+          completedAt: t.completedAt,
+          approvalStatus: t.approvalStatus ?? "APPROVED",
+          isManagerCreated: t.isManagerCreated ?? true,
+          rejectionReason: t.rejectionReason,
+        },
+      })
+    }
+
+    return team
+  }
+
+  // ─── Project 1: Acme Website Redesign ───
   const project1 = await prisma.project.create({
     data: {
-      name: "HRMS Platform Rollout",
-      code: "HRMS-001",
-      description: "Deploy and configure the full HRMS platform for all team members",
+      name: "Acme Website Redesign",
+      code: "DN01",
+      description: "Complete redesign and rebuild of Acme's marketing website with new branding, content, and SEO foundation.",
       status: "ACTIVE",
-      startDate: new Date("2026-03-01"),
-      endDate: new Date("2026-06-30"),
-      ownerId: adminId,
-      members: {
-        create: [
-          { employeeId: adminId, role: "OWNER" },
-          { employeeId: rupamId, role: "MEMBER" },
-          { employeeId: shaileshId, role: "MEMBER" },
-          { employeeId: praneetId, role: "MEMBER" },
-        ],
-      },
+      priority: "HIGH",
+      currentPhaseId: executingPhase?.id ?? null,
+      startDate: new Date("2026-04-01"),
+      endDate: new Date("2026-07-31"),
+      budget: 850000,
+      ownerId: rupamId,
     },
   })
 
-  await prisma.projectTask.createMany({
-    data: [
-      {
-        title: "Configure attendance devices",
-        description: "Set up biometric devices for all offices",
-        status: "DONE",
-        priority: "HIGH",
-        projectId: project1.id,
-        assigneeId: shaileshId,
-        creatorId: adminId,
-        completedAt: new Date("2026-03-15"),
-      },
-      {
-        title: "Import employee data",
-        description: "CSV import and verification of all employee records",
-        status: "DONE",
-        priority: "URGENT",
-        projectId: project1.id,
-        assigneeId: rupamId,
-        creatorId: adminId,
-        completedAt: new Date("2026-03-10"),
-      },
-      {
-        title: "Train team on HRMS features",
-        description: "Conduct training sessions for all employees",
-        status: "IN_PROGRESS",
-        priority: "HIGH",
-        projectId: project1.id,
-        assigneeId: praneetId,
-        creatorId: adminId,
-        dueDate: new Date("2026-04-30"),
-      },
-      {
-        title: "Set up payroll structures",
-        status: "IN_PROGRESS",
-        priority: "HIGH",
-        projectId: project1.id,
-        assigneeId: rupamId,
-        creatorId: adminId,
-        dueDate: new Date("2026-04-30"),
-      },
-      {
-        title: "Configure leave policies",
-        status: "TODO",
-        priority: "MEDIUM",
-        projectId: project1.id,
-        assigneeId: shaileshId,
-        creatorId: adminId,
-      },
-      {
-        title: "Employee self-service onboarding",
-        status: "TODO",
-        priority: "LOW",
-        projectId: project1.id,
-        assigneeId: praneetId,
-        creatorId: adminId,
-      },
+  await createTeamWithMembers(
+    project1.id,
+    "Web Development",
+    "Frontend + backend implementation, hosting, deployment",
+    vivekId, // Manager
+    [shaileshId, saurabhId, mridulId], // Members
+    [
+      { title: "Set up Next.js project + Vercel deployment", status: "DONE",        priority: "HIGH",   assigneeId: shaileshId, creatorId: vivekId, completedAt: new Date("2026-04-10") },
+      { title: "Build homepage hero section",                status: "IN_PROGRESS", priority: "HIGH",   assigneeId: saurabhId,  creatorId: vivekId, dueDate: new Date("2026-05-25") },
+      { title: "Implement contact form with email",          status: "TODO",        priority: "MEDIUM", assigneeId: mridulId,   creatorId: vivekId, dueDate: new Date("2026-06-05") },
+      { title: "Refactor navigation for mobile",             status: "TODO",        priority: "MEDIUM", assigneeId: saurabhId,  creatorId: saurabhId, approvalStatus: "PENDING_APPROVAL", isManagerCreated: false },
     ],
-  })
+  )
 
+  await createTeamWithMembers(
+    project1.id,
+    "Design",
+    "Visual design, branding, illustrations, UI mockups",
+    aditiId, // Manager
+    [teeshaId, komalId], // Members
+    [
+      { title: "Finalise brand colour palette",  status: "DONE",        priority: "URGENT", assigneeId: aditiId,  creatorId: aditiId, completedAt: new Date("2026-04-12") },
+      { title: "Design homepage mockups (3 variations)", status: "IN_REVIEW",  priority: "HIGH",   assigneeId: teeshaId, creatorId: aditiId, dueDate: new Date("2026-05-22") },
+      { title: "Create illustration set for features section", status: "TODO", priority: "MEDIUM", assigneeId: komalId,  creatorId: aditiId, dueDate: new Date("2026-06-01") },
+      { title: "Explore dark-mode variants",     status: "TODO", priority: "LOW", assigneeId: komalId, creatorId: komalId, approvalStatus: "PENDING_APPROVAL", isManagerCreated: false },
+    ],
+  )
+
+  await createTeamWithMembers(
+    project1.id,
+    "Content",
+    "Copywriting, blog migration, SEO content",
+    ayushiId, // Manager
+    [praneetId, diwakarId], // Members
+    [
+      { title: "Write homepage hero copy",       status: "DONE",        priority: "HIGH", assigneeId: ayushiId, creatorId: ayushiId, completedAt: new Date("2026-04-15") },
+      { title: "Migrate 25 old blog posts",      status: "IN_PROGRESS", priority: "HIGH", assigneeId: praneetId, creatorId: ayushiId, dueDate: new Date("2026-05-30") },
+      { title: "Draft About Us page copy",       status: "TODO",        priority: "MEDIUM", assigneeId: diwakarId, creatorId: ayushiId, dueDate: new Date("2026-06-10") },
+    ],
+  )
+
+  // ─── Project 2: Q2 Marketing Campaign ───
   const project2 = await prisma.project.create({
     data: {
-      name: "Q2 Content Production",
-      code: "CNT-002",
-      description: "Plan and deliver Q2 video and design content deliverables",
-      status: "PLANNING",
-      startDate: new Date("2026-04-01"),
+      name: "Q2 Marketing Campaign",
+      code: "DN02",
+      description: "Multi-channel marketing campaign for new product launch — paid ads, SEO content, social, video.",
+      status: "ACTIVE",
+      priority: "URGENT",
+      startDate: new Date("2026-04-15"),
       endDate: new Date("2026-06-30"),
-      ownerId: adminId,
-      members: {
-        create: [
-          { employeeId: adminId, role: "OWNER" },
-          { employeeId: vivekId, role: "MEMBER" },
-        ],
-      },
+      budget: 500000,
+      ownerId: rupamId,
+      currentPhaseId: executingPhase?.id ?? null,
     },
   })
 
-  await prisma.projectTask.createMany({
+  await createTeamWithMembers(
+    project2.id,
+    "Paid Ads",
+    "Google Ads, Meta Ads, LinkedIn campaigns",
+    hemantId, // Manager
+    [shivamId, jatinId], // Members
+    [
+      { title: "Audit existing ad accounts",     status: "DONE", priority: "URGENT", assigneeId: hemantId, creatorId: hemantId, completedAt: new Date("2026-04-20") },
+      { title: "Set up Q2 Google Ads structure", status: "IN_PROGRESS", priority: "HIGH", assigneeId: shivamId, creatorId: hemantId, dueDate: new Date("2026-05-20") },
+      { title: "Create Meta Ads creatives",      status: "TODO", priority: "HIGH", assigneeId: jatinId,  creatorId: hemantId, dueDate: new Date("2026-05-25") },
+    ],
+  )
+
+  // Note: an employee can only be on ONE team per project, but they CAN be on different
+  // teams across different projects (e.g., Shailesh on P1 Web Dev AND P2 Video Production).
+  await createTeamWithMembers(
+    project2.id,
+    "Video Production",
+    "Promo videos, social shorts, B-roll",
+    shaileshId, // Manager
+    [],
+    [
+      { title: "Storyboard for product launch video", status: "TODO", priority: "HIGH", assigneeId: shaileshId, creatorId: shaileshId, dueDate: new Date("2026-05-20") },
+    ],
+  )
+
+  // ─── Project 3: Internal HRMS Improvements ───
+  const project3 = await prisma.project.create({
+    data: {
+      name: "HRMS Internal Improvements",
+      code: "DN03",
+      description: "Q2 enhancements to the internal HRMS platform — payroll auto-gen, performance scoring, mobile responsiveness.",
+      status: "PLANNING",
+      priority: "MEDIUM",
+      startDate: new Date("2026-06-01"),
+      endDate: new Date("2026-08-31"),
+      budget: 200000,
+      ownerId: adminId,
+      currentPhaseId: initiationPhase?.id ?? null,
+    },
+  })
+
+  await createTeamWithMembers(
+    project3.id,
+    "Web Development",
+    "Engineering work on the HRMS app",
+    rupamId, // Manager
+    [],
+    [
+      { title: "Build payroll auto-generation",  status: "TODO", priority: "HIGH", assigneeId: rupamId, creatorId: adminId, dueDate: new Date("2026-07-15") },
+      { title: "Build performance scoring engine", status: "TODO", priority: "HIGH", assigneeId: rupamId, creatorId: adminId, dueDate: new Date("2026-07-30") },
+    ],
+  )
+
+  // ─── Sample Resources (file metadata only — no real files) ───
+  await prisma.projectResource.createMany({
     data: [
+      // Project 1 — Acme Website
       {
-        title: "Content calendar finalisation",
-        status: "IN_PROGRESS",
-        priority: "URGENT",
-        projectId: project2.id,
-        assigneeId: adminId,
-        creatorId: adminId,
+        projectId: project1.id,
+        teamId: null,                                  // project-level
+        category: "BRIEFS",
+        fileName: "acme-website-brief.pdf",
+        fileSize: 2_400_000,
+        mimeType: "application/pdf",
+        objectKey: `projects/${project1.id}/BRIEFS/acme-website-brief.pdf`,
+        description: "Client brief from Acme team — scope, deliverables, timelines",
+        uploadedById: rupamId,
       },
       {
-        title: "Script writing for Q2 videos",
-        status: "TODO",
-        priority: "HIGH",
-        projectId: project2.id,
-        assigneeId: vivekId,
-        creatorId: adminId,
-        dueDate: new Date("2026-04-25"),
-      },
-      {
-        title: "Shoot scheduling",
-        status: "TODO",
-        priority: "HIGH",
-        projectId: project2.id,
-        assigneeId: shaileshId,
-        creatorId: adminId,
-        dueDate: new Date("2026-05-05"),
-      },
-      {
-        title: "Post-production handoff plan",
-        status: "TODO",
-        priority: "MEDIUM",
-        projectId: project2.id,
-        assigneeId: rupamId,
-        creatorId: adminId,
+        projectId: project1.id,
+        teamId: null,
+        category: "REFERENCES",
+        fileName: "competitor-analysis.xlsx",
+        fileSize: 850_000,
+        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        objectKey: `projects/${project1.id}/REFERENCES/competitor-analysis.xlsx`,
+        description: "Analysis of 5 competitor websites",
+        uploadedById: aditiId,
       },
     ],
   })
 
-  console.log("  ✓ Created 2 projects with tasks")
+  console.log("  ✓ Created 3 projects, 7 teams, sample tasks & 2 resources")
 
   // ===========================================================================
   // STEP 14 - Performance Review Cycle + Goals
