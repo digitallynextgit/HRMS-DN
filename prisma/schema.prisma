@@ -458,6 +458,11 @@ model Employee {
   // Floating holiday selections
   floatingHolidays FloatingHolidaySelection[]
 
+  // V2 Project Management
+  managedTeams           ProjectTeam[]       @relation("TeamManager")
+  projectTeamMemberships ProjectTeamMember[] @relation("ProjectTeamMembership")
+  uploadedResources      ProjectResource[]   @relation("ResourceUploader")
+
   @@map("employees")
 }
 
@@ -848,28 +853,123 @@ model PayrollRecord {
 // =============================================================================
 
 model Project {
-  id          String        @id @default(uuid()) @map("id")
-  name        String        @map("name")
-  description String?       @map("description") @db.Text
-  code        String        @unique @map("code")
-  status      ProjectStatus @default(PLANNING) @map("status")
-  priority    TaskPriority  @default(MEDIUM) @map("priority")
-  ownerId     String        @map("owner_id")
-  startDate   DateTime?     @map("start_date") @db.Date
-  endDate     DateTime?     @map("end_date") @db.Date
-  budget      Float?        @map("budget")
-  isArchived  Boolean       @default(false) @map("is_archived")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  id              String        @id @default(uuid()) @map("id")
+  name            String        @map("name")
+  description     String?       @map("description") @db.Text
+  code            String        @unique @map("code")
+  status          ProjectStatus @default(PLANNING) @map("status")
+  priority        TaskPriority  @default(MEDIUM) @map("priority")
+  ownerId         String        @map("owner_id")
+  currentPhaseId  String?       @map("current_phase_id")
+  startDate       DateTime?     @map("start_date") @db.Date              // "Onboarding Date" in UI
+  endDate         DateTime?     @map("end_date") @db.Date                // deprecated — kept for back-compat
+  budget          Float?        @map("budget")
+  isArchived      Boolean       @default(false) @map("is_archived")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
 
-  owner      Employee        @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  members    ProjectMember[]
-  tasks      ProjectTask[]
-  timesheets Timesheet[]
+  owner        Employee            @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  currentPhase ProjectPhase?       @relation(fields: [currentPhaseId], references: [id], onDelete: SetNull)
+  members      ProjectMember[]                                            // legacy — kept for migration safety
+  teams        ProjectTeam[]                                              // v2 — primary structure
+  tasks        ProjectTask[]
+  resources    ProjectResource[]
+  timesheets   Timesheet[]
 
   @@index([status])
   @@index([ownerId])
+  @@index([currentPhaseId])
   @@map("projects")
+}
+
+// Global, admin-managed list of project phases (e.g. Initiation, Planning, Executing, …)
+model ProjectPhase {
+  id           String   @id @default(uuid()) @map("id")
+  name         String   @unique @map("name")
+  description  String?  @map("description")
+  displayOrder Int      @default(0) @map("display_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  projects Project[]
+
+  @@map("project_phases")
+}
+
+// ─── V2: Project Teams ────────────────────────────────────────────────────────
+model ProjectTeam {
+  id          String   @id @default(uuid()) @map("id")
+  projectId   String   @map("project_id")
+  name        String   @map("name")                                          // ad-hoc, e.g. "Web Development"
+  description String?  @map("description")
+  managerId   String?  @map("manager_id")                                    // nullable when team is empty
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  project   Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  manager   Employee?            @relation("TeamManager", fields: [managerId], references: [id], onDelete: SetNull)
+  members   ProjectTeamMember[]
+  tasks     ProjectTask[]
+  resources ProjectResource[]
+
+  @@unique([projectId, name])
+  @@index([projectId])
+  @@map("project_teams")
+}
+
+model ProjectTeamMember {
+  id         String   @id @default(uuid()) @map("id")
+  teamId     String   @map("team_id")
+  projectId  String   @map("project_id")                                     // denormalised to enforce 1 team per project per employee
+  employeeId String   @map("employee_id")
+  joinedAt   DateTime @default(now()) @map("joined_at")
+
+  team     ProjectTeam @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  employee Employee    @relation("ProjectTeamMembership", fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, employeeId])
+  @@unique([projectId, employeeId])                                          // one team per project per employee
+  @@index([teamId])
+  @@index([employeeId])
+  @@map("project_team_members")
+}
+
+enum ResourceCategory {
+  BRIEFS
+  ASSETS
+  DELIVERABLES
+  REFERENCES
+  OTHER
+}
+
+model ProjectResource {
+  id           String           @id @default(uuid()) @map("id")
+  projectId    String           @map("project_id")
+  teamId       String?          @map("team_id")                              // null = project-level
+  category     ResourceCategory @default(OTHER) @map("category")
+  fileName     String           @map("file_name")
+  fileSize     Int              @map("file_size")
+  mimeType     String           @map("mime_type")
+  objectKey    String           @unique @map("object_key")                   // Supabase storage path
+  description  String?          @map("description")
+  uploadedById String           @map("uploaded_by_id")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team       ProjectTeam? @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  uploadedBy Employee     @relation("ResourceUploader", fields: [uploadedById], references: [id])
+
+  @@index([projectId])
+  @@index([teamId])
+  @@index([category])
+  @@map("project_resources")
+}
+
+enum TaskApprovalStatus {
+  APPROVED
+  PENDING_APPROVAL
+  REJECTED
 }
 
 model ProjectMember {
@@ -887,31 +987,38 @@ model ProjectMember {
 }
 
 model ProjectTask {
-  id             String       @id @default(uuid()) @map("id")
-  projectId      String       @map("project_id")
-  title          String       @map("title")
-  description    String?      @map("description") @db.Text
-  status         TaskStatus   @default(TODO) @map("status")
-  priority       TaskPriority @default(MEDIUM) @map("priority")
-  assigneeId     String?      @map("assignee_id")
-  creatorId      String       @map("creator_id")
-  startDate      DateTime?    @map("start_date") @db.Date
-  dueDate        DateTime?    @map("due_date") @db.Date
-  completedAt    DateTime?    @map("completed_at")
-  estimatedHours Float?       @map("estimated_hours")
-  loggedHours    Float        @default(0) @map("logged_hours")
-  tags           String[]     @map("tags")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  updatedAt      DateTime     @updatedAt @map("updated_at")
+  id               String              @id @default(uuid()) @map("id")
+  projectId        String              @map("project_id")
+  teamId           String?             @map("team_id")                       // v2 — null only for legacy tasks
+  title            String              @map("title")
+  description      String?             @map("description") @db.Text
+  status           TaskStatus          @default(TODO) @map("status")
+  priority         TaskPriority        @default(MEDIUM) @map("priority")
+  assigneeId       String?             @map("assignee_id")
+  creatorId        String              @map("creator_id")
+  startDate        DateTime?           @map("start_date") @db.Date
+  dueDate          DateTime?           @map("due_date") @db.Date
+  completedAt      DateTime?           @map("completed_at")
+  estimatedHours   Float?              @map("estimated_hours")
+  loggedHours      Float               @default(0) @map("logged_hours")
+  tags             String[]            @map("tags")
+  approvalStatus   TaskApprovalStatus  @default(APPROVED) @map("approval_status")
+  isManagerCreated Boolean             @default(true) @map("is_manager_created")
+  rejectionReason  String?             @map("rejection_reason")
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
 
-  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignee   Employee?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  creator    Employee    @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Restrict)
+  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team       ProjectTeam? @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignee   Employee?    @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  creator    Employee     @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Restrict)
   timesheets Timesheet[]
 
   @@index([projectId])
+  @@index([teamId])
   @@index([assigneeId])
   @@index([status])
+  @@index([approvalStatus])
   @@map("project_tasks")
 }
 

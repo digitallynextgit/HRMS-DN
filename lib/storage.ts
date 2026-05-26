@@ -10,12 +10,13 @@ const BUCKET = process.env.SUPABASE_STORAGE_BUCKET || "hrms-documents"
 export async function ensureBucket(): Promise<void> {
   try {
     const { data } = await supabase.storage.getBucket(BUCKET)
-    if (!data) {
-      const { error } = await supabase.storage.createBucket(BUCKET, { public: false })
-      if (error) console.error("Failed to create Supabase bucket:", error.message)
+    if (data) return
+    const { error } = await supabase.storage.createBucket(BUCKET, { public: false })
+    if (error && !error.message?.toLowerCase().includes("already exists")) {
+      console.error("[STORAGE] Failed to create bucket:", error.message)
     }
   } catch (error) {
-    console.error("Failed to ensure Supabase bucket:", error)
+    console.error("[STORAGE] ensureBucket error:", error)
   }
 }
 

@@ -157,6 +157,12 @@ const ADMIN_ITEMS: NavItem[] = [
     icon: Mail,
     permission: PERMISSIONS.EMAIL_TEMPLATE_READ,
   },
+  {
+    label: "Project Settings",
+    href: "/admin/project-settings",
+    icon: FolderKanban,
+    permission: PERMISSIONS.PROJECT_WRITE,
+  },
 ]
 
 function canAccess(item: NavItem, permissions: string[], roles: string[]): boolean {
