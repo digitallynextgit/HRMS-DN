@@ -9,8 +9,22 @@ import { Pool } from "pg"
 import bcrypt from "bcryptjs"
 import { PERMISSION_DEFINITIONS } from "../lib/constants"
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 1,
+  idleTimeoutMillis: 0,
+  keepAlive: true,
+})
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
+
+// Prisma 7 + pg adapter breaks on createMany with session pooler.
+// This helper inserts rows one-by-one instead.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function safeCreateMany(model: any, rows: Record<string, unknown>[]) {
+  for (const row of rows) {
+    await model.create({ data: row })
+  }
+}
 
 async function main() {
   console.log("Starting HRMS database seed...")
@@ -72,14 +86,12 @@ async function main() {
   // ===========================================================================
   console.log("Step 2: Creating permissions...")
 
-  await prisma.permission.createMany({
-    data: PERMISSION_DEFINITIONS.map((def) => ({
-      scope: def.scope,
-      module: def.module,
-      action: def.action,
-      description: def.description,
-    })),
-  })
+  await safeCreateMany(prisma.permission, PERMISSION_DEFINITIONS.map((def) => ({
+    scope: def.scope,
+    module: def.module,
+    action: def.action,
+    description: def.description,
+  })))
   const permissionRecords = await prisma.permission.findMany()
 
   console.log(`  ✓ Created ${permissionRecords.length} permissions`)
@@ -194,12 +206,10 @@ async function main() {
         : permissionRecords.filter((p) => (permissions as string[]).includes(p.scope))
 
     if (permsToAssign.length > 0) {
-      await prisma.rolePermission.createMany({
-        data: permsToAssign.map((p) => ({
-          roleId: role.id,
-          permissionId: p.id,
-        })),
-      })
+      await safeCreateMany(prisma.rolePermission, permsToAssign.map((p) => ({
+        roleId: role.id,
+        permissionId: p.id,
+      })))
     }
 
     console.log(`  ✓ Created role "${role.displayName}" with ${permsToAssign.length} permissions`)
@@ -233,7 +243,7 @@ async function main() {
     { name: "Operations", code: "OPS" },
   ]
 
-  await prisma.department.createMany({ data: departmentsData })
+  await safeCreateMany(prisma.department, departmentsData)
   const departmentRecords = await prisma.department.findMany()
 
   const departmentMap = new Map(departmentRecords.map((d) => [d.name, d.id]))
@@ -280,7 +290,12 @@ async function main() {
     { title: "Senior Executive", level: 4, code: null, phase: null, maxMonthlySalary: null },
   ]
 
-  await prisma.designation.createMany({ data: designationsData })
+  // await prisma.designation.createMany({ data: designationsData })
+
+  for (const d of designationsData) {
+    await prisma.designation.create({ data: d })
+  }
+
   const designationRecords = await prisma.designation.findMany()
 
   const designationMap = new Map(designationRecords.map((d) => [d.title, d.id]))
@@ -1587,7 +1602,7 @@ async function main() {
     { name: "Bhai Dooj", date: new Date("2026-11-11"), isOptional: true },
   ]
 
-  await prisma.holiday.createMany({ data: holidays2026 })
+  await safeCreateMany(prisma.holiday, holidays2026)
 
   await prisma.hikvisionDevice.create({
     data: {
@@ -1697,7 +1712,7 @@ async function main() {
     },
   ]
 
-  await prisma.leaveType.createMany({ data: leaveTypesData })
+  await safeCreateMany(prisma.leaveType, leaveTypesData)
   const leaveTypeRecords = await prisma.leaveType.findMany()
   const leaveTypeMap = new Map(leaveTypeRecords.map((lt) => [lt.code, lt.id]))
 
@@ -1780,7 +1795,7 @@ async function main() {
     )
   }
 
-  await prisma.leaveBalance.createMany({ data: leaveBalanceData })
+  await safeCreateMany(prisma.leaveBalance, leaveBalanceData)
   console.log(`  ✓ Created ${leaveBalanceData.length} leave balances`)
 
   // ===========================================================================
@@ -2126,7 +2141,7 @@ async function main() {
     }
   }
 
-  await prisma.attendanceLog.createMany({ data: attendanceLogs })
+  await safeCreateMany(prisma.attendanceLog, attendanceLogs)
   console.log(`  ✓ Created ${attendanceLogs.length} attendance logs`)
 
   // ===========================================================================
@@ -2135,17 +2150,15 @@ async function main() {
   console.log("Step 13: Creating projects & tasks...")
 
   // Seed default project phases (PMI lifecycle)
-  await prisma.projectPhase.createMany({
-    data: [
-      { name: "Initiation",                 description: "Define the project, identify stakeholders, set initial scope", displayOrder: 1 },
-      { name: "Planning",                   description: "Detailed plan, timeline, resource allocation",                  displayOrder: 2 },
-      { name: "Executing",                  description: "Active delivery of project work",                                displayOrder: 3 },
-      { name: "Monitoring & Controlling",   description: "Track progress, manage changes, quality control",                displayOrder: 4 },
-      { name: "Closure",                    description: "Final delivery, retrospective, handover, archival",              displayOrder: 5 },
-    ],
-  })
-  const initiationPhase = await prisma.projectPhase.findUnique({ where: { name: "Initiation" } })
-  const executingPhase  = await prisma.projectPhase.findUnique({ where: { name: "Executing"  } })
+  await safeCreateMany(prisma.projectPhase, [
+    { name: "Initiation", description: "Define the project, identify stakeholders, set initial scope", displayOrder: 1 },
+    { name: "Planning", description: "Detailed plan, timeline, resource allocation", displayOrder: 2 },
+    { name: "Executing", description: "Active delivery of project work", displayOrder: 3 },
+    { name: "Monitoring & Controlling", description: "Track progress, manage changes, quality control", displayOrder: 4 },
+    { name: "Closure", description: "Final delivery, retrospective, handover, archival", displayOrder: 5 },
+  ])
+  const initiationPhase = await prisma.projectPhase.findFirst({ where: { name: "Initiation", parentId: null } })
+  const executingPhase = await prisma.projectPhase.findFirst({ where: { name: "Executing", parentId: null } })
 
   const adminId = employeeNoToId.get("EMP-001")!
   const rupamId = employeeNoToId.get("EMP-113")! // Rupam - senior active employee
@@ -2154,16 +2167,16 @@ async function main() {
   const vivekId = employeeNoToId.get("EMP-124")! // Vivek
 
   // Additional employee IDs needed for diverse team membership
-  const aditiId       = employeeNoToId.get("EMP-112")! // Aditi
-  const shivamId      = employeeNoToId.get("EMP-119")! // Shivam
-  const saurabhId     = employeeNoToId.get("EMP-129")! // Saurabh Singh Rawat
-  const mridulId      = employeeNoToId.get("EMP-132")! // Mridul
-  const jatinId       = employeeNoToId.get("EMP-135")! // Jatin
-  const hemantId      = employeeNoToId.get("EMP-136")! // Hemant
-  const ayushiId      = employeeNoToId.get("EMP-137")! // Ayushi
-  const teeshaId      = employeeNoToId.get("EMP-143")! // Teesha
-  const diwakarId     = employeeNoToId.get("EMP-145")! // Diwakar
-  const komalId       = employeeNoToId.get("EMP-146")! // Komal
+  const aditiId = employeeNoToId.get("EMP-112")! // Aditi
+  const shivamId = employeeNoToId.get("EMP-119")! // Shivam
+  const saurabhId = employeeNoToId.get("EMP-129")! // Saurabh Singh Rawat
+  const mridulId = employeeNoToId.get("EMP-132")! // Mridul
+  const jatinId = employeeNoToId.get("EMP-135")! // Jatin
+  const hemantId = employeeNoToId.get("EMP-136")! // Hemant
+  const ayushiId = employeeNoToId.get("EMP-137")! // Ayushi
+  const teeshaId = employeeNoToId.get("EMP-143")! // Teesha
+  const diwakarId = employeeNoToId.get("EMP-145")! // Diwakar
+  const komalId = employeeNoToId.get("EMP-146")! // Komal
 
   // Helper to create a team + members + manager + tasks
   async function createTeamWithMembers(
@@ -2196,14 +2209,15 @@ async function main() {
     })
 
     // Insert manager + members (manager included in member list)
-    const memberIds = [managerEmployeeId, ...memberEmployeeIds.filter((id) => id !== managerEmployeeId)]
-    await prisma.projectTeamMember.createMany({
-      data: memberIds.map((employeeId) => ({
-        teamId: team.id,
-        projectId,
-        employeeId,
-      })),
-    })
+    const memberIds = [
+      managerEmployeeId,
+      ...memberEmployeeIds.filter((id) => id !== managerEmployeeId),
+    ]
+    await safeCreateMany(prisma.projectTeamMember, memberIds.map((employeeId) => ({
+      teamId: team.id,
+      projectId,
+      employeeId,
+    })))
 
     // Tasks
     for (const t of tasks) {
@@ -2233,8 +2247,9 @@ async function main() {
   const project1 = await prisma.project.create({
     data: {
       name: "Acme Website Redesign",
-      code: "DN01",
-      description: "Complete redesign and rebuild of Acme's marketing website with new branding, content, and SEO foundation.",
+      code: "DN00001",
+      description:
+        "Complete redesign and rebuild of Acme's marketing website with new branding, content, and SEO foundation.",
       status: "ACTIVE",
       priority: "HIGH",
       currentPhaseId: executingPhase?.id ?? null,
@@ -2252,10 +2267,39 @@ async function main() {
     vivekId, // Manager
     [shaileshId, saurabhId, mridulId], // Members
     [
-      { title: "Set up Next.js project + Vercel deployment", status: "DONE",        priority: "HIGH",   assigneeId: shaileshId, creatorId: vivekId, completedAt: new Date("2026-04-10") },
-      { title: "Build homepage hero section",                status: "IN_PROGRESS", priority: "HIGH",   assigneeId: saurabhId,  creatorId: vivekId, dueDate: new Date("2026-05-25") },
-      { title: "Implement contact form with email",          status: "TODO",        priority: "MEDIUM", assigneeId: mridulId,   creatorId: vivekId, dueDate: new Date("2026-06-05") },
-      { title: "Refactor navigation for mobile",             status: "TODO",        priority: "MEDIUM", assigneeId: saurabhId,  creatorId: saurabhId, approvalStatus: "PENDING_APPROVAL", isManagerCreated: false },
+      {
+        title: "Set up Next.js project + Vercel deployment",
+        status: "DONE",
+        priority: "HIGH",
+        assigneeId: shaileshId,
+        creatorId: vivekId,
+        completedAt: new Date("2026-04-10"),
+      },
+      {
+        title: "Build homepage hero section",
+        status: "IN_PROGRESS",
+        priority: "HIGH",
+        assigneeId: saurabhId,
+        creatorId: vivekId,
+        dueDate: new Date("2026-05-25"),
+      },
+      {
+        title: "Implement contact form with email",
+        status: "TODO",
+        priority: "MEDIUM",
+        assigneeId: mridulId,
+        creatorId: vivekId,
+        dueDate: new Date("2026-06-05"),
+      },
+      {
+        title: "Refactor navigation for mobile",
+        status: "TODO",
+        priority: "MEDIUM",
+        assigneeId: saurabhId,
+        creatorId: saurabhId,
+        approvalStatus: "PENDING_APPROVAL",
+        isManagerCreated: false,
+      },
     ],
   )
 
@@ -2266,10 +2310,39 @@ async function main() {
     aditiId, // Manager
     [teeshaId, komalId], // Members
     [
-      { title: "Finalise brand colour palette",  status: "DONE",        priority: "URGENT", assigneeId: aditiId,  creatorId: aditiId, completedAt: new Date("2026-04-12") },
-      { title: "Design homepage mockups (3 variations)", status: "IN_REVIEW",  priority: "HIGH",   assigneeId: teeshaId, creatorId: aditiId, dueDate: new Date("2026-05-22") },
-      { title: "Create illustration set for features section", status: "TODO", priority: "MEDIUM", assigneeId: komalId,  creatorId: aditiId, dueDate: new Date("2026-06-01") },
-      { title: "Explore dark-mode variants",     status: "TODO", priority: "LOW", assigneeId: komalId, creatorId: komalId, approvalStatus: "PENDING_APPROVAL", isManagerCreated: false },
+      {
+        title: "Finalise brand colour palette",
+        status: "DONE",
+        priority: "URGENT",
+        assigneeId: aditiId,
+        creatorId: aditiId,
+        completedAt: new Date("2026-04-12"),
+      },
+      {
+        title: "Design homepage mockups (3 variations)",
+        status: "IN_REVIEW",
+        priority: "HIGH",
+        assigneeId: teeshaId,
+        creatorId: aditiId,
+        dueDate: new Date("2026-05-22"),
+      },
+      {
+        title: "Create illustration set for features section",
+        status: "TODO",
+        priority: "MEDIUM",
+        assigneeId: komalId,
+        creatorId: aditiId,
+        dueDate: new Date("2026-06-01"),
+      },
+      {
+        title: "Explore dark-mode variants",
+        status: "TODO",
+        priority: "LOW",
+        assigneeId: komalId,
+        creatorId: komalId,
+        approvalStatus: "PENDING_APPROVAL",
+        isManagerCreated: false,
+      },
     ],
   )
 
@@ -2280,9 +2353,30 @@ async function main() {
     ayushiId, // Manager
     [praneetId, diwakarId], // Members
     [
-      { title: "Write homepage hero copy",       status: "DONE",        priority: "HIGH", assigneeId: ayushiId, creatorId: ayushiId, completedAt: new Date("2026-04-15") },
-      { title: "Migrate 25 old blog posts",      status: "IN_PROGRESS", priority: "HIGH", assigneeId: praneetId, creatorId: ayushiId, dueDate: new Date("2026-05-30") },
-      { title: "Draft About Us page copy",       status: "TODO",        priority: "MEDIUM", assigneeId: diwakarId, creatorId: ayushiId, dueDate: new Date("2026-06-10") },
+      {
+        title: "Write homepage hero copy",
+        status: "DONE",
+        priority: "HIGH",
+        assigneeId: ayushiId,
+        creatorId: ayushiId,
+        completedAt: new Date("2026-04-15"),
+      },
+      {
+        title: "Migrate 25 old blog posts",
+        status: "IN_PROGRESS",
+        priority: "HIGH",
+        assigneeId: praneetId,
+        creatorId: ayushiId,
+        dueDate: new Date("2026-05-30"),
+      },
+      {
+        title: "Draft About Us page copy",
+        status: "TODO",
+        priority: "MEDIUM",
+        assigneeId: diwakarId,
+        creatorId: ayushiId,
+        dueDate: new Date("2026-06-10"),
+      },
     ],
   )
 
@@ -2290,8 +2384,9 @@ async function main() {
   const project2 = await prisma.project.create({
     data: {
       name: "Q2 Marketing Campaign",
-      code: "DN02",
-      description: "Multi-channel marketing campaign for new product launch — paid ads, SEO content, social, video.",
+      code: "DN00002",
+      description:
+        "Multi-channel marketing campaign for new product launch — paid ads, SEO content, social, video.",
       status: "ACTIVE",
       priority: "URGENT",
       startDate: new Date("2026-04-15"),
@@ -2309,9 +2404,30 @@ async function main() {
     hemantId, // Manager
     [shivamId, jatinId], // Members
     [
-      { title: "Audit existing ad accounts",     status: "DONE", priority: "URGENT", assigneeId: hemantId, creatorId: hemantId, completedAt: new Date("2026-04-20") },
-      { title: "Set up Q2 Google Ads structure", status: "IN_PROGRESS", priority: "HIGH", assigneeId: shivamId, creatorId: hemantId, dueDate: new Date("2026-05-20") },
-      { title: "Create Meta Ads creatives",      status: "TODO", priority: "HIGH", assigneeId: jatinId,  creatorId: hemantId, dueDate: new Date("2026-05-25") },
+      {
+        title: "Audit existing ad accounts",
+        status: "DONE",
+        priority: "URGENT",
+        assigneeId: hemantId,
+        creatorId: hemantId,
+        completedAt: new Date("2026-04-20"),
+      },
+      {
+        title: "Set up Q2 Google Ads structure",
+        status: "IN_PROGRESS",
+        priority: "HIGH",
+        assigneeId: shivamId,
+        creatorId: hemantId,
+        dueDate: new Date("2026-05-20"),
+      },
+      {
+        title: "Create Meta Ads creatives",
+        status: "TODO",
+        priority: "HIGH",
+        assigneeId: jatinId,
+        creatorId: hemantId,
+        dueDate: new Date("2026-05-25"),
+      },
     ],
   )
 
@@ -2324,7 +2440,14 @@ async function main() {
     shaileshId, // Manager
     [],
     [
-      { title: "Storyboard for product launch video", status: "TODO", priority: "HIGH", assigneeId: shaileshId, creatorId: shaileshId, dueDate: new Date("2026-05-20") },
+      {
+        title: "Storyboard for product launch video",
+        status: "TODO",
+        priority: "HIGH",
+        assigneeId: shaileshId,
+        creatorId: shaileshId,
+        dueDate: new Date("2026-05-20"),
+      },
     ],
   )
 
@@ -2332,8 +2455,9 @@ async function main() {
   const project3 = await prisma.project.create({
     data: {
       name: "HRMS Internal Improvements",
-      code: "DN03",
-      description: "Q2 enhancements to the internal HRMS platform — payroll auto-gen, performance scoring, mobile responsiveness.",
+      code: "DN00003",
+      description:
+        "Q2 enhancements to the internal HRMS platform — payroll auto-gen, performance scoring, mobile responsiveness.",
       status: "PLANNING",
       priority: "MEDIUM",
       startDate: new Date("2026-06-01"),
@@ -2351,39 +2475,50 @@ async function main() {
     rupamId, // Manager
     [],
     [
-      { title: "Build payroll auto-generation",  status: "TODO", priority: "HIGH", assigneeId: rupamId, creatorId: adminId, dueDate: new Date("2026-07-15") },
-      { title: "Build performance scoring engine", status: "TODO", priority: "HIGH", assigneeId: rupamId, creatorId: adminId, dueDate: new Date("2026-07-30") },
+      {
+        title: "Build payroll auto-generation",
+        status: "TODO",
+        priority: "HIGH",
+        assigneeId: rupamId,
+        creatorId: adminId,
+        dueDate: new Date("2026-07-15"),
+      },
+      {
+        title: "Build performance scoring engine",
+        status: "TODO",
+        priority: "HIGH",
+        assigneeId: rupamId,
+        creatorId: adminId,
+        dueDate: new Date("2026-07-30"),
+      },
     ],
   )
 
   // ─── Sample Resources (file metadata only — no real files) ───
-  await prisma.projectResource.createMany({
-    data: [
-      // Project 1 — Acme Website
-      {
-        projectId: project1.id,
-        teamId: null,                                  // project-level
-        category: "BRIEFS",
-        fileName: "acme-website-brief.pdf",
-        fileSize: 2_400_000,
-        mimeType: "application/pdf",
-        objectKey: `projects/${project1.id}/BRIEFS/acme-website-brief.pdf`,
-        description: "Client brief from Acme team — scope, deliverables, timelines",
-        uploadedById: rupamId,
-      },
-      {
-        projectId: project1.id,
-        teamId: null,
-        category: "REFERENCES",
-        fileName: "competitor-analysis.xlsx",
-        fileSize: 850_000,
-        mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        objectKey: `projects/${project1.id}/REFERENCES/competitor-analysis.xlsx`,
-        description: "Analysis of 5 competitor websites",
-        uploadedById: aditiId,
-      },
-    ],
-  })
+  await safeCreateMany(prisma.projectResource, [
+    {
+      projectId: project1.id,
+      teamId: null,
+      category: "BRIEFS",
+      fileName: "acme-website-brief.pdf",
+      fileSize: 2_400_000,
+      mimeType: "application/pdf",
+      objectKey: `projects/${project1.id}/BRIEFS/acme-website-brief.pdf`,
+      description: "Client brief from Acme team — scope, deliverables, timelines",
+      uploadedById: rupamId,
+    },
+    {
+      projectId: project1.id,
+      teamId: null,
+      category: "REFERENCES",
+      fileName: "competitor-analysis.xlsx",
+      fileSize: 850_000,
+      mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      objectKey: `projects/${project1.id}/REFERENCES/competitor-analysis.xlsx`,
+      description: "Analysis of 5 competitor websites",
+      uploadedById: aditiId,
+    },
+  ])
 
   console.log("  ✓ Created 3 projects, 7 teams, sample tasks & 2 resources")
 
@@ -2446,8 +2581,7 @@ async function main() {
   }
 
   // Goals
-  await prisma.goal.createMany({
-    data: [
+  await safeCreateMany(prisma.goal, [
       {
         employeeId: shaileshId,
         title: "Complete advanced content editing certification",
@@ -2497,8 +2631,7 @@ async function main() {
         year: 2026,
         targetDate: new Date("2026-04-30"),
       },
-    ],
-  })
+  ])
 
   console.log("  ✓ Created 1 review cycle, reviews for all employees, 6 goals")
 

@@ -12,22 +12,36 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useProject, useProjectTeams } from "@/hooks/use-projects"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, TASK_PRIORITY_LABELS, TASK_PRIORITY_COLORS } from "@/lib/constants"
 import { cn, formatDate, getInitials } from "@/lib/utils"
-import { ChevronLeft, Calendar, Users, FolderKanban, FileText, Layers, Pencil, GitBranch } from "lucide-react"
+import { ChevronLeft, ChevronDown, Calendar, Users, FolderKanban, FileText, Layers, Pencil, GitBranch, Activity, MessageSquare, KeyRound } from "lucide-react"
 import { TeamsTab } from "@/components/projects/teams-tab"
 import { TasksTab } from "@/components/projects/tasks-tab"
 import { ResourcesTab } from "@/components/projects/resources-tab"
+import { ActivityTab } from "@/components/projects/activity-tab"
+import { MessagesTab } from "@/components/projects/messages-tab"
+import { PasswordsTab } from "@/components/projects/passwords-tab"
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog"
 
-interface Phase { id: string; name: string; displayOrder: number; isActive: boolean }
+interface SubPhase { id: string; name: string; displayOrder: number; isActive: boolean; parentId: string }
+interface Phase { id: string; name: string; displayOrder: number; isActive: boolean; parentId: null; children: SubPhase[] }
 async function fetchPhases(): Promise<{ data: Phase[] }> {
   const res = await fetch("/api/project-phases")
   if (!res.ok) throw new Error()
   return res.json()
+}
+
+function getPhaseLabel(phaseId: string | null | undefined, phases: Phase[]): string {
+  if (!phaseId) return ""
+  for (const p of phases) {
+    if (p.id === phaseId) return p.name
+    const child = p.children.find((c) => c.id === phaseId)
+    if (child) return `${p.name} › ${child.name}`
+  }
+  return ""
 }
 
 export default function ProjectDetailPage() {
@@ -129,28 +143,77 @@ export default function ProjectDetailPage() {
             <TabsTrigger value="overview" className="gap-1.5"><Layers className="h-3.5 w-3.5" />Overview</TabsTrigger>
             <TabsTrigger value="teams" className="gap-1.5"><Users className="h-3.5 w-3.5" />Teams</TabsTrigger>
             <TabsTrigger value="tasks" className="gap-1.5"><FolderKanban className="h-3.5 w-3.5" />Tasks</TabsTrigger>
+            <TabsTrigger value="messages" className="gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Messages</TabsTrigger>
+            <TabsTrigger value="activity" className="gap-1.5"><Activity className="h-3.5 w-3.5" />Activity</TabsTrigger>
+            <TabsTrigger value="passwords" className="gap-1.5"><KeyRound className="h-3.5 w-3.5" />Passwords</TabsTrigger>
             <TabsTrigger value="resources" className="gap-1.5"><FileText className="h-3.5 w-3.5" />Resources</TabsTrigger>
           </TabsList>
 
-          {/* Phase dropdown — right of tabs */}
+          {/* Phase cascading dropdown — right of tabs */}
           <div className="flex items-center gap-2">
             <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">Phase:</span>
-            <Select
-              value={project.currentPhase?.id ?? "none"}
-              onValueChange={(v) => changePhase.mutate(v === "none" ? "" : v)}
-              disabled={!canManage || phases.length === 0}
-            >
-              <SelectTrigger className="h-8 w-52 text-sm">
-                <SelectValue placeholder={phases.length === 0 ? "No phases configured" : "Select phase"} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— None —</SelectItem>
-                {phases.map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild disabled={!canManage}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-w-36 max-w-56 justify-between gap-2 text-sm font-normal px-3"
+                >
+                  <span className="truncate">
+                    {project.currentPhase?.id
+                      ? getPhaseLabel(project.currentPhase.id, phases)
+                      : <span className="text-muted-foreground">{phases.length === 0 ? "No phases" : "Select phase"}</span>
+                    }
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuItem
+                  className="text-muted-foreground text-sm"
+                  onClick={() => changePhase.mutate("")}
+                >
+                  — None —
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {phases.map((p) =>
+                  p.children.filter((c) => c.isActive).length > 0 ? (
+                    <DropdownMenuSub key={p.id}>
+                      <DropdownMenuSubTrigger className="text-sm font-medium">
+                        {p.name}
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent className="w-48">
+                        <DropdownMenuItem
+                          className="text-sm text-muted-foreground italic"
+                          onClick={() => changePhase.mutate(p.id)}
+                        >
+                          {p.name} (general)
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {p.children.filter((c) => c.isActive).map((c) => (
+                          <DropdownMenuItem
+                            key={c.id}
+                            className="text-sm"
+                            onClick={() => changePhase.mutate(c.id)}
+                          >
+                            {c.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  ) : (
+                    <DropdownMenuItem
+                      key={p.id}
+                      className="text-sm font-medium"
+                      onClick={() => changePhase.mutate(p.id)}
+                    >
+                      {p.name}
+                    </DropdownMenuItem>
+                  )
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
@@ -211,6 +274,18 @@ export default function ProjectDetailPage() {
 
         <TabsContent value="tasks" className="mt-4">
           <TasksTab projectId={projectId} currentUserId={userId} isAdmin={canManage} />
+        </TabsContent>
+
+        <TabsContent value="messages" className="mt-4">
+          <MessagesTab projectId={projectId} currentUserId={userId} canManage={canManage} />
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-4">
+          <ActivityTab projectId={projectId} />
+        </TabsContent>
+
+        <TabsContent value="passwords" className="mt-4">
+          <PasswordsTab projectId={projectId} currentUserId={userId} canManage={canManage} />
         </TabsContent>
 
         <TabsContent value="resources" className="mt-4">

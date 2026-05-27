@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
+import { logActivity } from "@/lib/activity"
 import { PERMISSIONS } from "@/lib/constants"
 import { createNotification } from "@/lib/notifications"
 import { sendEmail } from "@/lib/mailer"
@@ -139,6 +140,15 @@ export const POST = withSession(
           entityId: task.id,
           changes: { teamId, title: task.title, assigneeId: finalAssigneeId, approvalStatus, isManagerCreated },
         },
+      })
+
+      await logActivity({
+        projectId,
+        actorId: session.user.id,
+        type: "TASK_CREATED",
+        entityType: "TASK",
+        entityId: task.id,
+        meta: { taskTitle: task.title, teamId, assigneeId: finalAssigneeId },
       })
 
       return NextResponse.json({ data: task }, { status: 201 })
