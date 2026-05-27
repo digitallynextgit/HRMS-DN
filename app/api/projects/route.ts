@@ -11,7 +11,7 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
     const mine = searchParams.get("mine") === "true"
     const page = parseInt(searchParams.get("page") ?? "1")
     const limit = parseInt(searchParams.get("limit") ?? "20")
-    const skip = (page - 1) * limit
+    const skip = (page - 1 ) * limit
 
     const where: Record<string, unknown> = { isArchived: false }
     if (status) where.status = status
@@ -94,7 +94,7 @@ export const POST = withAuth(
         }
       }
       const nextNum = maxNum + 1
-      const code = `DN${nextNum.toString().padStart(2, "0")}`
+      const code = `DN${nextNum.toString().padStart(5, "0")}`
 
       const project = await db.project.create({
         data: {

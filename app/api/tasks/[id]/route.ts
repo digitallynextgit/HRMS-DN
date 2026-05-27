@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
+import { logActivity } from "@/lib/activity"
+import { createNotification } from "@/lib/notifications"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
@@ -35,6 +37,7 @@ export const PATCH = withSession(
         estimatedHours,
         loggedHours,
         tags,
+        isMilestone,
       } = body
 
       const auth = await getTaskAuthContext(ctx.params.id, session.user.id)
@@ -80,6 +83,9 @@ export const PATCH = withSession(
         data.estimatedHours = estimatedHours ? parseFloat(estimatedHours) : null
       if (loggedHours !== undefined) data.loggedHours = parseFloat(loggedHours)
       if (tags !== undefined) data.tags = tags
+      if (typeof isMilestone === "boolean") data.isMilestone = isMilestone
+
+      const prevStatus = auth.task.status
 
       const task = await db.projectTask.update({
         where: { id: ctx.params.id },
@@ -99,6 +105,41 @@ export const PATCH = withSession(
           changes: data as object,
         },
       })
+
+      const projectId = auth.task.team?.projectId ?? auth.task.projectId
+      if (status !== undefined && status !== prevStatus) {
+        await logActivity({
+          projectId,
+          actorId: session.user.id,
+          type: "TASK_STATUS_CHANGED",
+          entityType: "TASK",
+          entityId: task.id,
+          meta: { taskTitle: task.title, from: prevStatus, to: status },
+        })
+
+        // Notify team manager when a task is completed
+        if (status === "DONE" && auth.task.team?.managerId && auth.task.team.managerId !== session.user.id) {
+          const assigneeName = task.assignee
+            ? `${task.assignee.firstName} ${task.assignee.lastName}`
+            : "Someone"
+          await createNotification({
+            employeeId: auth.task.team.managerId,
+            title: "Task completed",
+            message: `${assigneeName} completed "${task.title}"`,
+            type: "success",
+            link: `/projects/${projectId}`,
+          })
+        }
+      } else if (typeof isMilestone === "boolean") {
+        await logActivity({
+          projectId,
+          actorId: session.user.id,
+          type: "MILESTONE_TOGGLED",
+          entityType: "TASK",
+          entityId: task.id,
+          meta: { taskTitle: task.title, isMilestone },
+        })
+      }
 
       return NextResponse.json({ data: task })
     } catch (error) {

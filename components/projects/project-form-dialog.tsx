@@ -154,7 +154,7 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
             />
             {mode === "create" && (
               <p className="text-[11px] text-muted-foreground">
-                A code <span className="font-mono font-medium">DN##</span> will be auto-generated for this project.
+                A code <span className="font-mono font-medium">DN#####</span> will be auto-generated for this project.
               </p>
             )}
             {mode === "edit" && form.code && (

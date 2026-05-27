@@ -22,9 +22,11 @@ import {
   type ProjectTask,
   type ProjectTeam,
 } from "@/hooks/use-projects"
-import { Plus, Check, X, AlertTriangle, Trash2, Inbox, Clock } from "lucide-react"
+import { Plus, Check, X, AlertTriangle, Trash2, Clock, Milestone, MessageSquare, LayoutList, Kanban } from "lucide-react"
 import { cn, formatDate, getInitials } from "@/lib/utils"
 import { TASK_STATUS_LABELS, TASK_STATUS_COLORS, TASK_PRIORITY_LABELS, TASK_PRIORITY_COLORS } from "@/lib/constants"
+import { TaskDetailSheet } from "./task-detail-sheet"
+import { KanbanView, formatHours } from "./kanban-view"
 
 interface Props {
   projectId: string
@@ -38,8 +40,8 @@ export function TasksTab({ projectId, currentUserId, isAdmin = false }: Props) {
   const [activeTeamId, setActiveTeamId] = useState<string | "all">("all")
   const [statusFilter, setStatusFilter] = useState<string>("ALL")
   const [showPendingOnly, setShowPendingOnly] = useState(false)
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list")
 
-  // We need tasks from ALL teams when "all" is selected. Query each team separately.
   if (teamsLoading) return <Skeleton className="h-64 rounded-lg" />
   if (teams.length === 0) {
     return (
@@ -64,26 +66,57 @@ export function TasksTab({ projectId, currentUserId, isAdmin = false }: Props) {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2">
-          <Label className="text-xs">Status</Label>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-36 h-8 text-sm"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All statuses</SelectItem>
-              <SelectItem value="TODO">To Do</SelectItem>
-              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-              <SelectItem value="IN_REVIEW">In Review</SelectItem>
-              <SelectItem value="DONE">Done</SelectItem>
-            </SelectContent>
-          </Select>
+        {viewMode === "list" && (
+          <>
+            <div className="flex items-center gap-2">
+              <Label className="text-xs">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-36 h-8 text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All statuses</SelectItem>
+                  <SelectItem value="TODO">To Do</SelectItem>
+                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="IN_REVIEW">In Review</SelectItem>
+                  <SelectItem value="DONE">Done</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+              <input type="checkbox" checked={showPendingOnly} onChange={(e) => setShowPendingOnly(e.target.checked)} />
+              Pending approval only
+            </label>
+          </>
+        )}
+
+        {/* View toggle */}
+        <div className="ml-auto flex items-center rounded-md border overflow-hidden">
+          <Button
+            variant={viewMode === "list" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 rounded-none px-3 border-0"
+            onClick={() => setViewMode("list")}
+          >
+            <LayoutList className="h-3.5 w-3.5 mr-1.5" />List
+          </Button>
+          <Button
+            variant={viewMode === "kanban" ? "secondary" : "ghost"}
+            size="sm"
+            className="h-8 rounded-none px-3 border-0 border-l"
+            onClick={() => setViewMode("kanban")}
+          >
+            <Kanban className="h-3.5 w-3.5 mr-1.5" />Board
+          </Button>
         </div>
-        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-          <input type="checkbox" checked={showPendingOnly} onChange={(e) => setShowPendingOnly(e.target.checked)} />
-          Pending approval only
-        </label>
       </div>
 
-      {activeTeamId === "all"
+      {viewMode === "kanban" ? (
+        <KanbanView
+          projectId={projectId}
+          currentUserId={currentUserId}
+          isAdmin={isAdmin}
+          teamFilter={activeTeamId}
+        />
+      ) : activeTeamId === "all"
         ? teams.map((team) => (
             <TeamTasksSection
               key={team.id}
@@ -187,6 +220,7 @@ function TaskRow({ task, isManager, currentUserId }: { task: ProjectTask; isMana
   const update = useUpdateTask()
   const del = useDeleteTask()
   const [rejectOpen, setRejectOpen] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
 
   const isAssignee = task.assigneeId === currentUserId
   const isPending = task.approvalStatus === "PENDING_APPROVAL"
@@ -194,88 +228,115 @@ function TaskRow({ task, isManager, currentUserId }: { task: ProjectTask; isMana
   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && task.status !== "DONE"
 
   return (
-    <div className={cn(
-      "flex items-center gap-3 p-2.5 rounded border",
-      isPending && "border-amber-300 bg-amber-50/40 dark:border-amber-900/60 dark:bg-amber-950/20",
-      isRejected && "border-red-300 bg-red-50/40 dark:border-red-900/60 dark:bg-red-950/20",
-      !isPending && !isRejected && "border-border",
-    )}>
-      <Select
-        value={task.status}
-        disabled={!isManager && !isAssignee}
-        onValueChange={(v) => update.mutate({ taskId: task.id, body: { status: v } })}
-      >
-        <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="TODO">To Do</SelectItem>
-          <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-          <SelectItem value="IN_REVIEW">In Review</SelectItem>
-          <SelectItem value="DONE">Done</SelectItem>
-        </SelectContent>
-      </Select>
+    <>
+      <div className={cn(
+        "flex items-center gap-3 p-2.5 rounded border",
+        isPending && "border-amber-300 bg-amber-50/40 dark:border-amber-900/60 dark:bg-amber-950/20",
+        isRejected && "border-red-300 bg-red-50/40 dark:border-red-900/60 dark:bg-red-950/20",
+        !isPending && !isRejected && "border-border",
+      )}>
+        <Select
+          value={task.status}
+          disabled={!isManager && !isAssignee}
+          onValueChange={(v) => update.mutate({ taskId: task.id, body: { status: v }, silent: true })}
+        >
+          <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="TODO">To Do</SelectItem>
+            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+            <SelectItem value="IN_REVIEW">In Review</SelectItem>
+            <SelectItem value="DONE">Done</SelectItem>
+          </SelectContent>
+        </Select>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium truncate">{task.title}</p>
-          {isPending && (
-            <Badge variant="outline" className="text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
-              <Clock className="h-3 w-3 mr-1 inline" />Pending approval
-            </Badge>
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setDetailOpen(true)}>
+          <div className="flex items-center gap-2">
+            {task.isMilestone && (
+              <Milestone className="h-3.5 w-3.5 text-purple-600 shrink-0" />
+            )}
+            <p className="text-sm font-medium truncate hover:underline">{task.title}</p>
+            {isPending && (
+              <Badge variant="outline" className="text-[10px] bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">
+                <Clock className="h-3 w-3 mr-1 inline" />Pending approval
+              </Badge>
+            )}
+            {isRejected && (
+              <Badge variant="outline" className="text-[10px] bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800">
+                Rejected
+              </Badge>
+            )}
+            {isOverdue && (
+              <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">
+                <AlertTriangle className="h-3 w-3 mr-0.5 inline" />Overdue
+              </Badge>
+            )}
+          </div>
+          {task.rejectionReason && (
+            <p className="text-[11px] text-red-700 dark:text-red-400 mt-0.5">Reason: {task.rejectionReason}</p>
           )}
-          {isRejected && (
-            <Badge variant="outline" className="text-[10px] bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800">
-              Rejected
-            </Badge>
-          )}
-          {isOverdue && (
-            <Badge variant="outline" className="text-[10px] bg-red-50 text-red-700 border-red-200">
-              <AlertTriangle className="h-3 w-3 mr-0.5 inline" />Overdue
-            </Badge>
-          )}
+          <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
+            <Badge variant="outline" className={cn("text-[10px]", TASK_PRIORITY_COLORS[task.priority])}>{TASK_PRIORITY_LABELS[task.priority]}</Badge>
+            {task.dueDate && <span>Due {formatDate(task.dueDate)}</span>}
+            {task.estimatedHours != null && (
+              <span className="flex items-center gap-0.5">
+                <Clock className="h-3 w-3" />{formatHours(task.estimatedHours)}
+              </span>
+            )}
+            {task.assignee && (
+              <span className="flex items-center gap-1">
+                <Avatar className="h-4 w-4"><AvatarFallback className="text-[8px]">{getInitials(task.assignee.firstName, task.assignee.lastName)}</AvatarFallback></Avatar>
+                {task.assignee.firstName}
+              </span>
+            )}
+          </div>
         </div>
-        {task.rejectionReason && (
-          <p className="text-[11px] text-red-700 dark:text-red-400 mt-0.5">Reason: {task.rejectionReason}</p>
-        )}
-        <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
-          <Badge variant="outline" className={cn("text-[10px]", TASK_PRIORITY_COLORS[task.priority])}>{TASK_PRIORITY_LABELS[task.priority]}</Badge>
-          {task.dueDate && <span>Due {formatDate(task.dueDate)}</span>}
-          {task.assignee && (
-            <span className="flex items-center gap-1">
-              <Avatar className="h-4 w-4"><AvatarFallback className="text-[8px]">{getInitials(task.assignee.firstName, task.assignee.lastName)}</AvatarFallback></Avatar>
-              {task.assignee.firstName}
-            </span>
-          )}
-        </div>
-      </div>
 
-      <div className="flex items-center gap-1">
-        {isPending && isManager && (
-          <>
-            <Button variant="ghost" size="sm" className="h-7 text-emerald-700 dark:text-emerald-400" onClick={() => approve.mutate(task.id)}>
-              <Check className="h-3.5 w-3.5 mr-0.5" />Approve
-            </Button>
-            <Button variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => setRejectOpen(true)}>
-              <X className="h-3.5 w-3.5 mr-0.5" />Reject
-            </Button>
-          </>
-        )}
-        {isManager && !isPending && (
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
-            if (confirm(`Delete task "${task.title}"?`)) del.mutate(task.id)
-          }}>
-            <Trash2 className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            title="Open task detail"
+            onClick={() => setDetailOpen(true)}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
           </Button>
-        )}
+          {isPending && isManager && (
+            <>
+              <Button variant="ghost" size="sm" className="h-7 text-emerald-700 dark:text-emerald-400" onClick={() => approve.mutate(task.id)}>
+                <Check className="h-3.5 w-3.5 mr-0.5" />Approve
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-destructive" onClick={() => setRejectOpen(true)}>
+                <X className="h-3.5 w-3.5 mr-0.5" />Reject
+              </Button>
+            </>
+          )}
+          {isManager && !isPending && (
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => {
+              if (confirm(`Delete task "${task.title}"?`)) del.mutate(task.id)
+            }}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
+
+        <RejectDialog
+          open={rejectOpen}
+          onClose={() => setRejectOpen(false)}
+          onConfirm={(reason) => {
+            reject.mutate({ taskId: task.id, reason }, { onSuccess: () => setRejectOpen(false) })
+          }}
+        />
       </div>
 
-      <RejectDialog
-        open={rejectOpen}
-        onClose={() => setRejectOpen(false)}
-        onConfirm={(reason) => {
-          reject.mutate({ taskId: task.id, reason }, { onSuccess: () => setRejectOpen(false) })
-        }}
+      <TaskDetailSheet
+        task={task}
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        currentUserId={currentUserId}
+        isManager={isManager}
       />
-    </div>
+    </>
   )
 }
 
@@ -317,10 +378,15 @@ function CreateTaskDialog({ open, onClose, team, projectId, isManager, currentUs
   const [priority, setPriority] = useState("MEDIUM")
   const [assigneeId, setAssigneeId] = useState(defaultAssignee)
   const [dueDate, setDueDate] = useState("")
+  const [estHours, setEstHours] = useState("")
+  const [estMinutes, setEstMinutes] = useState("")
   const create = useCreateTask(projectId, team.id)
 
   function handleCreate() {
     if (!title.trim()) return
+    const hrs = parseInt(estHours || "0", 10)
+    const mins = parseInt(estMinutes || "0", 10)
+    const estimatedHours = hrs + mins / 60 || undefined
     create.mutate(
       {
         title: title.trim(),
@@ -328,10 +394,11 @@ function CreateTaskDialog({ open, onClose, team, projectId, isManager, currentUs
         priority,
         assigneeId: isManager ? assigneeId : currentUserId,
         dueDate: dueDate || undefined,
+        ...(estimatedHours !== undefined && { estimatedHours }),
       },
       {
         onSuccess: () => {
-          setTitle(""); setDescription(""); setDueDate(""); setAssigneeId(defaultAssignee); onClose()
+          setTitle(""); setDescription(""); setDueDate(""); setEstHours(""); setEstMinutes(""); setAssigneeId(defaultAssignee); onClose()
         },
       },
     )
@@ -373,6 +440,35 @@ function CreateTaskDialog({ open, onClose, team, projectId, isManager, currentUs
             <div className="space-y-1.5">
               <Label>Due Date</Label>
               <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Time Required</Label>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Input
+                  type="number"
+                  min="0"
+                  max="999"
+                  value={estHours}
+                  onChange={(e) => setEstHours(e.target.value)}
+                  placeholder="0"
+                  className="pr-8"
+                />
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">h</span>
+              </div>
+              <div className="relative flex-1">
+                <Input
+                  type="number"
+                  min="0"
+                  max="59"
+                  value={estMinutes}
+                  onChange={(e) => setEstMinutes(e.target.value)}
+                  placeholder="0"
+                  className="pr-8"
+                />
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">m</span>
+              </div>
             </div>
           </div>
           <div className="space-y-1.5">

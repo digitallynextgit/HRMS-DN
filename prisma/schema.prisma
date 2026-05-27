@@ -462,6 +462,10 @@ model Employee {
   managedTeams           ProjectTeam[]       @relation("TeamManager")
   projectTeamMemberships ProjectTeamMember[] @relation("ProjectTeamMembership")
   uploadedResources      ProjectResource[]   @relation("ResourceUploader")
+  taskComments           TaskComment[]            @relation("CommentAuthor")
+  projectActivities      ProjectActivity[]        @relation("ActivityActor")
+  projectMessages        ProjectMessage[]         @relation("MessageAuthor")
+  createdPasswords       ProjectPasswordEntry[]   @relation("PasswordCreator")
 
   @@map("employees")
 }
@@ -875,6 +879,9 @@ model Project {
   tasks        ProjectTask[]
   resources    ProjectResource[]
   timesheets   Timesheet[]
+  activities       ProjectActivity[]
+  messages         ProjectMessage[]
+  passwordEntries  ProjectPasswordEntry[]
 
   @@index([status])
   @@index([ownerId])
@@ -883,15 +890,19 @@ model Project {
 }
 
 // Global, admin-managed list of project phases (e.g. Initiation, Planning, Executing, …)
+// Supports exactly 2 levels: top-level phases and their sub-phases (parentId = null means top-level).
 model ProjectPhase {
   id           String   @id @default(uuid()) @map("id")
-  name         String   @unique @map("name")
+  name         String   @map("name")
   description  String?  @map("description")
   displayOrder Int      @default(0) @map("display_order")
   isActive     Boolean  @default(true) @map("is_active")
+  parentId     String?  @map("parent_id")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
+  parent   ProjectPhase?  @relation("PhaseParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children ProjectPhase[] @relation("PhaseParent")
   projects Project[]
 
   @@map("project_phases")
@@ -1008,11 +1019,15 @@ model ProjectTask {
   createdAt        DateTime            @default(now()) @map("created_at")
   updatedAt        DateTime            @updatedAt @map("updated_at")
 
-  project    Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  team       ProjectTeam? @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  assignee   Employee?    @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
-  creator    Employee     @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Restrict)
-  timesheets Timesheet[]
+  isMilestone Boolean @default(false) @map("is_milestone")
+
+  project        Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team           ProjectTeam?        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  assignee       Employee?           @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  creator        Employee            @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: Restrict)
+  timesheets     Timesheet[]
+  comments       TaskComment[]
+  checklistItems TaskChecklistItem[]
 
   @@index([projectId])
   @@index([teamId])
@@ -1020,6 +1035,89 @@ model ProjectTask {
   @@index([status])
   @@index([approvalStatus])
   @@map("project_tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid()) @map("id")
+  taskId    String   @map("task_id")
+  authorId  String   @map("author_id")
+  content   String   @map("content") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  task   ProjectTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author Employee    @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_comments")
+}
+
+model TaskChecklistItem {
+  id           String   @id @default(uuid()) @map("id")
+  taskId       String   @map("task_id")
+  text         String   @map("text")
+  isChecked    Boolean  @default(false) @map("is_checked")
+  displayOrder Int      @default(0) @map("display_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  task ProjectTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_checklist_items")
+}
+
+model ProjectActivity {
+  id         String   @id @default(uuid()) @map("id")
+  projectId  String   @map("project_id")
+  actorId    String   @map("actor_id")
+  type       String   @map("type")
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  meta       Json?    @map("meta")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   Employee @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([createdAt])
+  @@map("project_activities")
+}
+
+model ProjectMessage {
+  id        String   @id @default(uuid()) @map("id")
+  projectId String   @map("project_id")
+  authorId  String   @map("author_id")
+  title     String   @map("title")
+  content   String   @map("content") @db.Text
+  isPinned  Boolean  @default(false) @map("is_pinned")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author  Employee @relation("MessageAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_messages")
+}
+
+model ProjectPasswordEntry {
+  id          String   @id @default(uuid()) @map("id")
+  projectId   String   @map("project_id")
+  label       String   @map("label")
+  username    String?  @map("username")
+  encPassword String   @map("enc_password") @db.Text
+  url         String?  @map("url")
+  notes       String?  @map("notes") @db.Text
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy Employee @relation("PasswordCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_password_entries")
 }
 
 model Timesheet {

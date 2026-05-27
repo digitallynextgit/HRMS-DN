@@ -17,10 +17,13 @@ export const PATCH = withAuth(
       if (!existing) return NextResponse.json({ error: "Phase not found" }, { status: 404 })
 
       const data: Record<string, unknown> = {}
+
       if (name !== undefined) {
         if (!name.trim()) return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 })
-        const dupe = await db.projectPhase.findFirst({ where: { name: name.trim(), NOT: { id } } })
-        if (dupe) return NextResponse.json({ error: "Another phase already has that name" }, { status: 409 })
+        const dupe = await db.projectPhase.findFirst({
+          where: { name: name.trim(), parentId: existing.parentId, NOT: { id } },
+        })
+        if (dupe) return NextResponse.json({ error: "Another phase at this level already has that name" }, { status: 409 })
         data.name = name.trim()
       }
       if (description !== undefined) data.description = description?.trim() || null
@@ -54,12 +57,22 @@ export const DELETE = withAuth(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
       const { id } = ctx.params
-      const phase = await db.projectPhase.findUnique({ where: { id } })
+      const phase = await db.projectPhase.findUnique({
+        where: { id },
+        include: { children: { select: { id: true } } },
+      })
       if (!phase) return NextResponse.json({ error: "Phase not found" }, { status: 404 })
 
-      // Soft check — how many projects use it? FK is SetNull so deletion is safe, but warn the admin.
-      const inUseCount = await db.project.count({ where: { currentPhaseId: id } })
+      const childIds = phase.children.map((c) => c.id)
 
+      // Count projects displaced by this deletion (parent + all children)
+      const idsToDelete = [id, ...childIds]
+      const inUseCount = await db.project.count({ where: { currentPhaseId: { in: idsToDelete } } })
+
+      // Delete children first (FK constraint), then parent
+      if (childIds.length > 0) {
+        await db.projectPhase.deleteMany({ where: { id: { in: childIds } } })
+      }
       await db.projectPhase.delete({ where: { id } })
 
       await db.auditLog.create({
@@ -69,11 +82,11 @@ export const DELETE = withAuth(
           module: "project",
           entityType: "ProjectPhase",
           entityId: id,
-          changes: { name: phase.name, displacedFromProjects: inUseCount },
+          changes: { name: phase.name, deletedSubPhases: childIds.length, displacedFromProjects: inUseCount },
         },
       })
 
-      return NextResponse.json({ success: true, displacedFromProjects: inUseCount })
+      return NextResponse.json({ success: true, deletedSubPhases: childIds.length, displacedFromProjects: inUseCount })
     } catch (error) {
       console.error("[PROJECT_PHASE_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
