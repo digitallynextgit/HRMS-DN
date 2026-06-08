@@ -2,6 +2,18 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import {
+  getLeaveTypes,
+  createLeaveType as createLeaveTypeAction,
+  updateLeaveType as updateLeaveTypeAction,
+  deleteLeaveType as deleteLeaveTypeAction,
+  getLeaveBalances,
+  allocateLeave as allocateLeaveAction,
+  getLeaveRequests,
+  getTeamLeaveRequests,
+  applyLeave as applyLeaveAction,
+  updateLeaveRequest,
+} from "@/lib/actions/leave"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -83,25 +95,15 @@ interface PaginatedResponse<T> {
 // ─── Fetch helpers ─────────────────────────────────────────────────────────────
 
 async function fetchLeaveTypes(): Promise<{ data: LeaveType[] }> {
-  const res = await fetch("/api/leave/types")
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch leave types" }))
-    throw new Error(err.error || "Failed to fetch leave types")
-  }
-  return res.json()
+  const r = await getLeaveTypes()
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveType[] }
 }
 
 async function createLeaveType(body: Partial<LeaveType>): Promise<{ data: LeaveType }> {
-  const res = await fetch("/api/leave/types", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to create leave type" }))
-    throw new Error(err.error || "Failed to create leave type")
-  }
-  return res.json()
+  const r = await createLeaveTypeAction(body as Record<string, unknown>)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveType }
 }
 
 async function updateLeaveType({
@@ -111,40 +113,24 @@ async function updateLeaveType({
   id: string
   body: Partial<LeaveType>
 }): Promise<{ data: LeaveType }> {
-  const res = await fetch(`/api/leave/types/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to update leave type" }))
-    throw new Error(err.error || "Failed to update leave type")
-  }
-  return res.json()
+  const r = await updateLeaveTypeAction(id, body as Record<string, unknown>)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveType }
 }
 
 async function deleteLeaveType(id: string): Promise<{ message: string }> {
-  const res = await fetch(`/api/leave/types/${id}`, { method: "DELETE" })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to delete leave type" }))
-    throw new Error(err.error || "Failed to delete leave type")
-  }
-  return res.json()
+  const r = await deleteLeaveTypeAction(id)
+  if (!r.ok) throw new Error(r.error)
+  return r.data
 }
 
 async function fetchLeaveBalances(
   employeeId?: string,
   year?: number,
 ): Promise<{ data: LeaveBalance[] }> {
-  const params = new URLSearchParams()
-  if (employeeId) params.set("employeeId", employeeId)
-  if (year) params.set("year", String(year))
-  const res = await fetch(`/api/leave/balances?${params.toString()}`)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch leave balances" }))
-    throw new Error(err.error || "Failed to fetch leave balances")
-  }
-  return res.json()
+  const r = await getLeaveBalances(employeeId, year)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveBalance[] }
 }
 
 async function allocateLeave(body: {
@@ -154,35 +140,17 @@ async function allocateLeave(body: {
   allocated: number
   carried?: number
 }): Promise<{ data: LeaveBalance }> {
-  const res = await fetch("/api/leave/balances", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to allocate leave" }))
-    throw new Error(err.error || "Failed to allocate leave")
-  }
-  return res.json()
+  const r = await allocateLeaveAction(body)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveBalance }
 }
 
 async function fetchLeaveRequests(
   filters: LeaveRequestFilters,
 ): Promise<PaginatedResponse<LeaveRequest>> {
-  const params = new URLSearchParams()
-  if (filters.status) params.set("status", filters.status)
-  if (filters.employeeId) params.set("employeeId", filters.employeeId)
-  if (filters.leaveTypeId) params.set("leaveTypeId", filters.leaveTypeId)
-  if (filters.from) params.set("from", filters.from)
-  if (filters.to) params.set("to", filters.to)
-  if (filters.page) params.set("page", String(filters.page))
-  if (filters.limit) params.set("limit", String(filters.limit))
-  const res = await fetch(`/api/leave/requests?${params.toString()}`)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch leave requests" }))
-    throw new Error(err.error || "Failed to fetch leave requests")
-  }
-  return res.json()
+  const r = await getLeaveRequests(filters)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as PaginatedResponse<LeaveRequest>
 }
 
 async function fetchTeamLeaveRequests(filters: {
@@ -190,16 +158,9 @@ async function fetchTeamLeaveRequests(filters: {
   page?: number
   limit?: number
 }): Promise<PaginatedResponse<LeaveRequest>> {
-  const params = new URLSearchParams()
-  if (filters.status) params.set("status", filters.status)
-  if (filters.page) params.set("page", String(filters.page))
-  if (filters.limit) params.set("limit", String(filters.limit))
-  const res = await fetch(`/api/leave/team?${params.toString()}`)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch team leave requests" }))
-    throw new Error(err.error || "Failed to fetch team leave requests")
-  }
-  return res.json()
+  const r = await getTeamLeaveRequests(filters)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as PaginatedResponse<LeaveRequest>
 }
 
 async function applyLeave(body: {
@@ -209,42 +170,21 @@ async function applyLeave(body: {
   reason?: string
   isHalfDay?: boolean
 }): Promise<{ data: LeaveRequest }> {
-  const res = await fetch("/api/leave/requests", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to apply for leave" }))
-    throw new Error(err.error || "Failed to apply for leave")
-  }
-  return res.json()
+  const r = await applyLeaveAction(body)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveRequest }
 }
 
 async function cancelLeave(id: string): Promise<{ data: LeaveRequest }> {
-  const res = await fetch(`/api/leave/requests/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "CANCEL" }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to cancel leave request" }))
-    throw new Error(err.error || "Failed to cancel leave request")
-  }
-  return res.json()
+  const r = await updateLeaveRequest(id, "CANCEL")
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveRequest }
 }
 
 async function approveLeave(id: string): Promise<{ data: LeaveRequest }> {
-  const res = await fetch(`/api/leave/requests/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "APPROVE" }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to approve leave request" }))
-    throw new Error(err.error || "Failed to approve leave request")
-  }
-  return res.json()
+  const r = await updateLeaveRequest(id, "APPROVE")
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveRequest }
 }
 
 async function rejectLeave({
@@ -254,16 +194,9 @@ async function rejectLeave({
   id: string
   rejectionReason: string
 }): Promise<{ data: LeaveRequest }> {
-  const res = await fetch(`/api/leave/requests/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "REJECT", rejectionReason }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to reject leave request" }))
-    throw new Error(err.error || "Failed to reject leave request")
-  }
-  return res.json()
+  const r = await updateLeaveRequest(id, "REJECT", rejectionReason)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: LeaveRequest }
 }
 
 // ─── Query Hooks ───────────────────────────────────────────────────────────────

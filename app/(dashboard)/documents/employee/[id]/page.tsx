@@ -10,19 +10,18 @@ import { DocumentList } from "@/components/documents/document-list"
 import { DocumentUploadDialog } from "@/components/documents/document-upload-dialog"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { getEmployee } from "@/lib/actions/employees"
 
 function useEmployeeName(employeeId: string) {
   const [name, setName] = React.useState<string>("")
 
   React.useEffect(() => {
     if (!employeeId) return
-    fetch(`/api/employees/${employeeId}`)
-      .then((r) => r.json())
-      .then((json) => {
-        const emp = json.data
-        if (emp) {
-          setName(`${emp.firstName} ${emp.lastName}`)
-        }
+    getEmployee(employeeId)
+      .then((r) => {
+        if (!r.ok) return
+        const emp = (r.data as { data: { firstName: string; lastName: string } }).data
+        if (emp) setName(`${emp.firstName} ${emp.lastName}`)
       })
       .catch(() => {})
   }, [employeeId])

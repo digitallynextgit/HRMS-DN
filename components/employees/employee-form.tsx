@@ -8,6 +8,11 @@ import { z } from "zod"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import {
+  getEmployeeDocuments,
+  uploadEmployeeDocument,
+  deleteEmployeeDocument,
+} from "@/lib/actions/employee-documents"
+import {
   Check,
   ChevronLeft,
   ChevronRight,
@@ -128,9 +133,9 @@ interface ExistingDoc {
 }
 
 async function fetchEmployeeDocs(employeeId: string): Promise<{ data: ExistingDoc[] }> {
-  const res = await fetch(`/api/employees/${employeeId}/documents`)
-  if (!res.ok) throw new Error("Failed to load documents")
-  return res.json()
+  const r = await getEmployeeDocuments(employeeId)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: ExistingDoc[] }
 }
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -298,11 +303,8 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
       fd.append("category", doc.category)
       if (doc.expiresAt) fd.append("expiresAt", doc.expiresAt)
       try {
-        const res = await fetch(`/api/employees/${targetEmployeeId}/documents`, {
-          method: "POST",
-          body: fd,
-        })
-        if (!res.ok) throw new Error(await res.text())
+        const r = await uploadEmployeeDocument(targetEmployeeId, fd)
+        if (!r.ok) throw new Error(r.error)
         okCount++
       } catch (err) {
         console.error("[employee-form] upload failed", doc.file.name, err)
@@ -319,13 +321,8 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
   async function deleteExistingDoc(docId: string) {
     if (!employeeId) return
     try {
-      const res = await fetch(`/api/employees/${employeeId}/documents/${docId}`, {
-        method: "DELETE",
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Failed to delete" }))
-        throw new Error(err.error || "Failed to delete")
-      }
+      const r = await deleteEmployeeDocument(employeeId, docId)
+      if (!r.ok) throw new Error(r.error)
       toast.success("Document removed")
       refetchDocs()
       queryClient.invalidateQueries({ queryKey: ["employee-documents", employeeId] })

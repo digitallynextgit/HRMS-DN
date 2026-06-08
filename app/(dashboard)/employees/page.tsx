@@ -23,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/page-header"
 import { EmployeeCard } from "@/components/employees/employee-card"
 import { EmployeeFilters } from "@/components/employees/employee-filters"
+import { bulkTerminateEmployees } from "@/lib/actions/employees"
 import {
   useEmployees,
   useDeleteEmployee,
@@ -199,22 +200,14 @@ export default function EmployeesPage() {
     toast.success(`Exported ${selected.length} employee${selected.length !== 1 ? "s" : ""}`)
   }
 
-  // Bulk terminate via the new DELETE /api/employees endpoint.
+  // Bulk terminate via the bulkTerminateEmployees server action.
   async function confirmBulkDelete() {
     if (selectedIds.size === 0) return
     setBulkBusy(true)
     try {
-      const res = await fetch("/api/employees", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: Array.from(selectedIds) }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Bulk terminate failed" }))
-        throw new Error(err.error || "Bulk terminate failed")
-      }
-      const body = await res.json()
-      toast.success(`Terminated ${body?.data?.count ?? selectedIds.size} employees`)
+      const r = await bulkTerminateEmployees(Array.from(selectedIds))
+      if (!r.ok) throw new Error(r.error)
+      toast.success(`Terminated ${r.data.data.count ?? selectedIds.size} employees`)
       queryClient.invalidateQueries({ queryKey: ["employees"] })
       clearSelection()
       setBulkDeleteOpen(false)

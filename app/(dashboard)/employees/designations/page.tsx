@@ -18,6 +18,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/page-header"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import {
+  getDesignations,
+  createDesignation as createDesignationAction,
+} from "@/lib/actions/designations"
 
 interface Designation {
   id: string
@@ -26,25 +30,18 @@ interface Designation {
 }
 
 async function fetchDesignations(): Promise<{ data: Designation[] }> {
-  const res = await fetch("/api/designations")
-  if (!res.ok) throw new Error("Failed to fetch designations")
-  return res.json()
+  const r = await getDesignations()
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data }
 }
 
 async function createDesignation(body: {
   title: string
   level: number
 }): Promise<{ data: Designation }> {
-  const res = await fetch("/api/designations", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to create designation" }))
-    throw new Error(err.error || "Failed to create designation")
-  }
-  return res.json()
+  const r = await createDesignationAction(body)
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data }
 }
 
 export default function DesignationsPage() {

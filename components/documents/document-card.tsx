@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/shared/confirm-dialog"
 import { formatDate, formatFileSize, cn, truncate } from "@/lib/utils"
 import { DOCUMENT_CATEGORY_LABELS } from "@/lib/constants"
+import { getDocumentUrl } from "@/lib/actions/documents"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,10 +81,9 @@ export function DocumentCard({ document, onDelete, canDelete }: DocumentCardProp
   const handleDownload = async () => {
     setDownloadLoading(true)
     try {
-      const res = await fetch(`/api/documents/${document.id}`)
-      if (!res.ok) throw new Error("Failed to get download link")
-      const json = await res.json()
-      const url: string = json.data?.url
+      const r = await getDocumentUrl(document.id)
+      if (!r.ok) throw new Error("Failed to get download link")
+      const url: string | undefined = (r.data as { data?: { url?: string } }).data?.url
       if (url) {
         window.open(url, "_blank", "noopener,noreferrer")
       }

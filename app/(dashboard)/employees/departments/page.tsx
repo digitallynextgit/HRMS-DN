@@ -19,6 +19,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/page-header"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import {
+  getDepartments,
+  createDepartment as createDepartmentAction,
+} from "@/lib/actions/departments"
 
 interface Department {
   id: string
@@ -29,9 +33,9 @@ interface Department {
 }
 
 async function fetchDepartments(): Promise<{ data: Department[] }> {
-  const res = await fetch("/api/departments")
-  if (!res.ok) throw new Error("Failed to fetch departments")
-  return res.json()
+  const r = await getDepartments()
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data }
 }
 
 async function createDepartment(body: {
@@ -39,16 +43,9 @@ async function createDepartment(body: {
   code: string
   description?: string
 }): Promise<{ data: Department }> {
-  const res = await fetch("/api/departments", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to create department" }))
-    throw new Error(err.error || "Failed to create department")
-  }
-  return res.json()
+  const r = await createDepartmentAction(body)
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data }
 }
 
 export default function DepartmentsPage() {

@@ -2,6 +2,12 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import {
+  getWfhEligibility,
+  getWfhRequests,
+  applyWfh as applyWfhAction,
+  updateWfhRequest,
+} from "@/lib/actions/wfh"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,22 +66,15 @@ interface WfhFilters {
 // ─── Fetch ────────────────────────────────────────────────────────────────────
 
 async function fetchEligibility(): Promise<WfhEligibility> {
-  const res = await fetch("/api/wfh/eligibility")
-  if (!res.ok) throw new Error("Failed to load WFH eligibility")
-  return res.json()
+  const r = await getWfhEligibility()
+  if (!r.ok) throw new Error(r.error)
+  return r.data as WfhEligibility
 }
 
 async function fetchWfhRequests(filters: WfhFilters): Promise<PaginatedResponse<WfhRequest>> {
-  const params = new URLSearchParams()
-  Object.entries(filters).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && v !== "") params.set(k, String(v))
-  })
-  const res = await fetch(`/api/wfh/requests?${params.toString()}`)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch WFH requests" }))
-    throw new Error(err.error || "Failed to fetch WFH requests")
-  }
-  return res.json()
+  const r = await getWfhRequests(filters)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as PaginatedResponse<WfhRequest>
 }
 
 async function applyWfh(body: {
@@ -83,16 +82,9 @@ async function applyWfh(body: {
   reason?: string
   isEmergency?: boolean
 }): Promise<{ data: WfhRequest; tier: number }> {
-  const res = await fetch("/api/wfh/requests", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to apply for WFH" }))
-    throw new Error(err.error || "Failed to apply for WFH")
-  }
-  return res.json()
+  const r = await applyWfhAction(body)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: WfhRequest; tier: number }
 }
 
 async function patchWfh({
@@ -106,16 +98,9 @@ async function patchWfh({
   rejectionReason?: string
   approverRole?: "MANAGER" | "HR"
 }): Promise<{ data: WfhRequest }> {
-  const res = await fetch(`/api/wfh/requests/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, rejectionReason, approverRole }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to update WFH request" }))
-    throw new Error(err.error || "Failed to update WFH request")
-  }
-  return res.json()
+  const r = await updateWfhRequest(id, action, rejectionReason, approverRole)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: WfhRequest }
 }
 
 // ─── Hooks ────────────────────────────────────────────────────────────────────
