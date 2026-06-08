@@ -3,7 +3,7 @@
    so it's a plain external script — React 19 only warns about INLINE scripts. */
 (function () {
   try {
-    var raw = localStorage.getItem("hrms-theme-palette")
+    var raw = localStorage.getItem("dnms-theme-palette")
     if (!raw) return
     var parsed = JSON.parse(raw)
     var state = parsed && parsed.state

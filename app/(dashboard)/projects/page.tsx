@@ -12,10 +12,19 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { usePermissions } from "@/hooks/use-permissions"
-import { PERMISSIONS, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, TASK_PRIORITY_COLORS, TASK_PRIORITY_LABELS } from "@/lib/constants"
+import {
+  PERMISSIONS,
+  PROJECT_STATUS_LABELS,
+  PROJECT_STATUS_COLORS,
+  TASK_PRIORITY_COLORS,
+  TASK_PRIORITY_LABELS,
+} from "@/lib/constants"
 import { formatDate, cn, getInitials } from "@/lib/utils"
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog"
 import { ViewToggle, useViewMode } from "@/components/shared/view-toggle"
@@ -31,14 +40,16 @@ interface Project {
   endDate: string | null
   budget: number | null
   owner: { id: string; firstName: string; lastName: string; profilePhoto: string | null }
-  members: { employee: { id: string; firstName: string; lastName: string; profilePhoto: string | null } }[]
+  members: {
+    employee: { id: string; firstName: string; lastName: string; profilePhoto: string | null }
+  }[]
   _count: { tasks: number; teams?: number; resources?: number }
 }
 
 const KANBAN_COLUMNS: { id: string; color: string }[] = [
-  { id: "PLANNING",  color: "bg-slate-50 dark:bg-slate-900/40" },
-  { id: "ACTIVE",    color: "bg-blue-50 dark:bg-blue-950/30" },
-  { id: "ON_HOLD",   color: "bg-amber-50 dark:bg-amber-950/30" },
+  { id: "PLANNING", color: "bg-slate-50 dark:bg-slate-900/40" },
+  { id: "ACTIVE", color: "bg-blue-50 dark:bg-blue-950/30" },
+  { id: "ON_HOLD", color: "bg-amber-50 dark:bg-amber-950/30" },
   { id: "COMPLETED", color: "bg-emerald-50 dark:bg-emerald-950/30" },
 ]
 
@@ -82,14 +93,17 @@ export default function ProjectsPage() {
 
   const archiveMut = useMutation({
     mutationFn: archiveProject,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["projects"] }); toast.success("Project archived") },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["projects"] })
+      toast.success("Project archived")
+    },
     onError: () => toast.error("Failed to archive project"),
   })
 
   const statusGroups: Record<string, Project[]> = {
-    PLANNING:  projects.filter((p) => p.status === "PLANNING"),
-    ACTIVE:    projects.filter((p) => p.status === "ACTIVE"),
-    ON_HOLD:   projects.filter((p) => p.status === "ON_HOLD"),
+    PLANNING: projects.filter((p) => p.status === "PLANNING"),
+    ACTIVE: projects.filter((p) => p.status === "ACTIVE"),
+    ON_HOLD: projects.filter((p) => p.status === "ON_HOLD"),
     COMPLETED: projects.filter((p) => p.status === "COMPLETED"),
   }
 
@@ -104,7 +118,10 @@ export default function ProjectsPage() {
     // Optimistic update
     qc.setQueryData(["projects"], (old: { data: Project[] } | undefined) => {
       if (!old) return old
-      return { ...old, data: old.data.map((p) => p.id === draggableId ? { ...p, status: newStatus } : p) }
+      return {
+        ...old,
+        data: old.data.map((p) => (p.id === draggableId ? { ...p, status: newStatus } : p)),
+      }
     })
 
     updateProjectStatus(draggableId, newStatus)
@@ -134,7 +151,7 @@ export default function ProjectsPage() {
 
       {isLoading ? (
         viewMode === "kanban" ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {KANBAN_COLUMNS.map((c) => (
               <div key={c.id} className="space-y-2">
                 <Skeleton className="h-5 w-24 rounded" />
@@ -144,36 +161,43 @@ export default function ProjectsPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-52 rounded-lg" />)}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-52 rounded-lg" />
+            ))}
           </div>
         )
       ) : projects.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 rounded-lg border bg-card text-center">
-          <FolderKanban className="h-10 w-10 text-muted-foreground/40 mb-3" />
+        <div className="bg-card flex flex-col items-center justify-center rounded-lg border py-20 text-center">
+          <FolderKanban className="text-muted-foreground/40 mb-3 h-10 w-10" />
           <p className="text-muted-foreground text-sm">No projects yet.</p>
           {canWrite && (
             <Button className="mt-4 gap-2" onClick={() => setCreateOpen(true)}>
-              <Plus className="h-4 w-4" />Create First Project
+              <Plus className="h-4 w-4" />
+              Create First Project
             </Button>
           )}
         </div>
       ) : viewMode === "kanban" ? (
         /* ── Kanban board ── */
         <DragDropContext onDragEnd={onDragEnd}>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
+          <div className="grid grid-cols-2 items-stretch gap-3 lg:grid-cols-4">
             {KANBAN_COLUMNS.map((col) => {
               const group = statusGroups[col.id] ?? []
               return (
-                <div key={col.id} className="flex flex-col min-w-0">
-                  <div className="flex items-center justify-between mb-2 px-1">
-                    <span className={cn(
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                      PROJECT_STATUS_COLORS[col.id],
-                    )}>
+                <div key={col.id} className="flex min-w-0 flex-col">
+                  <div className="mb-2 flex items-center justify-between px-1">
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                        PROJECT_STATUS_COLORS[col.id],
+                      )}
+                    >
                       {PROJECT_STATUS_LABELS[col.id]}
                     </span>
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{group.length}</Badge>
+                    <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+                      {group.length}
+                    </Badge>
                   </div>
 
                   <Droppable droppableId={col.id} isDropDisabled={!canWrite}>
@@ -182,9 +206,9 @@ export default function ProjectsPage() {
                         ref={provided.innerRef}
                         {...provided.droppableProps}
                         className={cn(
-                          "flex-1 min-h-32 rounded-xl p-2 space-y-2 transition-colors",
+                          "min-h-32 flex-1 space-y-2 rounded-xl p-2 transition-colors",
                           col.color,
-                          snapshot.isDraggingOver && "ring-2 ring-primary/40",
+                          snapshot.isDraggingOver && "ring-primary/40 ring-2",
                         )}
                       >
                         {group.map((project, index) => (
@@ -200,31 +224,37 @@ export default function ProjectsPage() {
                                 {...drag.draggableProps}
                                 className={cn(
                                   "bg-background rounded-lg border p-3 shadow-sm select-none",
-                                  snap.isDragging && "shadow-lg ring-2 ring-primary/50 rotate-1",
+                                  snap.isDragging && "ring-primary/50 rotate-1 shadow-lg ring-2",
                                 )}
                               >
                                 {/* drag handle + menu row */}
-                                <div className="flex items-start justify-between gap-1 mb-2">
+                                <div className="mb-2 flex items-start justify-between gap-1">
                                   <div
                                     {...drag.dragHandleProps}
                                     className="mt-0.5 cursor-grab active:cursor-grabbing"
                                     onClick={(e) => e.stopPropagation()}
                                   >
-                                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40" />
+                                    <GripVertical className="text-muted-foreground/40 h-3.5 w-3.5" />
                                   </div>
-                                  <div className="flex-1 min-w-0 -ml-1">
+                                  <div className="-ml-1 min-w-0 flex-1">
                                     <Link
                                       href={`/projects/${project.id}`}
-                                      className="text-sm font-medium leading-snug hover:underline line-clamp-2 block"
+                                      className="line-clamp-2 block text-sm leading-snug font-medium hover:underline"
                                     >
                                       {project.name}
                                     </Link>
-                                    <p className="text-[10px] font-mono text-muted-foreground mt-0.5">{project.code}</p>
+                                    <p className="text-muted-foreground mt-0.5 font-mono text-[10px]">
+                                      {project.code}
+                                    </p>
                                   </div>
                                   {canWrite && (
                                     <DropdownMenu>
                                       <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0 -mr-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="-mr-1 h-6 w-6 shrink-0"
+                                        >
                                           <MoreHorizontal className="h-3.5 w-3.5" />
                                         </Button>
                                       </DropdownMenuTrigger>
@@ -232,10 +262,15 @@ export default function ProjectsPage() {
                                         <DropdownMenuItem asChild>
                                           <Link href={`/projects/${project.id}`}>View Details</Link>
                                         </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => setEditing(project)}>Edit</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => setEditing(project)}>
+                                          Edit
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem
                                           className="text-destructive"
-                                          onClick={() => { if (confirm(`Archive "${project.name}"?`)) archiveMut.mutate(project.id) }}
+                                          onClick={() => {
+                                            if (confirm(`Archive "${project.name}"?`))
+                                              archiveMut.mutate(project.id)
+                                          }}
                                         >
                                           Archive
                                         </DropdownMenuItem>
@@ -245,37 +280,52 @@ export default function ProjectsPage() {
                                 </div>
 
                                 {project.description && (
-                                  <p className="text-[11px] text-muted-foreground line-clamp-2 mb-2">{project.description}</p>
+                                  <p className="text-muted-foreground mb-2 line-clamp-2 text-[11px]">
+                                    {project.description}
+                                  </p>
                                 )}
 
-                                <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                                <div className="mb-2 flex flex-wrap items-center gap-1.5">
                                   <Badge
                                     variant="outline"
-                                    className={cn("text-[10px] py-0", TASK_PRIORITY_COLORS[project.priority])}
+                                    className={cn(
+                                      "py-0 text-[10px]",
+                                      TASK_PRIORITY_COLORS[project.priority],
+                                    )}
                                   >
                                     {TASK_PRIORITY_LABELS[project.priority]}
                                   </Badge>
-                                  <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                                    <FolderKanban className="h-3 w-3" />{project._count.tasks}
+                                  <span className="text-muted-foreground flex items-center gap-0.5 text-[10px]">
+                                    <FolderKanban className="h-3 w-3" />
+                                    {project._count.tasks}
                                   </span>
-                                  <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                                    <Users className="h-3 w-3" />{project.members.length}
+                                  <span className="text-muted-foreground flex items-center gap-0.5 text-[10px]">
+                                    <Users className="h-3 w-3" />
+                                    {project.members.length}
                                   </span>
                                 </div>
 
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-1">
                                     <Avatar className="h-5 w-5">
-                                      {project.owner.profilePhoto && <AvatarImage src={project.owner.profilePhoto} />}
+                                      {project.owner.profilePhoto && (
+                                        <AvatarImage src={project.owner.profilePhoto} />
+                                      )}
                                       <AvatarFallback className="text-[8px]">
-                                        {getInitials(project.owner.firstName, project.owner.lastName)}
+                                        {getInitials(
+                                          project.owner.firstName,
+                                          project.owner.lastName,
+                                        )}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-[10px] text-muted-foreground">{project.owner.firstName}</span>
+                                    <span className="text-muted-foreground text-[10px]">
+                                      {project.owner.firstName}
+                                    </span>
                                   </div>
                                   {project.startDate && (
-                                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                                      <Calendar className="h-3 w-3" />{formatDate(project.startDate)}
+                                    <span className="text-muted-foreground flex items-center gap-0.5 text-[10px]">
+                                      <Calendar className="h-3 w-3" />
+                                      {formatDate(project.startDate)}
                                     </span>
                                   )}
                                 </div>
@@ -285,7 +335,9 @@ export default function ProjectsPage() {
                         ))}
                         {provided.placeholder}
                         {group.length === 0 && !snapshot.isDraggingOver && (
-                          <p className="text-[11px] text-muted-foreground/50 text-center py-6">No projects</p>
+                          <p className="text-muted-foreground/50 py-6 text-center text-[11px]">
+                            No projects
+                          </p>
                         )}
                       </div>
                     )}
@@ -298,187 +350,239 @@ export default function ProjectsPage() {
       ) : (
         /* ── Card / Table views ── */
         <div className="space-y-6">
-          {Object.entries(statusGroups).map(([status, group]) => group.length === 0 ? null : (
-            <div key={status}>
-              <div className="flex items-center gap-2 mb-3">
-                <span className={cn(
-                  "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                  PROJECT_STATUS_COLORS[status],
-                )}>
-                  {PROJECT_STATUS_LABELS[status]}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {group.length} project{group.length !== 1 ? "s" : ""}
-                </span>
-              </div>
+          {Object.entries(statusGroups).map(([status, group]) =>
+            group.length === 0 ? null : (
+              <div key={status}>
+                <div className="mb-3 flex items-center gap-2">
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                      PROJECT_STATUS_COLORS[status],
+                    )}
+                  >
+                    {PROJECT_STATUS_LABELS[status]}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {group.length} project{group.length !== 1 ? "s" : ""}
+                  </span>
+                </div>
 
-              {viewMode === "table" ? (
-                <div className="rounded-lg border bg-card overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/40 border-b border-border">
-                      <tr className="text-left text-xs text-muted-foreground uppercase tracking-wider">
-                        <th className="px-4 py-2.5 font-medium">Code</th>
-                        <th className="px-4 py-2.5 font-medium">Name</th>
-                        <th className="px-4 py-2.5 font-medium">Account Manager</th>
-                        <th className="px-4 py-2.5 font-medium text-center">Tasks</th>
-                        <th className="px-4 py-2.5 font-medium text-center">Members</th>
-                        {canWrite && <th className="px-4 py-2.5 font-medium text-right">Budget</th>}
-                        <th className="px-4 py-2.5 font-medium text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {group.map((project) => (
-                        <tr key={project.id} className="hover:bg-muted/30 transition-colors">
-                          <td className="px-4 py-2.5 font-mono text-xs">{project.code}</td>
-                          <td className="px-4 py-2.5">
-                            <Link href={`/projects/${project.id}`} className="font-medium hover:underline">
+                {viewMode === "table" ? (
+                  <div className="bg-card overflow-x-auto rounded-lg border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-muted/40 border-border border-b">
+                        <tr className="text-muted-foreground text-left text-xs tracking-wider uppercase">
+                          <th className="px-4 py-2.5 font-medium">Code</th>
+                          <th className="px-4 py-2.5 font-medium">Name</th>
+                          <th className="px-4 py-2.5 font-medium">Account Manager</th>
+                          <th className="px-4 py-2.5 text-center font-medium">Tasks</th>
+                          <th className="px-4 py-2.5 text-center font-medium">Members</th>
+                          {canWrite && (
+                            <th className="px-4 py-2.5 text-right font-medium">Budget</th>
+                          )}
+                          <th className="px-4 py-2.5 text-right font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-border divide-y">
+                        {group.map((project) => (
+                          <tr key={project.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-2.5 font-mono text-xs">{project.code}</td>
+                            <td className="px-4 py-2.5">
+                              <Link
+                                href={`/projects/${project.id}`}
+                                className="font-medium hover:underline"
+                              >
+                                {project.name}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-2.5">
+                              <div className="flex items-center gap-1.5">
+                                <Avatar className="h-5 w-5">
+                                  {project.owner.profilePhoto && (
+                                    <AvatarImage src={project.owner.profilePhoto} />
+                                  )}
+                                  <AvatarFallback className="text-[9px]">
+                                    {getInitials(project.owner.firstName, project.owner.lastName)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-xs">
+                                  {project.owner.firstName} {project.owner.lastName}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="text-muted-foreground px-4 py-2.5 text-center">
+                              {project._count.tasks}
+                            </td>
+                            <td className="text-muted-foreground px-4 py-2.5 text-center">
+                              {project.members.length}
+                            </td>
+                            {canWrite && (
+                              <td className="px-4 py-2.5 text-right text-xs">
+                                {project.budget != null ? (
+                                  `₹${project.budget.toLocaleString("en-IN")}`
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </td>
+                            )}
+                            <td className="px-4 py-2.5 text-right">
+                              {canWrite ? (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/projects/${project.id}`}>View Details</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setEditing(project)}>
+                                      Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-destructive"
+                                      onClick={() => {
+                                        if (confirm(`Archive "${project.name}"?`))
+                                          archiveMut.mutate(project.id)
+                                      }}
+                                    >
+                                      Archive
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              ) : (
+                                <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
+                                  <Link href={`/projects/${project.id}`}>Open</Link>
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {group.map((project) => (
+                      <div
+                        key={project.id}
+                        className="bg-card hover:border-foreground/20 flex flex-col gap-3 rounded-lg border p-4 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <Link
+                              href={`/projects/${project.id}`}
+                              className="line-clamp-1 text-sm font-medium hover:underline"
+                            >
                               {project.name}
                             </Link>
-                          </td>
-                          <td className="px-4 py-2.5">
-                            <div className="flex items-center gap-1.5">
-                              <Avatar className="h-5 w-5">
-                                {project.owner.profilePhoto && <AvatarImage src={project.owner.profilePhoto} />}
-                                <AvatarFallback className="text-[9px]">
-                                  {getInitials(project.owner.firstName, project.owner.lastName)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-xs">{project.owner.firstName} {project.owner.lastName}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-2.5 text-center text-muted-foreground">{project._count.tasks}</td>
-                          <td className="px-4 py-2.5 text-center text-muted-foreground">{project.members.length}</td>
+                            <p className="text-muted-foreground mt-0.5 font-mono text-xs">
+                              {project.code}
+                            </p>
+                          </div>
                           {canWrite && (
-                            <td className="px-4 py-2.5 text-right text-xs">
-                              {project.budget != null ? `₹${project.budget.toLocaleString("en-IN")}` : <span className="text-muted-foreground">—</span>}
-                            </td>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                  <Link href={`/projects/${project.id}`}>View Details</Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setEditing(project)}>
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => {
+                                    if (confirm(`Archive "${project.name}"?`))
+                                      archiveMut.mutate(project.id)
+                                  }}
+                                >
+                                  Archive
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
-                          <td className="px-4 py-2.5 text-right">
-                            {canWrite ? (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem asChild>
-                                    <Link href={`/projects/${project.id}`}>View Details</Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => setEditing(project)}>Edit</DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-destructive"
-                                    onClick={() => { if (confirm(`Archive "${project.name}"?`)) archiveMut.mutate(project.id) }}
-                                  >
-                                    Archive
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            ) : (
-                              <Button variant="ghost" size="sm" asChild className="h-7 text-xs">
-                                <Link href={`/projects/${project.id}`}>Open</Link>
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {group.map((project) => (
-                    <div
-                      key={project.id}
-                      className="rounded-lg border bg-card p-4 flex flex-col gap-3 hover:border-foreground/20 transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <Link
-                            href={`/projects/${project.id}`}
-                            className="font-medium text-sm hover:underline line-clamp-1"
-                          >
-                            {project.name}
-                          </Link>
-                          <p className="text-xs text-muted-foreground font-mono mt-0.5">{project.code}</p>
                         </div>
-                        {canWrite && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild>
-                                <Link href={`/projects/${project.id}`}>View Details</Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => setEditing(project)}>Edit</DropdownMenuItem>
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => { if (confirm(`Archive "${project.name}"?`)) archiveMut.mutate(project.id) }}
-                              >
-                                Archive
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+
+                        {project.description && (
+                          <p className="text-muted-foreground line-clamp-2 text-xs">
+                            {project.description}
+                          </p>
                         )}
-                      </div>
 
-                      {project.description && (
-                        <p className="text-xs text-muted-foreground line-clamp-2">{project.description}</p>
-                      )}
-
-                      <div className="flex items-center gap-2 text-xs">
-                        <Avatar className="h-5 w-5">
-                          {project.owner.profilePhoto && <AvatarImage src={project.owner.profilePhoto} />}
-                          <AvatarFallback className="text-[9px]">
-                            {getInitials(project.owner.firstName, project.owner.lastName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-muted-foreground">Account Manager:</span>
-                        <span className="font-medium">{project.owner.firstName} {project.owner.lastName}</span>
-                      </div>
-
-                      <div className="text-muted-foreground flex items-center gap-3 text-xs">
-                        <span className="flex items-center gap-1">
-                          <FolderKanban className="h-3 w-3" />{project._count.tasks} tasks
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />{project.members.length} members
-                        </span>
-                        {project.endDate && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />{formatDate(project.endDate)}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        {project.members.slice(0, 5).map((m) => (
-                          <Avatar key={m.employee.id} className="h-6 w-6 border-2 border-background -ml-1 first:ml-0">
-                            {m.employee.profilePhoto && <AvatarImage src={m.employee.profilePhoto} />}
+                        <div className="flex items-center gap-2 text-xs">
+                          <Avatar className="h-5 w-5">
+                            {project.owner.profilePhoto && (
+                              <AvatarImage src={project.owner.profilePhoto} />
+                            )}
                             <AvatarFallback className="text-[9px]">
-                              {getInitials(m.employee.firstName, m.employee.lastName)}
+                              {getInitials(project.owner.firstName, project.owner.lastName)}
                             </AvatarFallback>
                           </Avatar>
-                        ))}
-                        {project.members.length > 5 && (
-                          <span className="text-muted-foreground ml-1 text-xs">+{project.members.length - 5}</span>
+                          <span className="text-muted-foreground">Account Manager:</span>
+                          <span className="font-medium">
+                            {project.owner.firstName} {project.owner.lastName}
+                          </span>
+                        </div>
+
+                        <div className="text-muted-foreground flex items-center gap-3 text-xs">
+                          <span className="flex items-center gap-1">
+                            <FolderKanban className="h-3 w-3" />
+                            {project._count.tasks} tasks
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            {project.members.length} members
+                          </span>
+                          {project.endDate && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDate(project.endDate)}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {project.members.slice(0, 5).map((m) => (
+                            <Avatar
+                              key={m.employee.id}
+                              className="border-background -ml-1 h-6 w-6 border-2 first:ml-0"
+                            >
+                              {m.employee.profilePhoto && (
+                                <AvatarImage src={m.employee.profilePhoto} />
+                              )}
+                              <AvatarFallback className="text-[9px]">
+                                {getInitials(m.employee.firstName, m.employee.lastName)}
+                              </AvatarFallback>
+                            </Avatar>
+                          ))}
+                          {project.members.length > 5 && (
+                            <span className="text-muted-foreground ml-1 text-xs">
+                              +{project.members.length - 5}
+                            </span>
+                          )}
+                        </div>
+
+                        {canWrite && project.budget !== null && (
+                          <div className="text-muted-foreground text-[11px]">
+                            Budget:{" "}
+                            <span className="text-foreground font-medium">
+                              ₹{project.budget.toLocaleString("en-IN")}
+                            </span>
+                          </div>
                         )}
                       </div>
-
-                      {canWrite && project.budget !== null && (
-                        <div className="text-[11px] text-muted-foreground">
-                          Budget: <span className="text-foreground font-medium">₹{project.budget.toLocaleString("en-IN")}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                    ))}
+                  </div>
+                )}
+              </div>
+            ),
+          )}
         </div>
       )}
 
@@ -490,13 +594,13 @@ export default function ProjectsPage() {
           mode="edit"
           projectId={editing.id}
           initial={{
-            name:             editing.name,
-            code:             editing.code,
-            description:      editing.description ?? "",
-            status:           editing.status,
-            priority:         editing.priority,
-            startDate:        editing.startDate ? editing.startDate.split("T")[0] : "",
-            budget:           editing.budget != null ? String(editing.budget) : "",
+            name: editing.name,
+            code: editing.code,
+            description: editing.description ?? "",
+            status: editing.status,
+            priority: editing.priority,
+            startDate: editing.startDate ? editing.startDate.split("T")[0] : "",
+            budget: editing.budget != null ? String(editing.budget) : "",
             accountManagerId: editing.owner.id,
           }}
         />

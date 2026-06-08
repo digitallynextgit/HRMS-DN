@@ -64,7 +64,7 @@ export const PATCH = withSession(
       if (isStructuralChange && !auth.isManager && !isAdmin) {
         return NextResponse.json(
           { error: "Only the team manager can edit task details. You can update status only." },
-          { status: 403 }
+          { status: 403 },
         )
       }
 
@@ -116,7 +116,11 @@ export const PATCH = withSession(
         })
 
         // Notify team manager when a task is completed
-        if (status === "DONE" && auth.task.team?.managerId && auth.task.team.managerId !== session.user.id) {
+        if (
+          status === "DONE" &&
+          auth.task.team?.managerId &&
+          auth.task.team.managerId !== session.user.id
+        ) {
           const assigneeName = task.assignee
             ? `${task.assignee.firstName} ${task.assignee.lastName}`
             : "Someone"
@@ -155,7 +159,10 @@ export const DELETE = withSession(
 
       const isAdmin = hasPermission(session, PERMISSIONS.PROJECT_WRITE)
       if (!auth.isManager && !isAdmin) {
-        return NextResponse.json({ error: "Only the team manager can delete tasks" }, { status: 403 })
+        return NextResponse.json(
+          { error: "Only the team manager can delete tasks" },
+          { status: 403 },
+        )
       }
 
       await db.projectTask.delete({ where: { id: ctx.params.id } })

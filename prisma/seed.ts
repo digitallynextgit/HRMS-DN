@@ -1,5 +1,5 @@
 // =============================================================================
-// HRMS Database Seed Script
+// DNMS Database Seed Script
 // Run with: pnpm prisma db seed
 // =============================================================================
 
@@ -27,7 +27,7 @@ async function safeCreateMany(model: any, rows: Record<string, unknown>[]) {
 }
 
 async function main() {
-  console.log("Starting HRMS database seed...")
+  console.log("Starting DNMS database seed...")
   console.log("─────────────────────────────────────────")
 
   // ===========================================================================
@@ -84,12 +84,15 @@ async function main() {
   // ===========================================================================
   console.log("Step 2: Creating permissions...")
 
-  await safeCreateMany(prisma.permission, PERMISSION_DEFINITIONS.map((def) => ({
-    scope: def.scope,
-    module: def.module,
-    action: def.action,
-    description: def.description,
-  })))
+  await safeCreateMany(
+    prisma.permission,
+    PERMISSION_DEFINITIONS.map((def) => ({
+      scope: def.scope,
+      module: def.module,
+      action: def.action,
+      description: def.description,
+    })),
+  )
   const permissionRecords = await prisma.permission.findMany()
 
   console.log(`  ✓ Created ${permissionRecords.length} permissions`)
@@ -204,10 +207,13 @@ async function main() {
         : permissionRecords.filter((p) => (permissions as string[]).includes(p.scope))
 
     if (permsToAssign.length > 0) {
-      await safeCreateMany(prisma.rolePermission, permsToAssign.map((p) => ({
-        roleId: role.id,
-        permissionId: p.id,
-      })))
+      await safeCreateMany(
+        prisma.rolePermission,
+        permsToAssign.map((p) => ({
+          roleId: role.id,
+          permissionId: p.id,
+        })),
+      )
     }
 
     console.log(`  ✓ Created role "${role.displayName}" with ${permsToAssign.length} permissions`)
@@ -1423,13 +1429,13 @@ async function main() {
   <div class="wrapper">
     <div class="header">
       <h1>{{company_name}}</h1>
-      <p>Human Resource Management System</p>
+      <p>Digitally Next Management System</p>
     </div>
     <div class="body">
       <p class="greeting">Welcome aboard, {{first_name}}!</p>
       <p class="text">
         We're thrilled to have you join the {{company_name}} family. Your account has been set up and
-        you're ready to get started with the HRMS portal. Below are the details of your profile.
+        you're ready to get started with the DNMS portal. Below are the details of your profile.
       </p>
       <div class="details-box">
         <h3>Your Details</h3>
@@ -1447,7 +1453,7 @@ async function main() {
         </div>
       </div>
       <div class="cta-wrapper">
-        <a href="{{login_url}}" class="cta-btn">Log In to HRMS Portal</a>
+        <a href="{{login_url}}" class="cta-btn">Log In to DNMS Portal</a>
         <p class="note">Button not working? Copy and paste this link into your browser:<br />{{login_url}}</p>
       </div>
       <p class="text">
@@ -1456,7 +1462,7 @@ async function main() {
       </p>
     </div>
     <div class="footer">
-      <p>This is an automated email from {{company_name}} HRMS. Please do not reply directly to this email.</p>
+      <p>This is an automated email from {{company_name}} DNMS. Please do not reply directly to this email.</p>
       <p style="margin-top: 4px;">© {{company_name}}. All rights reserved.</p>
     </div>
   </div>
@@ -1492,13 +1498,13 @@ async function main() {
 <body>
   <div class="wrapper">
     <div class="header">
-      <h1>HRMS Portal</h1>
+      <h1>DNMS Portal</h1>
       <p>Password Reset Request</p>
     </div>
     <div class="body">
       <p class="greeting">Hi {{first_name}},</p>
       <p class="text">
-        We received a request to reset the password for your HRMS account. Click the button below
+        We received a request to reset the password for your DNMS account. Click the button below
         to choose a new password. This link is valid for <strong>1 hour</strong>.
       </p>
       <div class="cta-wrapper">
@@ -1517,7 +1523,7 @@ async function main() {
       </p>
     </div>
     <div class="footer">
-      <p>This is an automated email from the HRMS system. Please do not reply directly to this email.</p>
+      <p>This is an automated email from the DNMS system. Please do not reply directly to this email.</p>
     </div>
   </div>
 </body>
@@ -1546,7 +1552,7 @@ async function main() {
     data: {
       slug: "password-reset",
       name: "Password Reset",
-      subject: "Reset your HRMS password",
+      subject: "Reset your DNMS password",
       bodyHtml: passwordResetHtml,
       mergeFields: ["first_name", "reset_url"],
       isActive: true,
@@ -2149,14 +2155,34 @@ async function main() {
 
   // Seed default project phases (PMI lifecycle)
   await safeCreateMany(prisma.projectPhase, [
-    { name: "Initiation", description: "Define the project, identify stakeholders, set initial scope", displayOrder: 1 },
-    { name: "Planning", description: "Detailed plan, timeline, resource allocation", displayOrder: 2 },
+    {
+      name: "Initiation",
+      description: "Define the project, identify stakeholders, set initial scope",
+      displayOrder: 1,
+    },
+    {
+      name: "Planning",
+      description: "Detailed plan, timeline, resource allocation",
+      displayOrder: 2,
+    },
     { name: "Executing", description: "Active delivery of project work", displayOrder: 3 },
-    { name: "Monitoring & Controlling", description: "Track progress, manage changes, quality control", displayOrder: 4 },
-    { name: "Closure", description: "Final delivery, retrospective, handover, archival", displayOrder: 5 },
+    {
+      name: "Monitoring & Controlling",
+      description: "Track progress, manage changes, quality control",
+      displayOrder: 4,
+    },
+    {
+      name: "Closure",
+      description: "Final delivery, retrospective, handover, archival",
+      displayOrder: 5,
+    },
   ])
-  const initiationPhase = await prisma.projectPhase.findFirst({ where: { name: "Initiation", parentId: null } })
-  const executingPhase = await prisma.projectPhase.findFirst({ where: { name: "Executing", parentId: null } })
+  const initiationPhase = await prisma.projectPhase.findFirst({
+    where: { name: "Initiation", parentId: null },
+  })
+  const executingPhase = await prisma.projectPhase.findFirst({
+    where: { name: "Executing", parentId: null },
+  })
 
   const adminId = employeeNoToId.get("EMP-001")!
   const rupamId = employeeNoToId.get("EMP-113")! // Rupam - senior active employee
@@ -2211,11 +2237,14 @@ async function main() {
       managerEmployeeId,
       ...memberEmployeeIds.filter((id) => id !== managerEmployeeId),
     ]
-    await safeCreateMany(prisma.projectTeamMember, memberIds.map((employeeId) => ({
-      teamId: team.id,
-      projectId,
-      employeeId,
-    })))
+    await safeCreateMany(
+      prisma.projectTeamMember,
+      memberIds.map((employeeId) => ({
+        teamId: team.id,
+        projectId,
+        employeeId,
+      })),
+    )
 
     // Tasks
     for (const t of tasks) {
@@ -2384,7 +2413,7 @@ async function main() {
       name: "Q2 Marketing Campaign",
       code: "DN00002",
       description:
-        "Multi-channel marketing campaign for new product launch — paid ads, SEO content, social, video.",
+        "Multi-channel marketing campaign for new product launch - paid ads, SEO content, social, video.",
       status: "ACTIVE",
       priority: "URGENT",
       startDate: new Date("2026-04-15"),
@@ -2449,13 +2478,13 @@ async function main() {
     ],
   )
 
-  // ─── Project 3: Internal HRMS Improvements ───
+  // ─── Project 3: Internal DNMS Improvements ───
   const project3 = await prisma.project.create({
     data: {
-      name: "HRMS Internal Improvements",
+      name: "DNMS Internal Improvements",
       code: "DN00003",
       description:
-        "Q2 enhancements to the internal HRMS platform — payroll auto-gen, performance scoring, mobile responsiveness.",
+        "Q2 enhancements to the internal DNMS platform - payroll auto-gen, performance scoring, mobile responsiveness.",
       status: "PLANNING",
       priority: "MEDIUM",
       startDate: new Date("2026-06-01"),
@@ -2469,7 +2498,7 @@ async function main() {
   await createTeamWithMembers(
     project3.id,
     "Web Development",
-    "Engineering work on the HRMS app",
+    "Engineering work on the DNMS app",
     rupamId, // Manager
     [],
     [
@@ -2492,7 +2521,7 @@ async function main() {
     ],
   )
 
-  // ─── Sample Resources (file metadata only — no real files) ───
+  // ─── Sample Resources (file metadata only - no real files) ───
   await safeCreateMany(prisma.projectResource, [
     {
       projectId: project1.id,
@@ -2502,7 +2531,7 @@ async function main() {
       fileSize: 2_400_000,
       mimeType: "application/pdf",
       objectKey: `projects/${project1.id}/BRIEFS/acme-website-brief.pdf`,
-      description: "Client brief from Acme team — scope, deliverables, timelines",
+      description: "Client brief from Acme team - scope, deliverables, timelines",
       uploadedById: rupamId,
     },
     {
@@ -2580,55 +2609,55 @@ async function main() {
 
   // Goals
   await safeCreateMany(prisma.goal, [
-      {
-        employeeId: shaileshId,
-        title: "Complete advanced content editing certification",
-        description: "Finish the professional video editing course by Q3 2026",
-        progress: 60,
-        status: "IN_PROGRESS",
-        year: 2026,
-        targetDate: new Date("2026-09-30"),
-      },
-      {
-        employeeId: shaileshId,
-        title: "Mentor 2 new team members",
-        progress: 100,
-        status: "COMPLETED",
-        year: 2026,
-      },
-      {
-        employeeId: shaileshId,
-        title: "Improve delivery turnaround time by 15%",
-        progress: 20,
-        status: "IN_PROGRESS",
-        year: 2026,
-        targetDate: new Date("2026-12-31"),
-      },
-      {
-        employeeId: vivekId,
-        title: "Build a strong content portfolio",
-        description: "Create and publish 20 content pieces across channels",
-        progress: 35,
-        status: "IN_PROGRESS",
-        year: 2026,
-        targetDate: new Date("2026-06-30"),
-      },
-      {
-        employeeId: vivekId,
-        title: "Complete digital marketing certification",
-        progress: 0,
-        status: "NOT_STARTED",
-        year: 2026,
-        targetDate: new Date("2026-12-31"),
-      },
-      {
-        employeeId: rupamId,
-        title: "Streamline employee onboarding process",
-        progress: 80,
-        status: "IN_PROGRESS",
-        year: 2026,
-        targetDate: new Date("2026-04-30"),
-      },
+    {
+      employeeId: shaileshId,
+      title: "Complete advanced content editing certification",
+      description: "Finish the professional video editing course by Q3 2026",
+      progress: 60,
+      status: "IN_PROGRESS",
+      year: 2026,
+      targetDate: new Date("2026-09-30"),
+    },
+    {
+      employeeId: shaileshId,
+      title: "Mentor 2 new team members",
+      progress: 100,
+      status: "COMPLETED",
+      year: 2026,
+    },
+    {
+      employeeId: shaileshId,
+      title: "Improve delivery turnaround time by 15%",
+      progress: 20,
+      status: "IN_PROGRESS",
+      year: 2026,
+      targetDate: new Date("2026-12-31"),
+    },
+    {
+      employeeId: vivekId,
+      title: "Build a strong content portfolio",
+      description: "Create and publish 20 content pieces across channels",
+      progress: 35,
+      status: "IN_PROGRESS",
+      year: 2026,
+      targetDate: new Date("2026-06-30"),
+    },
+    {
+      employeeId: vivekId,
+      title: "Complete digital marketing certification",
+      progress: 0,
+      status: "NOT_STARTED",
+      year: 2026,
+      targetDate: new Date("2026-12-31"),
+    },
+    {
+      employeeId: rupamId,
+      title: "Streamline employee onboarding process",
+      progress: 80,
+      status: "IN_PROGRESS",
+      year: 2026,
+      targetDate: new Date("2026-04-30"),
+    },
   ])
 
   console.log("  ✓ Created 1 review cycle, reviews for all employees, 6 goals")

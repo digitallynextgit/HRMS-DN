@@ -100,7 +100,7 @@ export default function EmailTemplatesPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Email Templates"
-        description="Manage transactional email templates used across the HRMS platform."
+        description="Manage transactional email templates used across the DNMS platform."
         actions={
           canWrite ? (
             <Button onClick={handleCreate}>

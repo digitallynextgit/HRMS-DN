@@ -12,7 +12,7 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
     const mine = searchParams.get("mine") === "true"
     const page = parseInt(searchParams.get("page") ?? "1")
     const limit = parseInt(searchParams.get("limit") ?? "20")
-    const skip = (page - 1 ) * limit
+    const skip = (page - 1) * limit
 
     const where: Record<string, unknown> = { isArchived: false }
     if (status) where.status = status
@@ -41,7 +41,9 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
               name: true,
               members: {
                 select: {
-                  employee: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
+                  employee: {
+                    select: { id: true, firstName: true, lastName: true, profilePhoto: true },
+                  },
                 },
               },
             },
@@ -73,16 +75,31 @@ export const POST = withAuth(
   async (req: NextRequest, _ctx: unknown, session: Session) => {
     try {
       const body = await req.json()
-      const { name, description, status, priority, startDate, budget, accountManagerId, currentPhaseId } = body
+      const {
+        name,
+        description,
+        status,
+        priority,
+        startDate,
+        budget,
+        accountManagerId,
+        currentPhaseId,
+      } = body
 
-      // Validate Account Manager (formerly "owner") — falls back to creator if not supplied
+      // Validate Account Manager (formerly "owner") - falls back to creator if not supplied
       const ownerId: string = accountManagerId || session.user.id
-      const accountManager = await db.employee.findUnique({ where: { id: ownerId }, select: { id: true, isActive: true } })
+      const accountManager = await db.employee.findUnique({
+        where: { id: ownerId },
+        select: { id: true, isActive: true },
+      })
       if (!accountManager) {
         return NextResponse.json({ error: "Account Manager not found" }, { status: 422 })
       }
       if (!accountManager.isActive) {
-        return NextResponse.json({ error: "Account Manager is not an active employee" }, { status: 422 })
+        return NextResponse.json(
+          { error: "Account Manager is not an active employee" },
+          { status: 422 },
+        )
       }
 
       // Auto-generate code in DN## format (DN01, DN02, …). Looks at max existing DN-prefixed code.

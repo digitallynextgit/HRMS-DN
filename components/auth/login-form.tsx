@@ -81,9 +81,10 @@ export function LoginForm() {
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="you@company.com"
+                    placeholder="username@digitallynext.com"
                     autoComplete="email"
                     disabled={isSubmitting}
+                    className="h-11"
                     {...field}
                   />
                 </FormControl>
@@ -105,7 +106,7 @@ export function LoginForm() {
                       placeholder="••••••••"
                       autoComplete="current-password"
                       disabled={isSubmitting}
-                      className="pr-10"
+                      className="h-11 pr-10"
                       {...field}
                     />
                     <button
@@ -139,7 +140,7 @@ export function LoginForm() {
             </Link>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
+          <Button type="submit" className="h-11 w-full text-sm" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting ? "Signing in…" : "Sign in"}
           </Button>
@@ -160,7 +161,7 @@ export function LoginForm() {
       <Button
         type="button"
         variant="outline"
-        className="w-full"
+        className="h-11 w-full text-sm"
         onClick={handleGoogleSignIn}
         disabled={isGoogleLoading || isSubmitting}
       >

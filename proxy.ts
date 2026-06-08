@@ -1,5 +1,5 @@
 /**
- * Next.js Edge Proxy – authentication guard for the HRMS.
+ * Next.js Edge Proxy – authentication guard for the DNMS.
  *
  * Renamed from `middleware.ts` to `proxy.ts` (Next.js 16 convention).
  *
@@ -33,7 +33,14 @@ const PUBLIC_PREFIXES = [
   "/public",
 ]
 
+// Static assets in /public are served at the root (e.g. /logo_dark_bg.webp), so
+// any request for a file with an asset extension must be allowed through — these
+// are needed on public pages (the login page logo) and by the image optimiser.
+const PUBLIC_FILE =
+  /\.(?:webp|png|jpe?g|gif|svg|ico|bmp|avif|webmanifest|woff2?|ttf|otf|mp4|webm)$/i
+
 function isPublic(pathname: string): boolean {
+  if (!pathname.startsWith("/api/") && PUBLIC_FILE.test(pathname)) return true
   return PUBLIC_PREFIXES.some(
     (prefix) =>
       pathname === prefix || pathname.startsWith(prefix + "/") || pathname.startsWith(prefix + "?"),

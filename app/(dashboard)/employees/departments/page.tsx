@@ -21,6 +21,12 @@ import { PageHeader } from "@/components/shared/page-header"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { cn } from "@/lib/utils"
+import {
+  getDepartments,
+  createDepartment,
+  updateDepartment,
+  deleteDepartment,
+} from "@/lib/actions/departments"
 
 interface Department {
   id: string
@@ -33,9 +39,9 @@ interface Department {
 }
 
 async function fetchDepartments(): Promise<{ data: Department[] }> {
-  const res = await fetch("/api/departments?includeInactive=true")
-  if (!res.ok) throw new Error("Failed to fetch departments")
-  return res.json()
+  const r = await getDepartments({ includeInactive: true })
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data as Department[] }
 }
 
 async function saveDepartment(body: {
@@ -44,36 +50,25 @@ async function saveDepartment(body: {
   code: string
   description?: string
 }): Promise<{ data: Department }> {
-  const res = await fetch(body.id ? `/api/departments/${body.id}` : "/api/departments", {
-    method: body.id ? "PATCH" : "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: body.name, code: body.code, description: body.description }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to save department" }))
-    throw new Error(err.error || "Failed to save department")
-  }
-  return res.json()
+  const r = body.id
+    ? await updateDepartment(body.id, {
+        name: body.name,
+        code: body.code,
+        description: body.description,
+      })
+    : await createDepartment({ name: body.name, code: body.code, description: body.description })
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data as Department }
 }
 
 async function patchActive(id: string, isActive: boolean): Promise<void> {
-  const res = await fetch(`/api/departments/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ isActive }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to update department" }))
-    throw new Error(err.error || "Failed to update department")
-  }
+  const r = await updateDepartment(id, { isActive })
+  if (!r.ok) throw new Error(r.error)
 }
 
 async function purgeDepartment(id: string): Promise<void> {
-  const res = await fetch(`/api/departments/${id}?permanent=true`, { method: "DELETE" })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to delete department" }))
-    throw new Error(err.error || "Failed to delete department")
-  }
+  const r = await deleteDepartment(id, true)
+  if (!r.ok) throw new Error(r.error)
 }
 
 export default function DepartmentsPage() {

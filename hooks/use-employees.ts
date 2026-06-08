@@ -2,6 +2,18 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { getDepartments } from "@/lib/actions/departments"
+import { getDesignations } from "@/lib/actions/designations"
+import {
+  getEmployees,
+  getEmployee,
+  createEmployee as createEmployeeAction,
+  updateEmployee as updateEmployeeAction,
+  deactivateEmployee,
+  deleteEmployeePermanent,
+  activateEmployee as activateEmployeeAction,
+  getOrgChart,
+} from "@/lib/actions/employees"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,43 +106,21 @@ interface PaginatedResponse<T> {
 async function fetchEmployees(
   filters: EmployeeFilters,
 ): Promise<PaginatedResponse<EmployeeListItem>> {
-  const params = new URLSearchParams()
-  if (filters.search) params.set("search", filters.search)
-  if (filters.departmentId) params.set("departmentId", filters.departmentId)
-  if (filters.designationId) params.set("designationId", filters.designationId)
-  if (filters.status) params.set("status", filters.status)
-  if (filters.employmentType) params.set("employmentType", filters.employmentType)
-  if (filters.page) params.set("page", String(filters.page))
-  if (filters.limit) params.set("limit", String(filters.limit))
-
-  const res = await fetch(`/api/employees?${params.toString()}`)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch employees" }))
-    throw new Error(err.error || "Failed to fetch employees")
-  }
-  return res.json()
+  const r = await getEmployees(filters)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as PaginatedResponse<EmployeeListItem>
 }
 
 async function fetchEmployee(id: string): Promise<{ data: EmployeeDetail }> {
-  const res = await fetch(`/api/employees/${id}`)
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch employee" }))
-    throw new Error(err.error || "Failed to fetch employee")
-  }
-  return res.json()
+  const r = await getEmployee(id)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: EmployeeDetail }
 }
 
 async function createEmployee(body: Record<string, unknown>): Promise<{ data: EmployeeListItem }> {
-  const res = await fetch("/api/employees", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to create employee" }))
-    throw new Error(err.error || "Failed to create employee")
-  }
-  return res.json()
+  const r = await createEmployeeAction(body)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: EmployeeListItem }
 }
 
 async function updateEmployee({
@@ -140,70 +130,45 @@ async function updateEmployee({
   id: string
   body: Record<string, unknown>
 }): Promise<{ data: EmployeeListItem }> {
-  const res = await fetch(`/api/employees/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to update employee" }))
-    throw new Error(err.error || "Failed to update employee")
-  }
-  return res.json()
+  const r = await updateEmployeeAction(id, body)
+  if (!r.ok) throw new Error(r.error)
+  return r.data as { data: EmployeeListItem }
 }
 
 async function deleteEmployee(id: string): Promise<{ message: string }> {
-  const res = await fetch(`/api/employees/${id}`, { method: "DELETE" })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to deactivate employee" }))
-    throw new Error(err.error || "Failed to deactivate employee")
-  }
-  return res.json()
+  const r = await deactivateEmployee(id)
+  if (!r.ok) throw new Error(r.error)
+  return r.data
 }
 
 async function activateEmployee(id: string): Promise<{ message: string }> {
-  const res = await fetch(`/api/employees/${id}/activate`, { method: "POST" })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to reactivate employee" }))
-    throw new Error(err.error || "Failed to reactivate employee")
-  }
-  return res.json()
+  const r = await activateEmployeeAction(id)
+  if (!r.ok) throw new Error(r.error)
+  return { message: "Employee reactivated" }
 }
 
 async function hardDeleteEmployee(id: string): Promise<{ message: string }> {
-  const res = await fetch(`/api/employees/${id}?permanent=true`, { method: "DELETE" })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to delete employee" }))
-    throw new Error(err.error || "Failed to delete employee")
-  }
-  return res.json()
+  const r = await deleteEmployeePermanent(id)
+  if (!r.ok) throw new Error(r.error)
+  return r.data
 }
 
 async function fetchOrgChart(): Promise<{ data: import("@/types").OrgNode[] }> {
-  const res = await fetch("/api/employees/org-chart")
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch org chart" }))
-    throw new Error(err.error || "Failed to fetch org chart")
-  }
-  return res.json()
+  const r = await getOrgChart()
+  if (!r.ok) throw new Error(r.error)
+  return r.data
 }
 
 async function fetchDepartments(): Promise<{ data: Department[] }> {
-  const res = await fetch("/api/departments")
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch departments" }))
-    throw new Error(err.error || "Failed to fetch departments")
-  }
-  return res.json()
+  const r = await getDepartments()
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data }
 }
 
 async function fetchDesignations(): Promise<{ data: Designation[] }> {
-  const res = await fetch("/api/designations")
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to fetch designations" }))
-    throw new Error(err.error || "Failed to fetch designations")
-  }
-  return res.json()
+  const r = await getDesignations()
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data }
 }
 
 // ─── Hooks ─────────────────────────────────────────────────────────────────────

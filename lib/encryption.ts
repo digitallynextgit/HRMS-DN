@@ -3,8 +3,11 @@ import { createCipheriv, createDecipheriv, randomBytes } from "crypto"
 function getKey(): Buffer {
   const hex = process.env.ENCRYPTION_KEY
   if (!hex || hex.length !== 64) {
-    // Deterministic dev-only fallback — never use in production
-    return Buffer.from("devdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdev".slice(0, 64), "hex")
+    // Deterministic dev-only fallback - never use in production
+    return Buffer.from(
+      "devdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdevdev".slice(0, 64),
+      "hex",
+    )
   }
   return Buffer.from(hex, "hex")
 }

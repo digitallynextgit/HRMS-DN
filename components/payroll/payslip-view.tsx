@@ -55,7 +55,7 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
         <div id="payslip-print-area" className="space-y-6">
           {/* Company header */}
           <div className="border-b pb-4 text-center">
-            <h2 className="text-foreground text-xl font-bold">HRMS</h2>
+            <h2 className="text-foreground text-xl font-bold">DNMS</h2>
             <p className="text-muted-foreground mt-1 text-sm">
               Payslip for {monthName} {record.year}
             </p>

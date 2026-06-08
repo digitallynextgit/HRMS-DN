@@ -268,3 +268,67 @@
     print-color-adjust: exact !important;
   }
 }
+
+/* ── Auth / login animations ──────────────────────────────────────────── */
+
+/* Logo "walk" — a gentle stepping bob that pivots from the feet (the red mark
+   sits bottom-left of the wordmark, so the sway reads as legs stepping). */
+@keyframes dnms-walk {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(-1.2deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-5px) rotate(1.2deg);
+  }
+}
+
+/* Staggered entrance for headline / features / chips. */
+@keyframes dnms-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Slow drifting ambient glow orbs. */
+@keyframes dnms-float {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(24px, -28px) scale(1.12);
+  }
+}
+
+.animate-dnms-walk {
+  animation: dnms-walk 2.4s ease-in-out infinite;
+  transform-origin: bottom left;
+  will-change: transform;
+}
+.animate-dnms-fade-up {
+  animation: dnms-fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-dnms-float {
+  animation: dnms-float 14s ease-in-out infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-dnms-walk,
+  .animate-dnms-float,
+  .animate-dnms-fade-up {
+    animation: none;
+  }
+}

@@ -4,10 +4,10 @@ import { Providers } from "@/components/providers/providers"
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | HRMS",
-    default: "HRMS - Human Resource Management System",
+    template: "%s | DNMS",
+    default: "DNMS - Digitally Next Management System",
   },
-  description: "Modern HRMS for managing your workforce",
+  description: "Modern DNMS for managing your workforce",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

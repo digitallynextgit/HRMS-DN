@@ -20,6 +20,12 @@ import { PageHeader } from "@/components/shared/page-header"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { cn } from "@/lib/utils"
+import {
+  getDesignations,
+  createDesignation,
+  updateDesignation,
+  deleteDesignation,
+} from "@/lib/actions/designations"
 
 interface Designation {
   id: string
@@ -30,9 +36,9 @@ interface Designation {
 }
 
 async function fetchDesignations(): Promise<{ data: Designation[] }> {
-  const res = await fetch("/api/designations?includeInactive=true")
-  if (!res.ok) throw new Error("Failed to fetch designations")
-  return res.json()
+  const r = await getDesignations({ includeInactive: true })
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data as Designation[] }
 }
 
 async function saveDesignation(body: {
@@ -40,36 +46,21 @@ async function saveDesignation(body: {
   title: string
   level: number
 }): Promise<{ data: Designation }> {
-  const res = await fetch(body.id ? `/api/designations/${body.id}` : "/api/designations", {
-    method: body.id ? "PATCH" : "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title: body.title, level: body.level }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to save designation" }))
-    throw new Error(err.error || "Failed to save designation")
-  }
-  return res.json()
+  const r = body.id
+    ? await updateDesignation(body.id, { title: body.title, level: body.level })
+    : await createDesignation({ title: body.title, level: body.level })
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data as Designation }
 }
 
 async function patchActive(id: string, isActive: boolean): Promise<void> {
-  const res = await fetch(`/api/designations/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ isActive }),
-  })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to update designation" }))
-    throw new Error(err.error || "Failed to update designation")
-  }
+  const r = await updateDesignation(id, { isActive })
+  if (!r.ok) throw new Error(r.error)
 }
 
 async function purgeDesignation(id: string): Promise<void> {
-  const res = await fetch(`/api/designations/${id}?permanent=true`, { method: "DELETE" })
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to delete designation" }))
-    throw new Error(err.error || "Failed to delete designation")
-  }
+  const r = await deleteDesignation(id, true)
+  if (!r.ok) throw new Error(r.error)
 }
 
 export default function DesignationsPage() {

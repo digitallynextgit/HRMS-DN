@@ -3,12 +3,24 @@
 import { useEffect, useState } from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useEmployees } from "@/hooks/use-employees"
 import { usePermissions } from "@/hooks/use-permissions"
@@ -18,11 +30,11 @@ import { cn, getInitials } from "@/lib/utils"
 
 interface ProjectFormValues {
   name: string
-  code?: string                  // legacy, ignored on create (auto-generated)
+  code?: string // legacy, ignored on create (auto-generated)
   description: string
   status: string
   priority: string
-  startDate: string              // labelled "Onboarding Date" in UI
+  startDate: string // labelled "Onboarding Date" in UI
   budget: string
   accountManagerId: string
 }
@@ -64,7 +76,7 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
 
   const { data: empsData } = useEmployees({ status: "ACTIVE", limit: 100 })
   const employees = (empsData?.data ?? []).filter((e) =>
-    `${e.firstName} ${e.lastName}`.toLowerCase().includes(search.toLowerCase())
+    `${e.firstName} ${e.lastName}`.toLowerCase().includes(search.toLowerCase()),
   )
   const selectedManager = (empsData?.data ?? []).find((e) => e.id === form.accountManagerId)
 
@@ -138,7 +150,7 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !isPending && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{mode === "create" ? "New Project" : "Edit Project"}</DialogTitle>
         </DialogHeader>
@@ -153,13 +165,15 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
               placeholder="e.g. Acme Website Redesign"
             />
             {mode === "create" && (
-              <p className="text-[11px] text-muted-foreground">
-                A code <span className="font-mono font-medium">DN#####</span> will be auto-generated for this project.
+              <p className="text-muted-foreground text-[11px]">
+                A code <span className="font-mono font-medium">DN#####</span> will be auto-generated
+                for this project.
               </p>
             )}
             {mode === "edit" && form.code && (
-              <p className="text-[11px] text-muted-foreground">
-                Code: <span className="font-mono font-medium">{form.code}</span> (auto-generated, cannot be changed)
+              <p className="text-muted-foreground text-[11px]">
+                Code: <span className="font-mono font-medium">{form.code}</span> (auto-generated,
+                cannot be changed)
               </p>
             )}
           </div>
@@ -178,7 +192,7 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
           {/* Account Manager */}
           <div className="space-y-1.5">
             <Label>Account Manager *</Label>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               The lead manager under whom all teams will be created for this project.
             </p>
             <Input
@@ -187,16 +201,22 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
               onChange={(e) => setSearch(e.target.value)}
             />
             {selectedManager && !search && (
-              <div className="flex items-center gap-2 rounded border bg-muted/30 px-3 py-2">
+              <div className="bg-muted/30 flex items-center gap-2 rounded border px-3 py-2">
                 <Avatar className="h-7 w-7">
-                  {selectedManager.profilePhoto && <AvatarImage src={selectedManager.profilePhoto} />}
+                  {selectedManager.profilePhoto && (
+                    <AvatarImage src={selectedManager.profilePhoto} />
+                  )}
                   <AvatarFallback className="text-[10px]">
                     {getInitials(selectedManager.firstName, selectedManager.lastName)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0 text-sm">
-                  <p className="font-medium">{selectedManager.firstName} {selectedManager.lastName}</p>
-                  <p className="text-xs text-muted-foreground">{selectedManager.employeeNo} · {selectedManager.designation?.title ?? "—"}</p>
+                <div className="min-w-0 flex-1 text-sm">
+                  <p className="font-medium">
+                    {selectedManager.firstName} {selectedManager.lastName}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {selectedManager.employeeNo} · {selectedManager.designation?.title ?? "—"}
+                  </p>
                 </div>
                 <Button
                   type="button"
@@ -210,27 +230,38 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
               </div>
             )}
             {(search || !selectedManager) && (
-              <div className="max-h-44 overflow-y-auto border rounded-md divide-y">
+              <div className="max-h-44 divide-y overflow-y-auto rounded-md border">
                 {employees.length === 0 ? (
-                  <p className="p-3 text-xs text-muted-foreground text-center">No matching employees</p>
+                  <p className="text-muted-foreground p-3 text-center text-xs">
+                    No matching employees
+                  </p>
                 ) : (
                   employees.map((e) => (
                     <button
                       key={e.id}
                       type="button"
                       className={cn(
-                        "w-full text-left p-2 hover:bg-muted/50 flex items-center gap-2 text-sm",
+                        "hover:bg-muted/50 flex w-full items-center gap-2 p-2 text-left text-sm",
                         form.accountManagerId === e.id && "bg-accent",
                       )}
-                      onClick={() => { setForm((f) => ({ ...f, accountManagerId: e.id })); setSearch("") }}
+                      onClick={() => {
+                        setForm((f) => ({ ...f, accountManagerId: e.id }))
+                        setSearch("")
+                      }}
                     >
                       <Avatar className="h-6 w-6">
                         {e.profilePhoto && <AvatarImage src={e.profilePhoto} />}
-                        <AvatarFallback className="text-[9px]">{getInitials(e.firstName, e.lastName)}</AvatarFallback>
+                        <AvatarFallback className="text-[9px]">
+                          {getInitials(e.firstName, e.lastName)}
+                        </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <p className="font-medium truncate">{e.firstName} {e.lastName}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{e.employeeNo} · {e.designation?.title ?? "—"}</p>
+                        <p className="truncate font-medium">
+                          {e.firstName} {e.lastName}
+                        </p>
+                        <p className="text-muted-foreground truncate text-[11px]">
+                          {e.employeeNo} · {e.designation?.title ?? "—"}
+                        </p>
                       </div>
                     </button>
                   ))
@@ -242,22 +273,36 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.status}
+                onValueChange={(v) => setForm((f) => ({ ...f, status: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {Object.entries(PROJECT_STATUS_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                    <SelectItem key={k} value={k}>
+                      {v}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Priority</Label>
-              <Select value={form.priority} onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select
+                value={form.priority}
+                onValueChange={(v) => setForm((f) => ({ ...f, priority: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {Object.entries(TASK_PRIORITY_LABELS).map(([k, v]) => (
-                    <SelectItem key={k} value={k}>{v}</SelectItem>
+                    <SelectItem key={k} value={k}>
+                      {v}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -272,17 +317,22 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
               value={form.startDate}
               onChange={(e) => setForm((f) => ({ ...f, startDate: e.target.value }))}
             />
-            <p className="text-[11px] text-muted-foreground">The day the client / project was onboarded.</p>
+            <p className="text-muted-foreground text-[11px]">
+              The day the client / project was onboarded.
+            </p>
           </div>
 
-          {/* Budget — admin only */}
+          {/* Budget - admin only */}
           {canSeeBudget && (
             <div className="space-y-1.5">
               <Label htmlFor="project-budget">
-                Budget <span className="text-muted-foreground font-normal">(optional, admin-only field)</span>
+                Budget{" "}
+                <span className="text-muted-foreground font-normal">
+                  (optional, admin-only field)
+                </span>
               </Label>
               <div className="relative">
-                <IndianRupee className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <IndianRupee className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
                 <Input
                   id="project-budget"
                   type="number"
@@ -299,9 +349,11 @@ export function ProjectFormDialog({ open, onClose, mode, projectId, initial, onS
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isPending}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={isPending}>
+            Cancel
+          </Button>
           <Button onClick={handleSubmit} disabled={!canSubmit || isPending}>
-            {isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {mode === "create" ? "Create Project" : "Save Changes"}
           </Button>
         </DialogFooter>

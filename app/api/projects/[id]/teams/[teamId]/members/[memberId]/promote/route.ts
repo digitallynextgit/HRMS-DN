@@ -8,7 +8,7 @@ import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // PATCH /api/projects/[id]/teams/[teamId]/members/[memberId]/promote
-// Admin only — make this member the new manager. Previous manager stays as a regular member.
+// Admin only - make this member the new manager. Previous manager stays as a regular member.
 export const PATCH = withAuth(
   PERMISSIONS.PROJECT_WRITE,
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
@@ -17,7 +17,11 @@ export const PATCH = withAuth(
 
       const team = await db.projectTeam.findUnique({
         where: { id: teamId },
-        include: { members: { include: { employee: { select: { id: true, firstName: true, email: true } } } } },
+        include: {
+          members: {
+            include: { employee: { select: { id: true, firstName: true, email: true } } },
+          },
+        },
       })
       if (!team || team.projectId !== projectId) {
         return NextResponse.json({ error: "Team not found" }, { status: 404 })
@@ -37,7 +41,9 @@ export const PATCH = withAuth(
 
       // Notify new manager
       try {
-        const projectName = (await db.project.findUnique({ where: { id: projectId }, select: { name: true } }))?.name
+        const projectName = (
+          await db.project.findUnique({ where: { id: projectId }, select: { name: true } })
+        )?.name
         await createNotification({
           employeeId: member.employeeId,
           title: "Promoted to Team Manager",
@@ -53,7 +59,9 @@ export const PATCH = withAuth(
             <p>You can now create tasks for team members and approve self-tasks.</p>`,
           text: `You're now manager of ${team.name} in ${projectName}.`,
         })
-      } catch (_e) { /* non-blocking */ }
+      } catch (_e) {
+        /* non-blocking */
+      }
 
       await createAuditLog(session, {
         action: "PROMOTE",
@@ -68,5 +76,5 @@ export const PATCH = withAuth(
       console.error("[TEAM_MEMBER_PROMOTE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

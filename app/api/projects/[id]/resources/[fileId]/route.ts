@@ -6,7 +6,7 @@ import { PERMISSIONS } from "@/lib/constants"
 import { getSignedUrl, deleteFile } from "@/lib/storage"
 import type { Session } from "next-auth"
 
-// GET /api/projects/[id]/resources/[fileId] — returns metadata + signed download URL
+// GET /api/projects/[id]/resources/[fileId] - returns metadata + signed download URL
 export const GET = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
     try {
@@ -28,10 +28,10 @@ export const GET = withSession(
       console.error("[RESOURCE_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// DELETE /api/projects/[id]/resources/[fileId] — uploader, team manager, or admin
+// DELETE /api/projects/[id]/resources/[fileId] - uploader, team manager, or admin
 export const DELETE = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -49,10 +49,17 @@ export const DELETE = withSession(
       const isTeamManager = resource.team?.managerId === session.user.id
 
       if (!isUploader && !isAdmin && !isTeamManager) {
-        return NextResponse.json({ error: "You can only delete files you uploaded" }, { status: 403 })
+        return NextResponse.json(
+          { error: "You can only delete files you uploaded" },
+          { status: 403 },
+        )
       }
 
-      try { await deleteFile(resource.objectKey) } catch { /* file may already be gone */ }
+      try {
+        await deleteFile(resource.objectKey)
+      } catch {
+        /* file may already be gone */
+      }
       await db.projectResource.delete({ where: { id: fileId } })
 
       await createAuditLog(session, {
@@ -68,5 +75,5 @@ export const DELETE = withSession(
       console.error("[RESOURCE_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

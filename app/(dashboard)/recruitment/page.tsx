@@ -28,6 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS, JOB_STATUS_LABELS, JOB_STATUS_COLORS } from "@/lib/constants"
 import { cn, formatDate } from "@/lib/utils"
+import { getDepartments, updateDepartment } from "@/lib/actions/departments"
 
 interface Department {
   id: string
@@ -55,9 +56,9 @@ async function fetchJobs(status?: string): Promise<{ data: JobPosting[] }> {
 }
 
 async function fetchDepts(): Promise<{ data: Department[] }> {
-  const res = await fetch("/api/departments")
-  if (!res.ok) throw new Error("Failed")
-  return res.json()
+  const r = await getDepartments()
+  if (!r.ok) throw new Error(r.error)
+  return { data: r.data as Department[] }
 }
 
 async function createJob(body: Record<string, unknown>) {
@@ -206,7 +207,7 @@ export default function RecruitmentPage() {
         }
       }
 
-      // Only fill empty fields — never overwrite the user's input.
+      // Only fill empty fields - never overwrite the user's input.
       setForm((f) => ({
         ...f,
         meta: f.meta.trim() ? f.meta : (data.meta ?? ""),
@@ -233,15 +234,11 @@ export default function RecruitmentPage() {
     if (!selectedDept) return
     setDeptSaving(true)
     try {
-      const res = await fetch(`/api/departments/${selectedDept.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          careersTone: deptTone || null,
-          careersJobsLabel: deptJobsLabel || null,
-        }),
+      const r = await updateDepartment(selectedDept.id, {
+        careersTone: deptTone || null,
+        careersJobsLabel: deptJobsLabel || null,
       })
-      if (!res.ok) throw new Error()
+      if (!r.ok) throw new Error(r.error)
       await qc.invalidateQueries({ queryKey: ["departments"] })
       toast.success("Department careers settings saved")
     } catch {
@@ -661,7 +658,7 @@ export default function RecruitmentPage() {
                   className="bg-background focus:ring-ring min-h-17.5 w-full resize-none rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                   value={form.jobEssence}
                   onChange={(e) => setForm((f) => ({ ...f, jobEssence: e.target.value }))}
-                  placeholder="The gist — what success in this role looks like."
+                  placeholder="The gist - what success in this role looks like."
                 />
               </div>
 

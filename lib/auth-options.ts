@@ -89,7 +89,7 @@ export const authOptions: NextAuthConfig = {
 
     // -----------------------------------------------------------------------
     // Google OAuth – only employees whose email already exists in the DB may
-    // sign in. Self-registration is not allowed in this internal HRMS.
+    // sign in. Self-registration is not allowed in this internal DNMS.
     // -----------------------------------------------------------------------
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [

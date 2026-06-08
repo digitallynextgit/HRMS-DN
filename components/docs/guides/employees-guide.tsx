@@ -31,7 +31,7 @@ export function EmployeesGuide() {
         />
         <p>
           Once you save the new employee, the system automatically sends them a welcome email with
-          their login details. They can log into HRMS right away.
+          their login details. They can log into DNMS right away.
         </p>
       </GuideSection>
 
@@ -53,7 +53,7 @@ export function EmployeesGuide() {
       <GuideSection title="Deactivating an Employee">
         <p>
           When someone leaves the company - whether they resign or are terminated - you need to
-          deactivate their account so they can no longer access HRMS.
+          deactivate their account so they can no longer access DNMS.
         </p>
         <StepList
           steps={[

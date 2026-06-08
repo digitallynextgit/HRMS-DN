@@ -7,7 +7,7 @@ import { sendEmail } from "@/lib/mailer"
 import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
-// PATCH /api/tasks/[id]/reject — Manager rejects a PENDING_APPROVAL task
+// PATCH /api/tasks/[id]/reject - Manager rejects a PENDING_APPROVAL task
 export const PATCH = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -58,7 +58,9 @@ export const PATCH = withSession(
             text: `Task rejected: ${task.title}. Reason: ${reason.trim()}`,
           })
         }
-      } catch (_e) { /* non-blocking */ }
+      } catch (_e) {
+        /* non-blocking */
+      }
 
       await createAuditLog(session, {
         action: "REJECT",
@@ -73,5 +75,5 @@ export const PATCH = withSession(
       console.error("[TASK_REJECT]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

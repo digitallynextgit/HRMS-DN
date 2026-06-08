@@ -5,7 +5,7 @@ import { PERMISSIONS } from "@/lib/constants"
 import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
-// GET /api/projects/[id]/teams — list teams in a project
+// GET /api/projects/[id]/teams - list teams in a project
 export const GET = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
     try {
@@ -15,12 +15,24 @@ export const GET = withSession(
         where: { projectId },
         include: {
           manager: {
-            select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              employeeNo: true,
+              profilePhoto: true,
+            },
           },
           members: {
             include: {
               employee: {
-                select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true },
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  employeeNo: true,
+                  profilePhoto: true,
+                },
               },
             },
           },
@@ -34,10 +46,10 @@ export const GET = withSession(
       console.error("[PROJECT_TEAMS_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// POST /api/projects/[id]/teams — create a new team (Admin only)
+// POST /api/projects/[id]/teams - create a new team (Admin only)
 export const POST = withAuth(
   PERMISSIONS.PROJECT_WRITE,
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
@@ -61,7 +73,7 @@ export const POST = withAuth(
       if (existing) {
         return NextResponse.json(
           { error: `A team named "${name.trim()}" already exists in this project` },
-          { status: 409 }
+          { status: 409 },
         )
       }
 
@@ -90,5 +102,5 @@ export const POST = withAuth(
       console.error("[PROJECT_TEAMS_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

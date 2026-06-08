@@ -1,5 +1,5 @@
 {
-  "name": "hrms",
+  "name": "dnms",
   "version": "0.2.0",
   "private": true,
   "scripts": {
@@ -13,6 +13,9 @@
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
+    "db:snapshot": "tsx prisma/export-snapshot.ts",
+    "db:restore": "tsx prisma/seed-snapshot.ts",
+    "db:restore:check": "tsx prisma/seed-snapshot.ts --dry-run",
     "db:studio": "prisma studio",
     "setup": "pnpm prisma migrate dev && pnpm prisma db seed"
   },

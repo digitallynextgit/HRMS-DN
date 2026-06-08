@@ -8,9 +8,9 @@ export function GettingStartedGuide() {
       <GuideSection title="Logging In">
         <StepList
           steps={[
-            "Open your web browser and go to the HRMS app URL shared by your HR team.",
+            "Open your web browser and go to the DNMS app URL shared by your HR team.",
             "Enter the email address and password that HR gave you when you joined.",
-            "Click Sign In. You will land on the Dashboard - your home page in HRMS.",
+            "Click Sign In. You will land on the Dashboard - your home page in DNMS.",
           ]}
         />
       </GuideSection>

@@ -12,12 +12,40 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useProject, useProjectTeams } from "@/hooks/use-projects"
 import { usePermissions } from "@/hooks/use-permissions"
-import { PERMISSIONS, PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS, TASK_PRIORITY_LABELS, TASK_PRIORITY_COLORS } from "@/lib/constants"
+import {
+  PERMISSIONS,
+  PROJECT_STATUS_LABELS,
+  PROJECT_STATUS_COLORS,
+  TASK_PRIORITY_LABELS,
+  TASK_PRIORITY_COLORS,
+} from "@/lib/constants"
 import { cn, formatDate, getInitials } from "@/lib/utils"
-import { ChevronLeft, ChevronDown, Calendar, Users, FolderKanban, FileText, Layers, Pencil, GitBranch, Activity, MessageSquare, KeyRound } from "lucide-react"
+import {
+  ChevronLeft,
+  ChevronDown,
+  Calendar,
+  Users,
+  FolderKanban,
+  FileText,
+  Layers,
+  Pencil,
+  GitBranch,
+  Activity,
+  MessageSquare,
+  KeyRound,
+} from "lucide-react"
 import { TeamsTab } from "@/components/projects/teams-tab"
 import { TasksTab } from "@/components/projects/tasks-tab"
 import { ResourcesTab } from "@/components/projects/resources-tab"
@@ -26,8 +54,21 @@ import { MessagesTab } from "@/components/projects/messages-tab"
 import { PasswordsTab } from "@/components/projects/passwords-tab"
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog"
 
-interface SubPhase { id: string; name: string; displayOrder: number; isActive: boolean; parentId: string }
-interface Phase { id: string; name: string; displayOrder: number; isActive: boolean; parentId: null; children: SubPhase[] }
+interface SubPhase {
+  id: string
+  name: string
+  displayOrder: number
+  isActive: boolean
+  parentId: string
+}
+interface Phase {
+  id: string
+  name: string
+  displayOrder: number
+  isActive: boolean
+  parentId: null
+  children: SubPhase[]
+}
 async function fetchPhases(): Promise<{ data: Phase[] }> {
   const res = await fetch("/api/project-phases")
   if (!res.ok) throw new Error()
@@ -95,10 +136,13 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <div className="text-center py-20">
+      <div className="py-20 text-center">
         <p className="text-muted-foreground text-sm">Project not found.</p>
         <Button variant="outline" asChild className="mt-4">
-          <Link href="/projects"><ChevronLeft className="h-4 w-4 mr-1" />Back to projects</Link>
+          <Link href="/projects">
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Back to projects
+          </Link>
         </Button>
       </div>
     )
@@ -111,26 +155,40 @@ export default function ProjectDetailPage() {
     <div className="space-y-6">
       <div className="space-y-2">
         <Button variant="ghost" size="sm" asChild className="-ml-2">
-          <Link href="/projects"><ChevronLeft className="h-4 w-4 mr-1" />Back to projects</Link>
+          <Link href="/projects">
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Back to projects
+          </Link>
         </Button>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight">{project.name}</h1>
-              <Badge variant="outline" className="font-mono text-xs">{project.code}</Badge>
+              <Badge variant="outline" className="font-mono text-xs">
+                {project.code}
+              </Badge>
             </div>
-            {project.description && <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{project.description}</p>}
+            {project.description && (
+              <p className="text-muted-foreground mt-1 max-w-2xl text-sm">{project.description}</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className={cn("text-xs", PROJECT_STATUS_COLORS[project.status])}>
+            <Badge
+              variant="outline"
+              className={cn("text-xs", PROJECT_STATUS_COLORS[project.status])}
+            >
               {PROJECT_STATUS_LABELS[project.status]}
             </Badge>
-            <Badge variant="outline" className={cn("text-xs", TASK_PRIORITY_COLORS[project.priority])}>
+            <Badge
+              variant="outline"
+              className={cn("text-xs", TASK_PRIORITY_COLORS[project.priority])}
+            >
               {TASK_PRIORITY_LABELS[project.priority]} priority
             </Badge>
             {canManage && (
               <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
-                <Pencil className="h-3.5 w-3.5 mr-1" />Edit
+                <Pencil className="mr-1 h-3.5 w-3.5" />
+                Edit
               </Button>
             )}
           </div>
@@ -138,35 +196,59 @@ export default function ProjectDetailPage() {
       </div>
 
       <Tabs defaultValue="overview">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList>
-            <TabsTrigger value="overview" className="gap-1.5"><Layers className="h-3.5 w-3.5" />Overview</TabsTrigger>
-            <TabsTrigger value="teams" className="gap-1.5"><Users className="h-3.5 w-3.5" />Teams</TabsTrigger>
-            <TabsTrigger value="tasks" className="gap-1.5"><FolderKanban className="h-3.5 w-3.5" />Tasks</TabsTrigger>
-            <TabsTrigger value="messages" className="gap-1.5"><MessageSquare className="h-3.5 w-3.5" />Messages</TabsTrigger>
-            <TabsTrigger value="activity" className="gap-1.5"><Activity className="h-3.5 w-3.5" />Activity</TabsTrigger>
-            <TabsTrigger value="passwords" className="gap-1.5"><KeyRound className="h-3.5 w-3.5" />Passwords</TabsTrigger>
-            <TabsTrigger value="resources" className="gap-1.5"><FileText className="h-3.5 w-3.5" />Resources</TabsTrigger>
+            <TabsTrigger value="overview" className="gap-1.5">
+              <Layers className="h-3.5 w-3.5" />
+              Overview
+            </TabsTrigger>
+            <TabsTrigger value="teams" className="gap-1.5">
+              <Users className="h-3.5 w-3.5" />
+              Teams
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="gap-1.5">
+              <FolderKanban className="h-3.5 w-3.5" />
+              Tasks
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="gap-1.5">
+              <MessageSquare className="h-3.5 w-3.5" />
+              Messages
+            </TabsTrigger>
+            <TabsTrigger value="activity" className="gap-1.5">
+              <Activity className="h-3.5 w-3.5" />
+              Activity
+            </TabsTrigger>
+            <TabsTrigger value="passwords" className="gap-1.5">
+              <KeyRound className="h-3.5 w-3.5" />
+              Passwords
+            </TabsTrigger>
+            <TabsTrigger value="resources" className="gap-1.5">
+              <FileText className="h-3.5 w-3.5" />
+              Resources
+            </TabsTrigger>
           </TabsList>
 
-          {/* Phase cascading dropdown — right of tabs */}
+          {/* Phase cascading dropdown - right of tabs */}
           <div className="flex items-center gap-2">
-            <GitBranch className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Phase:</span>
+            <GitBranch className="text-muted-foreground h-3.5 w-3.5" />
+            <span className="text-muted-foreground text-xs">Phase:</span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild disabled={!canManage}>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 min-w-36 max-w-56 justify-between gap-2 text-sm font-normal px-3"
+                  className="h-8 max-w-56 min-w-36 justify-between gap-2 px-3 text-sm font-normal"
                 >
                   <span className="truncate">
-                    {project.currentPhase?.id
-                      ? getPhaseLabel(project.currentPhase.id, phases)
-                      : <span className="text-muted-foreground">{phases.length === 0 ? "No phases" : "Select phase"}</span>
-                    }
+                    {project.currentPhase?.id ? (
+                      getPhaseLabel(project.currentPhase.id, phases)
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {phases.length === 0 ? "No phases" : "Select phase"}
+                      </span>
+                    )}
                   </span>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <ChevronDown className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
@@ -174,7 +256,7 @@ export default function ProjectDetailPage() {
                   className="text-muted-foreground text-sm"
                   onClick={() => changePhase.mutate("")}
                 >
-                  — None —
+                  - None —
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {phases.map((p) =>
@@ -185,21 +267,23 @@ export default function ProjectDetailPage() {
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent className="w-48">
                         <DropdownMenuItem
-                          className="text-sm text-muted-foreground italic"
+                          className="text-muted-foreground text-sm italic"
                           onClick={() => changePhase.mutate(p.id)}
                         >
                           {p.name} (general)
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        {p.children.filter((c) => c.isActive).map((c) => (
-                          <DropdownMenuItem
-                            key={c.id}
-                            className="text-sm"
-                            onClick={() => changePhase.mutate(c.id)}
-                          >
-                            {c.name}
-                          </DropdownMenuItem>
-                        ))}
+                        {p.children
+                          .filter((c) => c.isActive)
+                          .map((c) => (
+                            <DropdownMenuItem
+                              key={c.id}
+                              className="text-sm"
+                              onClick={() => changePhase.mutate(c.id)}
+                            >
+                              {c.name}
+                            </DropdownMenuItem>
+                          ))}
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
                   ) : (
@@ -210,20 +294,22 @@ export default function ProjectDetailPage() {
                     >
                       {p.name}
                     </DropdownMenuItem>
-                  )
+                  ),
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
 
-        <TabsContent value="overview" className="space-y-4 mt-4">
+        <TabsContent value="overview" className="mt-4 space-y-4">
           <Card>
             <CardContent className="p-0">
-              <div className={cn(
-                "grid divide-x divide-y sm:divide-y-0 divide-border",
-                canManage ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
-              )}>
+              <div
+                className={cn(
+                  "divide-border grid divide-x divide-y sm:divide-y-0",
+                  canManage ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3",
+                )}
+              >
                 <Stat label="Teams" value={teams.length} />
                 <Stat label="Members" value={totalMembers} />
                 <Stat label="Tasks" value={totalTasks} />
@@ -239,10 +325,10 @@ export default function ProjectDetailPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-5 space-y-4">
-              {/* Account Manager — featured card */}
+            <CardContent className="space-y-4 p-5">
+              {/* Account Manager - featured card */}
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium mb-2">
+                <p className="text-muted-foreground mb-2 text-[10px] font-medium tracking-widest uppercase">
                   Account Manager
                 </p>
                 <div className="flex items-center gap-3">
@@ -253,15 +339,21 @@ export default function ProjectDetailPage() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">{project.owner.firstName} {project.owner.lastName}</p>
-                    <p className="text-xs text-muted-foreground">Lead manager for this project</p>
+                    <p className="font-medium">
+                      {project.owner.firstName} {project.owner.lastName}
+                    </p>
+                    <p className="text-muted-foreground text-xs">Lead manager for this project</p>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm pt-3 border-t">
+              <div className="grid grid-cols-1 gap-4 border-t pt-3 text-sm sm:grid-cols-3">
                 <Field label="Code" value={project.code} mono />
-                <Field label="Onboarding Date" value={project.startDate ? formatDate(project.startDate) : "—"} icon={Calendar} />
+                <Field
+                  label="Onboarding Date"
+                  value={project.startDate ? formatDate(project.startDate) : "—"}
+                  icon={Calendar}
+                />
                 <Field label="Phase" value={project.currentPhase?.name ?? "—"} icon={GitBranch} />
               </div>
             </CardContent>
@@ -300,13 +392,13 @@ export default function ProjectDetailPage() {
         mode="edit"
         projectId={projectId}
         initial={{
-          name:             project.name,
-          code:             project.code,
-          description:      project.description ?? "",
-          status:           project.status,
-          priority:         project.priority,
-          startDate:        project.startDate ? project.startDate.split("T")[0] : "",
-          budget:           project.budget != null ? String(project.budget) : "",
+          name: project.name,
+          code: project.code,
+          description: project.description ?? "",
+          status: project.status,
+          priority: project.priority,
+          startDate: project.startDate ? project.startDate.split("T")[0] : "",
+          budget: project.budget != null ? String(project.budget) : "",
           accountManagerId: project.owner.id,
         }}
       />
@@ -314,21 +406,45 @@ export default function ProjectDetailPage() {
   )
 }
 
-function Stat({ label, value, isText }: { label: string; value: number | string; isText?: boolean }) {
+function Stat({
+  label,
+  value,
+  isText,
+}: {
+  label: string
+  value: number | string
+  isText?: boolean
+}) {
   return (
     <div className="px-4 py-3">
-      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">{label}</p>
-      <p className={cn("mt-1 tabular-nums", isText ? "text-sm font-medium" : "text-xl font-bold")}>{value}</p>
+      <p className="text-muted-foreground text-[10px] font-medium tracking-widest uppercase">
+        {label}
+      </p>
+      <p className={cn("mt-1 tabular-nums", isText ? "text-sm font-medium" : "text-xl font-bold")}>
+        {value}
+      </p>
     </div>
   )
 }
 
-function Field({ label, value, icon: Icon, mono }: { label: string; value: string; icon?: React.ElementType; mono?: boolean }) {
+function Field({
+  label,
+  value,
+  icon: Icon,
+  mono,
+}: {
+  label: string
+  value: string
+  icon?: React.ElementType
+  mono?: boolean
+}) {
   return (
     <div>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-medium">{label}</p>
+      <p className="text-muted-foreground text-[10px] font-medium tracking-widest uppercase">
+        {label}
+      </p>
       <p className={cn("mt-1 flex items-center gap-1.5", mono && "font-mono")}>
-        {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+        {Icon && <Icon className="text-muted-foreground h-3.5 w-3.5" />}
         {value}
       </p>
     </div>

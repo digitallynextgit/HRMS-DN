@@ -1,4 +1,4 @@
--- ─── Project Management V2 — Teams, Members, Resources, Task approvals ──────
+-- ─── Project Management V2 - Teams, Members, Resources, Task approvals ──────
 
 -- New enums
 DO $$ BEGIN

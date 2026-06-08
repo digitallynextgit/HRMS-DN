@@ -1,6 +1,6 @@
-# HRMS - Human Resource Management System
+# DNMS - Digitally Next Management System
 
-A full-featured HRMS built for **Digitally Next** using Next.js 14, Prisma, Supabase, and Tailwind CSS. Covers the complete HR lifecycle from recruitment to payroll.
+A full-featured DNMS built for **Digitally Next** using Next.js 14, Prisma, Supabase, and Tailwind CSS. Covers the complete HR lifecycle from recruitment to payroll.
 
 ---
 
@@ -54,7 +54,7 @@ A full-featured HRMS built for **Digitally Next** using Next.js 14, Prisma, Supa
 ## Project Structure
 
 ```
-HRMS/
+DNMS/
 ├── app/
 │   ├── (auth)/              # Login, forgot password, reset password
 │   ├── (dashboard)/         # All protected pages
@@ -132,10 +132,10 @@ SMTP_PORT=587
 SMTP_SECURE=false
 SMTP_USER="your-gmail@gmail.com"
 SMTP_PASS="your-gmail-app-password"
-SMTP_FROM="HRMS <noreply@yourcompany.com>"
+SMTP_FROM="DNMS <noreply@yourcompany.com>"
 
 # App
-APP_NAME="HRMS"
+APP_NAME="DNMS"
 APP_URL="http://localhost:3000"
 NODE_ENV="development"
 CRON_SECRET="your-cron-secret"

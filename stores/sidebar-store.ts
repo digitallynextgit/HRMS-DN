@@ -14,6 +14,6 @@ export const useSidebarStore = create<SidebarStore>()(
       toggle: () => set((state) => ({ isCollapsed: !state.isCollapsed })),
       setCollapsed: (collapsed) => set({ isCollapsed: collapsed }),
     }),
-    { name: "hrms-sidebar" },
+    { name: "dnms-sidebar" },
   ),
 )

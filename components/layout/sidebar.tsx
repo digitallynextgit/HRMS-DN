@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import { Session } from "next-auth"
@@ -13,7 +14,6 @@ import {
   ScrollText,
   Mail,
   ChevronDown,
-  Building2,
   Clock,
   CalendarDays,
   DollarSign,
@@ -361,12 +361,16 @@ export function Sidebar({ session }: { session: Session }) {
           isCollapsed ? "justify-center" : "gap-2.5",
         )}
       >
-        <div className="bg-foreground flex h-7 w-7 shrink-0 items-center justify-center rounded">
-          <Building2 className="text-background h-3.5 w-3.5" />
-        </div>
+        <Image
+          src="/brand-mark.png"
+          alt="DNMS"
+          width={2505}
+          height={2200}
+          className="h-7 w-7 shrink-0 object-contain"
+        />
         {!isCollapsed && (
           <div>
-            <p className="text-foreground text-sm font-semibold tracking-tight">HRMS</p>
+            <p className="text-foreground text-sm font-semibold tracking-tight">DNMS</p>
             <p className="text-muted-foreground text-[10px]">Management System</p>
           </div>
         )}

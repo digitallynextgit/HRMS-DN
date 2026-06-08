@@ -2,6 +2,13 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { getEmployeeDocuments } from "@/lib/actions/employee-documents"
+import {
+  getCompanyDocuments,
+  uploadDocument,
+  deleteDocument,
+  getDocumentUrl,
+} from "@/lib/actions/documents"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,10 +54,9 @@ export function useEmployeeDocuments(employeeId: string) {
   return useQuery<DocumentRecord[]>({
     queryKey: documentKeys.employee(employeeId),
     queryFn: async () => {
-      const res = await fetch(`/api/employees/${employeeId}/documents`)
-      if (!res.ok) throw new Error("Failed to load documents")
-      const json = await res.json()
-      return json.data as DocumentRecord[]
+      const r = await getEmployeeDocuments(employeeId)
+      if (!r.ok) throw new Error(r.error)
+      return (r.data as { data: DocumentRecord[] }).data
     },
     enabled: Boolean(employeeId),
   })
@@ -60,14 +66,12 @@ export function useEmployeeDocuments(employeeId: string) {
  * Fetch company-wide documents, optionally filtered by category.
  */
 export function useCompanyDocuments(category?: string) {
-  const params = category ? `?category=${encodeURIComponent(category)}` : ""
   return useQuery<DocumentRecord[]>({
     queryKey: documentKeys.company(category),
     queryFn: async () => {
-      const res = await fetch(`/api/documents/company${params}`)
-      if (!res.ok) throw new Error("Failed to load company documents")
-      const json = await res.json()
-      return json.data as DocumentRecord[]
+      const r = await getCompanyDocuments(category)
+      if (!r.ok) throw new Error(r.error)
+      return (r.data as { data: DocumentRecord[] }).data
     },
   })
 }
@@ -80,16 +84,9 @@ export function useUploadDocument() {
 
   return useMutation<DocumentRecord, Error, FormData>({
     mutationFn: async (formData: FormData) => {
-      const res = await fetch("/api/documents/upload", {
-        method: "POST",
-        body: formData,
-      })
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
-        throw new Error(json.error ?? "Upload failed")
-      }
-      const json = await res.json()
-      return json.data as DocumentRecord
+      const r = await uploadDocument(formData)
+      if (!r.ok) throw new Error(r.error)
+      return (r.data as { data: DocumentRecord }).data
     },
     onSuccess: (doc) => {
       toast.success("Document uploaded successfully")
@@ -113,11 +110,8 @@ export function useDeleteDocument() {
 
   return useMutation<void, Error, string>({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/documents/${id}`, { method: "DELETE" })
-      if (!res.ok) {
-        const json = await res.json().catch(() => ({}))
-        throw new Error(json.error ?? "Delete failed")
-      }
+      const r = await deleteDocument(id)
+      if (!r.ok) throw new Error(r.error)
     },
     onSuccess: () => {
       toast.success("Document deleted")
@@ -183,10 +177,9 @@ export function useDocumentUrl(id: string | null) {
   return useQuery<DocumentUrlData>({
     queryKey: documentKeys.url(id ?? ""),
     queryFn: async () => {
-      const res = await fetch(`/api/documents/${id}`)
-      if (!res.ok) throw new Error("Failed to get download URL")
-      const json = await res.json()
-      return json.data as DocumentUrlData
+      const r = await getDocumentUrl(id as string)
+      if (!r.ok) throw new Error(r.error)
+      return (r.data as { data: DocumentUrlData }).data
     },
     enabled: Boolean(id),
     staleTime: 10 * 60 * 1000, // 10 min - URL valid for 15 min

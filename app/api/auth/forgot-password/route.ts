@@ -29,12 +29,12 @@ export const POST = async (req: NextRequest) => {
 
     await sendEmail({
       to: employee.email,
-      subject: "Reset your HRMS password",
+      subject: "Reset your DNMS password",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color: #1a1a1a;">Password Reset Request</h2>
           <p>Hi ${firstName},</p>
-          <p>We received a request to reset your HRMS password. Click the button below to set a new password:</p>
+          <p>We received a request to reset your DNMS password. Click the button below to set a new password:</p>
           <div style="text-align: center; margin: 32px 0;">
             <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold;">Reset Password</a>
           </div>
@@ -43,7 +43,7 @@ export const POST = async (req: NextRequest) => {
           <p style="color: #999; font-size: 12px;">If the button doesn't work, copy and paste this URL into your browser:<br/>${resetUrl}</p>
         </div>
       `,
-      text: `Hi ${firstName},\n\nReset your HRMS password by visiting:\n${resetUrl}\n\nThis link expires in 1 hour.`,
+      text: `Hi ${firstName},\n\nReset your DNMS password by visiting:\n${resetUrl}\n\nThis link expires in 1 hour.`,
     })
 
     return NextResponse.json({ message: "If that email exists, a reset link has been sent." })

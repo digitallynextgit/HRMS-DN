@@ -11,7 +11,7 @@ export function AdminGuide() {
           Go to <strong>Admin → Roles & Permissions</strong>.
         </p>
         <p>
-          A role is a set of rules that controls what a user can see and do in HRMS. Every employee
+          A role is a set of rules that controls what a user can see and do in DNMS. Every employee
           is assigned a role, and that role decides their access.
         </p>
         <p>The system comes with these default roles:</p>
@@ -66,7 +66,7 @@ export function AdminGuide() {
           Go to <strong>Admin → Audit Log</strong>.
         </p>
         <p>
-          The audit log is a complete record of every action taken in HRMS. Every time someone
+          The audit log is a complete record of every action taken in DNMS. Every time someone
           creates, edits, or deletes something - whether it is an employee profile, a payroll
           record, or a document - it gets logged here automatically.
         </p>
@@ -88,7 +88,7 @@ export function AdminGuide() {
           Go to <strong>Admin → Email Templates</strong>.
         </p>
         <p>
-          HRMS sends emails automatically when certain things happen - for example, when a new
+          DNMS sends emails automatically when certain things happen - for example, when a new
           employee is added, when a leave request is approved, or when a payslip is generated. Email
           templates control what those emails say.
         </p>
@@ -102,7 +102,7 @@ export function AdminGuide() {
             { term: "{{first_name}}", description: "The recipient's first name." },
             { term: "{{last_name}}", description: "The recipient's last name." },
             { term: "{{company_name}}", description: "Your company's name." },
-            { term: "{{login_url}}", description: "The link to the HRMS login page." },
+            { term: "{{login_url}}", description: "The link to the DNMS login page." },
           ]}
         />
         <p className="mt-3">
