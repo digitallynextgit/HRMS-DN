@@ -7,7 +7,7 @@ import { createNotification } from "@/lib/notifications"
 import { sendEmail } from "@/lib/mailer"
 import type { Session } from "next-auth"
 
-// GET /api/projects/[id]/teams/[teamId]/tasks — list tasks for team (all project members can view)
+// GET /api/projects/[id]/teams/[teamId]/tasks - list tasks for team (all project members can view)
 export const GET = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
     try {
@@ -25,10 +25,10 @@ export const GET = withSession(
       console.error("[TEAM_TASKS_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// POST /api/projects/[id]/teams/[teamId]/tasks — create task
+// POST /api/projects/[id]/teams/[teamId]/tasks - create task
 // Manager-created (assigneeId !== caller) → APPROVED + isManagerCreated=true
 // Self-task (assigneeId === caller OR not set) → PENDING_APPROVAL (unless caller IS the manager)
 export const POST = withSession(
@@ -56,7 +56,10 @@ export const POST = withSession(
       // Caller must be a team member OR admin
       const memberIds = team.members.map((m) => m.employeeId)
       if (!memberIds.includes(session.user.id) && !isAdmin) {
-        return NextResponse.json({ error: "Only team members can create tasks here" }, { status: 403 })
+        return NextResponse.json(
+          { error: "Only team members can create tasks here" },
+          { status: 403 },
+        )
       }
 
       const isManager = team.managerId === session.user.id
@@ -66,18 +69,21 @@ export const POST = withSession(
       if (finalAssigneeId !== session.user.id && !isManager && !isAdmin) {
         return NextResponse.json(
           { error: "Only the team manager can assign tasks to other members" },
-          { status: 403 }
+          { status: 403 },
         )
       }
 
-      // Assignee must be a team member (unless admin is creating — they may assign to manager who must be in team)
+      // Assignee must be a team member (unless admin is creating - they may assign to manager who must be in team)
       if (!memberIds.includes(finalAssigneeId)) {
-        return NextResponse.json({ error: "Assignee must be a member of this team" }, { status: 422 })
+        return NextResponse.json(
+          { error: "Assignee must be a member of this team" },
+          { status: 422 },
+        )
       }
 
       // Determine approval status
       // Manager OR admin creates → APPROVED. Member creates self-task → PENDING_APPROVAL.
-      const approvalStatus = (isManager || isAdmin) ? "APPROVED" : "PENDING_APPROVAL"
+      const approvalStatus = isManager || isAdmin ? "APPROVED" : "PENDING_APPROVAL"
       const isManagerCreated = isManager || isAdmin
 
       const task = await db.projectTask.create({
@@ -120,7 +126,7 @@ export const POST = withSession(
             text: `New task assigned: ${task.title}`,
           })
         } else if (!isManager && team.managerId) {
-          // Member self-created task — notify manager for approval
+          // Member self-created task - notify manager for approval
           await createNotification({
             employeeId: team.managerId,
             title: "Task pending approval",
@@ -129,7 +135,9 @@ export const POST = withSession(
             link: `/projects/${projectId}`,
           })
         }
-      } catch (_e) { /* non-blocking */ }
+      } catch (_e) {
+        /* non-blocking */
+      }
 
       await db.auditLog.create({
         data: {
@@ -138,7 +146,13 @@ export const POST = withSession(
           module: "project",
           entityType: "ProjectTask",
           entityId: task.id,
-          changes: { teamId, title: task.title, assigneeId: finalAssigneeId, approvalStatus, isManagerCreated },
+          changes: {
+            teamId,
+            title: task.title,
+            assigneeId: finalAssigneeId,
+            approvalStatus,
+            isManagerCreated,
+          },
         },
       })
 
@@ -156,5 +170,5 @@ export const POST = withSession(
       console.error("[TEAM_TASKS_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

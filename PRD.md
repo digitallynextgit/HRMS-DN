@@ -1,6 +1,6 @@
 # Product Requirements Document (PRD)
 
-## HRMS - Human Resource Management System
+## DNMS - Digitally Next Management System
 
 **Version:** 1.0  
 **Date:** April 2026  
@@ -36,13 +36,13 @@
 
 ## 1. Executive Summary
 
-This document defines the full product scope for a proprietary **Human Resource Management System (HRMS)** for the company. The system is designed to consolidate all HR operations - from hiring to exit - into a single, modular, web-based platform.
+This document defines the full product scope for a proprietary **Digitally Next Management System (DNMS)** for the company. The system is designed to consolidate all HR operations - from hiring to exit - into a single, modular, web-based platform.
 
 Key differentiators from off-the-shelf solutions:
 
 - **Modular architecture** - every feature is an independent module; new features can be added without touching existing ones.
 - **Hikvision face-recognition integration** - automated attendance sync from the physical entry/exit machine.
-- **Project-aware HRMS** - built-in project management with PBAC and auto performance evaluation based on task completion rates.
+- **Project-aware DNMS** - built-in project management with PBAC and auto performance evaluation based on task completion rates.
 - **Auto-communication engine** - triggered emails for onboarding, shortlisting, birthdays, leave, and project events.
 
 ---

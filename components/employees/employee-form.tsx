@@ -399,7 +399,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
   const stepFields: Record<number, (keyof FormData)[]> = {
     1: ["firstName", "lastName", "email"],
     2: [],
-    3: [], // Documents step — no schema fields to validate (files only)
+    3: [], // Documents step - no schema fields to validate (files only)
     4: [],
     5: [],
   }
@@ -776,7 +776,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
                 <div className="space-y-3">
                   {pendingDocs.map((doc) => (
                     <div key={doc.uid} className="bg-muted/20 space-y-4 rounded border p-4">
-                      {/* Filename header — prominent so it's clear which doc you're editing */}
+                      {/* Filename header - prominent so it's clear which doc you're editing */}
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
                           <div className="bg-background flex h-9 w-9 shrink-0 items-center justify-center rounded border">

@@ -21,7 +21,7 @@ interface SendEmailOptions {
 
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
   await transporter.sendMail({
-    from: process.env.SMTP_FROM || "HRMS <noreply@company.com>",
+    from: process.env.SMTP_FROM || "DNMS <noreply@company.com>",
     to: Array.isArray(options.to) ? options.to.join(", ") : options.to,
     subject: options.subject,
     html: options.html,

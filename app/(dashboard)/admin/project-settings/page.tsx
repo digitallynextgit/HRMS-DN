@@ -11,7 +11,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Plus, Pencil, Trash2, Settings, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -61,7 +67,12 @@ export default function ProjectSettingsPage() {
   const [editing, setEditing] = useState<EditTarget | null>(null)
 
   const create = useMutation({
-    mutationFn: (body: { name: string; description?: string; displayOrder?: number; parentId?: string }) =>
+    mutationFn: (body: {
+      name: string
+      description?: string
+      displayOrder?: number
+      parentId?: string
+    }) =>
       api("/api/project-phases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -95,8 +106,14 @@ export default function ProjectSettingsPage() {
     onSuccess: (resp: { deletedSubPhases?: number; displacedFromProjects?: number }) => {
       qc.invalidateQueries({ queryKey: ["project-phases"] })
       const parts: string[] = ["Phase deleted"]
-      if ((resp.deletedSubPhases ?? 0) > 0) parts.push(`${resp.deletedSubPhases} sub-phase${resp.deletedSubPhases === 1 ? "" : "s"} removed`)
-      if ((resp.displacedFromProjects ?? 0) > 0) parts.push(`${resp.displacedFromProjects} project${resp.displacedFromProjects === 1 ? "" : "s"} updated`)
+      if ((resp.deletedSubPhases ?? 0) > 0)
+        parts.push(
+          `${resp.deletedSubPhases} sub-phase${resp.deletedSubPhases === 1 ? "" : "s"} removed`,
+        )
+      if ((resp.displacedFromProjects ?? 0) > 0)
+        parts.push(
+          `${resp.displacedFromProjects} project${resp.displacedFromProjects === 1 ? "" : "s"} updated`,
+        )
       toast.success(parts.join(" · "))
     },
     onError: (e: Error) => toast.error(e.message),
@@ -105,7 +122,8 @@ export default function ProjectSettingsPage() {
   function confirmDelete(phase: Phase | SubPhase) {
     const childCount = !phase.parentId ? (phase as Phase).children.length : 0
     let msg = `Delete "${phase.name}"?`
-    if (childCount > 0) msg += ` This will also delete its ${childCount} sub-phase${childCount === 1 ? "" : "s"}.`
+    if (childCount > 0)
+      msg += ` This will also delete its ${childCount} sub-phase${childCount === 1 ? "" : "s"}.`
     msg += " Any projects using this phase will be updated."
     if (confirm(msg)) del.mutate(phase.id)
   }
@@ -118,18 +136,22 @@ export default function ProjectSettingsPage() {
       />
 
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Settings className="h-4 w-4 text-muted-foreground" />
+            <Settings className="text-muted-foreground h-4 w-4" />
             <h2 className="text-sm font-semibold">Project Phases</h2>
-            <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{totalCount}</Badge>
+            <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+              {totalCount}
+            </Badge>
           </div>
           <Button size="sm" onClick={() => setCreateFor(undefined)}>
-            <Plus className="h-4 w-4 mr-1.5" />Add Phase
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add Phase
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mb-4">
-          Two-level structure: top-level phases (e.g. Execution) can contain sub-phases (e.g. Sprint 1, QA). Projects select one phase as their current status.
+        <p className="text-muted-foreground mb-4 text-xs">
+          Two-level structure: top-level phases (e.g. Execution) can contain sub-phases (e.g. Sprint
+          1, QA). Projects select one phase as their current status.
         </p>
 
         {isLoading ? (
@@ -140,51 +162,67 @@ export default function ProjectSettingsPage() {
           </div>
         ) : phases.length === 0 ? (
           <Card className="border-dashed">
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            <CardContent className="text-muted-foreground py-10 text-center text-sm">
               No phases yet. Add one to get started.
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-2">
             {phases.map((p, idx) => (
-              <Card key={p.id} className={cn("overflow-hidden transition-colors", !p.isActive && "opacity-60")}>
+              <Card
+                key={p.id}
+                className={cn("overflow-hidden transition-colors", !p.isActive && "opacity-60")}
+              >
                 {/* ── Parent phase row ── */}
                 <div className="flex items-start gap-3 px-4 py-3">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10 text-primary text-xs font-bold mt-0.5 shrink-0">
+                  <div className="bg-primary/10 text-primary mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold">
                     {idx + 1}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-sm">{p.name}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold">{p.name}</span>
                       {!p.isActive && (
-                        <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-muted-foreground">Inactive</Badge>
+                        <Badge
+                          variant="outline"
+                          className="text-muted-foreground h-4 px-1.5 text-[10px]"
+                        >
+                          Inactive
+                        </Badge>
                       )}
                       {p.children.length > 0 && (
-                        <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                        <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
                           {p.children.length} sub-phase{p.children.length !== 1 ? "s" : ""}
                         </Badge>
                       )}
                     </div>
                     {p.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{p.description}</p>
+                      <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+                        {p.description}
+                      </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex shrink-0 items-center gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                      className="text-muted-foreground hover:text-foreground h-7 gap-1 px-2 text-xs"
                       onClick={() => setCreateFor(p.id)}
                     >
-                      <Plus className="h-3 w-3" />Sub-phase
+                      <Plus className="h-3 w-3" />
+                      Sub-phase
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditing(p)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-foreground h-7 w-7"
+                      onClick={() => setEditing(p)}
+                    >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      className="text-muted-foreground hover:text-destructive h-7 w-7"
                       onClick={() => confirmDelete(p)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -194,36 +232,48 @@ export default function ProjectSettingsPage() {
 
                 {/* ── Sub-phases ── */}
                 {p.children.length > 0 && (
-                  <div className="mx-4 mb-3 border border-border/60 rounded-lg overflow-hidden">
+                  <div className="border-border/60 mx-4 mb-3 overflow-hidden rounded-lg border">
                     {p.children.map((child, ci) => (
                       <div
                         key={child.id}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 bg-muted/30",
-                          ci !== p.children.length - 1 && "border-b border-border/40",
+                          "bg-muted/30 flex items-center gap-3 px-3 py-2.5",
+                          ci !== p.children.length - 1 && "border-border/40 border-b",
                           !child.isActive && "opacity-60",
                         )}
                       >
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
+                        <ChevronRight className="text-muted-foreground/50 h-3.5 w-3.5 shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
                             <span className="text-sm">{child.name}</span>
                             {!child.isActive && (
-                              <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-muted-foreground">Inactive</Badge>
+                              <Badge
+                                variant="outline"
+                                className="text-muted-foreground h-4 px-1.5 text-[10px]"
+                              >
+                                Inactive
+                              </Badge>
                             )}
                           </div>
                           {child.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5">{child.description}</p>
+                            <p className="text-muted-foreground mt-0.5 text-xs">
+                              {child.description}
+                            </p>
                           )}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => setEditing(child)}>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-foreground h-6 w-6"
+                            onClick={() => setEditing(child)}
+                          >
                             <Pencil className="h-3 w-3" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            className="text-muted-foreground hover:text-destructive h-6 w-6"
                             onClick={() => confirmDelete(child)}
                           >
                             <Trash2 className="h-3 w-3" />
@@ -247,7 +297,9 @@ export default function ProjectSettingsPage() {
         pending={create.isPending}
         mode="create"
         isSubPhase={typeof createFor === "string"}
-        parentName={typeof createFor === "string" ? phases.find((p) => p.id === createFor)?.name : undefined}
+        parentName={
+          typeof createFor === "string" ? phases.find((p) => p.id === createFor)?.name : undefined
+        }
       />
 
       {/* Edit dialog */}
@@ -267,11 +319,23 @@ export default function ProjectSettingsPage() {
 }
 
 function PhaseFormDialog({
-  open, onClose, onSubmit, pending, mode, isSubPhase, parentName, initial,
+  open,
+  onClose,
+  onSubmit,
+  pending,
+  mode,
+  isSubPhase,
+  parentName,
+  initial,
 }: {
   open: boolean
   onClose: () => void
-  onSubmit: (v: { name: string; description?: string; displayOrder?: number; isActive?: boolean }) => void
+  onSubmit: (v: {
+    name: string
+    description?: string
+    displayOrder?: number
+    isActive?: boolean
+  }) => void
   pending: boolean
   mode: "create" | "edit"
   isSubPhase: boolean
@@ -283,11 +347,14 @@ function PhaseFormDialog({
   const [displayOrder, setDisplayOrder] = useState(initial?.displayOrder ?? 0)
   const [isActive, setIsActive] = useState(initial?.isActive ?? true)
 
-  const title = mode === "create"
-    ? isSubPhase
-      ? `Add Sub-phase${parentName ? ` to "${parentName}"` : ""}`
-      : "Add Phase"
-    : isSubPhase ? "Edit Sub-phase" : "Edit Phase"
+  const title =
+    mode === "create"
+      ? isSubPhase
+        ? `Add Sub-phase${parentName ? ` to "${parentName}"` : ""}`
+        : "Add Phase"
+      : isSubPhase
+        ? "Edit Sub-phase"
+        : "Edit Phase"
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !pending && onClose()}>
@@ -301,7 +368,9 @@ function PhaseFormDialog({
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={isSubPhase ? "e.g. Sprint 1, Requirements Gathering" : "e.g. Execution, Planning"}
+              placeholder={
+                isSubPhase ? "e.g. Sprint 1, Requirements Gathering" : "e.g. Execution, Planning"
+              }
               autoFocus
             />
           </div>
@@ -317,13 +386,17 @@ function PhaseFormDialog({
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Display Order</Label>
-              <Input type="number" value={displayOrder} onChange={(e) => setDisplayOrder(Number(e.target.value))} />
+              <Input
+                type="number"
+                value={displayOrder}
+                onChange={(e) => setDisplayOrder(Number(e.target.value))}
+              />
             </div>
             {mode === "edit" && (
               <div className="space-y-1.5">
                 <Label>Status</Label>
                 <select
-                  className="w-full h-9 rounded-md border bg-background px-2 text-sm"
+                  className="bg-background h-9 w-full rounded-md border px-2 text-sm"
                   value={isActive ? "1" : "0"}
                   onChange={(e) => setIsActive(e.target.value === "1")}
                 >
@@ -335,15 +408,19 @@ function PhaseFormDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={pending}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={pending}>
+            Cancel
+          </Button>
           <Button
             disabled={pending || !name.trim()}
-            onClick={() => onSubmit({
-              name: name.trim(),
-              description: description.trim() || undefined,
-              displayOrder,
-              ...(mode === "edit" && { isActive }),
-            })}
+            onClick={() =>
+              onSubmit({
+                name: name.trim(),
+                description: description.trim() || undefined,
+                displayOrder,
+                ...(mode === "edit" && { isActive }),
+              })
+            }
           >
             {pending ? "Saving…" : mode === "create" ? "Add" : "Save"}
           </Button>

@@ -14,11 +14,19 @@ export const GET = withSession(
           currentPhase: { select: { id: true, name: true, displayOrder: true } },
           teams: {
             include: {
-              manager: { select: { id: true, firstName: true, lastName: true, profilePhoto: true } },
+              manager: {
+                select: { id: true, firstName: true, lastName: true, profilePhoto: true },
+              },
               members: {
                 include: {
                   employee: {
-                    select: { id: true, firstName: true, lastName: true, profilePhoto: true, designation: { select: { title: true } } },
+                    select: {
+                      id: true,
+                      firstName: true,
+                      lastName: true,
+                      profilePhoto: true,
+                      designation: { select: { title: true } },
+                    },
                   },
                 },
               },
@@ -50,13 +58,30 @@ export const PATCH = withAuth(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
       const body = await req.json()
-      const { name, description, status, priority, startDate, budget, isArchived, accountManagerId, currentPhaseId } = body
+      const {
+        name,
+        description,
+        status,
+        priority,
+        startDate,
+        budget,
+        isArchived,
+        accountManagerId,
+        currentPhaseId,
+      } = body
 
       // Validate new Account Manager if provided
       if (accountManagerId) {
-        const emp = await db.employee.findUnique({ where: { id: accountManagerId }, select: { id: true, isActive: true } })
+        const emp = await db.employee.findUnique({
+          where: { id: accountManagerId },
+          select: { id: true, isActive: true },
+        })
         if (!emp) return NextResponse.json({ error: "Account Manager not found" }, { status: 422 })
-        if (!emp.isActive) return NextResponse.json({ error: "Account Manager is not an active employee" }, { status: 422 })
+        if (!emp.isActive)
+          return NextResponse.json(
+            { error: "Account Manager is not an active employee" },
+            { status: 422 },
+          )
       }
 
       // Validate phase if provided
@@ -87,7 +112,17 @@ export const PATCH = withAuth(
           module: "project",
           entityType: "Project",
           entityId: ctx.params.id,
-          changes: { name, description, status, priority, startDate, budget, accountManagerId, isArchived, currentPhaseId } as object,
+          changes: {
+            name,
+            description,
+            status,
+            priority,
+            startDate,
+            budget,
+            accountManagerId,
+            isArchived,
+            currentPhaseId,
+          } as object,
         },
       })
 

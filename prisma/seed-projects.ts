@@ -1,5 +1,5 @@
 // =============================================================================
-// Project Seed Script — standalone, safe to re-run
+// Project Seed Script - standalone, safe to re-run
 // Run with: npx tsx prisma/seed-projects.ts
 // =============================================================================
 
@@ -37,14 +37,34 @@ async function main() {
 
   // ── Project phases ───────────────────────────────────────────────────────
   await safeCreateMany(prisma.projectPhase, [
-    { name: "Initiation", description: "Define the project, identify stakeholders, set initial scope", displayOrder: 1 },
-    { name: "Planning", description: "Detailed plan, timeline, resource allocation", displayOrder: 2 },
+    {
+      name: "Initiation",
+      description: "Define the project, identify stakeholders, set initial scope",
+      displayOrder: 1,
+    },
+    {
+      name: "Planning",
+      description: "Detailed plan, timeline, resource allocation",
+      displayOrder: 2,
+    },
     { name: "Executing", description: "Active delivery of project work", displayOrder: 3 },
-    { name: "Monitoring & Controlling", description: "Track progress, manage changes, quality control", displayOrder: 4 },
-    { name: "Closure", description: "Final delivery, retrospective, handover, archival", displayOrder: 5 },
+    {
+      name: "Monitoring & Controlling",
+      description: "Track progress, manage changes, quality control",
+      displayOrder: 4,
+    },
+    {
+      name: "Closure",
+      description: "Final delivery, retrospective, handover, archival",
+      displayOrder: 5,
+    },
   ])
-  const initiationPhase = await prisma.projectPhase.findFirst({ where: { name: "Initiation", parentId: null } })
-  const executingPhase  = await prisma.projectPhase.findFirst({ where: { name: "Executing", parentId: null } })
+  const initiationPhase = await prisma.projectPhase.findFirst({
+    where: { name: "Initiation", parentId: null },
+  })
+  const executingPhase = await prisma.projectPhase.findFirst({
+    where: { name: "Executing", parentId: null },
+  })
   console.log("  ✓ Created 5 project phases")
 
   // ── Load employee IDs by employeeNo ─────────────────────────────────────
@@ -53,23 +73,23 @@ async function main() {
   })
   const byNo = new Map(employees.map((e) => [e.employeeNo, e.id]))
 
-  const adminId    = byNo.get("EMP-001")!
-  const rupamId    = byNo.get("EMP-113")!
+  const adminId = byNo.get("EMP-001")!
+  const rupamId = byNo.get("EMP-113")!
   const shaileshId = byNo.get("EMP-125")!
-  const praneetId  = byNo.get("EMP-126")!
-  const vivekId    = byNo.get("EMP-124")!
-  const aditiId    = byNo.get("EMP-112")!
-  const shivamId   = byNo.get("EMP-119")!
-  const saurabhId  = byNo.get("EMP-129")!
-  const mridulId   = byNo.get("EMP-132")!
-  const jatinId    = byNo.get("EMP-135")!
-  const hemantId   = byNo.get("EMP-136")!
-  const ayushiId   = byNo.get("EMP-137")!
-  const teeshaId   = byNo.get("EMP-143")!
-  const diwakarId  = byNo.get("EMP-145")!
-  const komalId    = byNo.get("EMP-146")!
+  const praneetId = byNo.get("EMP-126")!
+  const vivekId = byNo.get("EMP-124")!
+  const aditiId = byNo.get("EMP-112")!
+  const shivamId = byNo.get("EMP-119")!
+  const saurabhId = byNo.get("EMP-129")!
+  const mridulId = byNo.get("EMP-132")!
+  const jatinId = byNo.get("EMP-135")!
+  const hemantId = byNo.get("EMP-136")!
+  const ayushiId = byNo.get("EMP-137")!
+  const teeshaId = byNo.get("EMP-143")!
+  const diwakarId = byNo.get("EMP-145")!
+  const komalId = byNo.get("EMP-146")!
 
-  type TaskStatus   = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
+  type TaskStatus = "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE"
   type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT"
   type ApprovalStatus = "APPROVED" | "PENDING_APPROVAL" | "REJECTED"
 
@@ -154,10 +174,39 @@ async function main() {
     vivekId,
     [shaileshId, saurabhId, mridulId],
     [
-      { title: "Set up Next.js project + Vercel deployment", status: "DONE", priority: "HIGH", assigneeId: shaileshId, creatorId: vivekId, completedAt: new Date("2026-04-10") },
-      { title: "Build homepage hero section", status: "IN_PROGRESS", priority: "HIGH", assigneeId: saurabhId, creatorId: vivekId, dueDate: new Date("2026-05-25") },
-      { title: "Implement contact form with email", status: "TODO", priority: "MEDIUM", assigneeId: mridulId, creatorId: vivekId, dueDate: new Date("2026-06-05") },
-      { title: "Refactor navigation for mobile", status: "TODO", priority: "MEDIUM", assigneeId: saurabhId, creatorId: saurabhId, approvalStatus: "PENDING_APPROVAL", isManagerCreated: false },
+      {
+        title: "Set up Next.js project + Vercel deployment",
+        status: "DONE",
+        priority: "HIGH",
+        assigneeId: shaileshId,
+        creatorId: vivekId,
+        completedAt: new Date("2026-04-10"),
+      },
+      {
+        title: "Build homepage hero section",
+        status: "IN_PROGRESS",
+        priority: "HIGH",
+        assigneeId: saurabhId,
+        creatorId: vivekId,
+        dueDate: new Date("2026-05-25"),
+      },
+      {
+        title: "Implement contact form with email",
+        status: "TODO",
+        priority: "MEDIUM",
+        assigneeId: mridulId,
+        creatorId: vivekId,
+        dueDate: new Date("2026-06-05"),
+      },
+      {
+        title: "Refactor navigation for mobile",
+        status: "TODO",
+        priority: "MEDIUM",
+        assigneeId: saurabhId,
+        creatorId: saurabhId,
+        approvalStatus: "PENDING_APPROVAL",
+        isManagerCreated: false,
+      },
     ],
   )
 
@@ -168,10 +217,39 @@ async function main() {
     aditiId,
     [teeshaId, komalId],
     [
-      { title: "Finalise brand colour palette", status: "DONE", priority: "URGENT", assigneeId: aditiId, creatorId: aditiId, completedAt: new Date("2026-04-12") },
-      { title: "Design homepage mockups (3 variations)", status: "IN_REVIEW", priority: "HIGH", assigneeId: teeshaId, creatorId: aditiId, dueDate: new Date("2026-05-22") },
-      { title: "Create illustration set for features section", status: "TODO", priority: "MEDIUM", assigneeId: komalId, creatorId: aditiId, dueDate: new Date("2026-06-01") },
-      { title: "Explore dark-mode variants", status: "TODO", priority: "LOW", assigneeId: komalId, creatorId: komalId, approvalStatus: "PENDING_APPROVAL", isManagerCreated: false },
+      {
+        title: "Finalise brand colour palette",
+        status: "DONE",
+        priority: "URGENT",
+        assigneeId: aditiId,
+        creatorId: aditiId,
+        completedAt: new Date("2026-04-12"),
+      },
+      {
+        title: "Design homepage mockups (3 variations)",
+        status: "IN_REVIEW",
+        priority: "HIGH",
+        assigneeId: teeshaId,
+        creatorId: aditiId,
+        dueDate: new Date("2026-05-22"),
+      },
+      {
+        title: "Create illustration set for features section",
+        status: "TODO",
+        priority: "MEDIUM",
+        assigneeId: komalId,
+        creatorId: aditiId,
+        dueDate: new Date("2026-06-01"),
+      },
+      {
+        title: "Explore dark-mode variants",
+        status: "TODO",
+        priority: "LOW",
+        assigneeId: komalId,
+        creatorId: komalId,
+        approvalStatus: "PENDING_APPROVAL",
+        isManagerCreated: false,
+      },
     ],
   )
 
@@ -182,9 +260,30 @@ async function main() {
     ayushiId,
     [praneetId, diwakarId],
     [
-      { title: "Write homepage hero copy", status: "DONE", priority: "HIGH", assigneeId: ayushiId, creatorId: ayushiId, completedAt: new Date("2026-04-15") },
-      { title: "Migrate 25 old blog posts", status: "IN_PROGRESS", priority: "HIGH", assigneeId: praneetId, creatorId: ayushiId, dueDate: new Date("2026-05-30") },
-      { title: "Draft About Us page copy", status: "TODO", priority: "MEDIUM", assigneeId: diwakarId, creatorId: ayushiId, dueDate: new Date("2026-06-10") },
+      {
+        title: "Write homepage hero copy",
+        status: "DONE",
+        priority: "HIGH",
+        assigneeId: ayushiId,
+        creatorId: ayushiId,
+        completedAt: new Date("2026-04-15"),
+      },
+      {
+        title: "Migrate 25 old blog posts",
+        status: "IN_PROGRESS",
+        priority: "HIGH",
+        assigneeId: praneetId,
+        creatorId: ayushiId,
+        dueDate: new Date("2026-05-30"),
+      },
+      {
+        title: "Draft About Us page copy",
+        status: "TODO",
+        priority: "MEDIUM",
+        assigneeId: diwakarId,
+        creatorId: ayushiId,
+        dueDate: new Date("2026-06-10"),
+      },
     ],
   )
 
@@ -194,7 +293,7 @@ async function main() {
       name: "Q2 Marketing Campaign",
       code: "DN00002",
       description:
-        "Multi-channel marketing campaign for new product launch — paid ads, SEO content, social, video.",
+        "Multi-channel marketing campaign for new product launch - paid ads, SEO content, social, video.",
       status: "ACTIVE",
       priority: "URGENT",
       startDate: new Date("2026-04-15"),
@@ -212,9 +311,30 @@ async function main() {
     hemantId,
     [shivamId, jatinId],
     [
-      { title: "Audit existing ad accounts", status: "DONE", priority: "URGENT", assigneeId: hemantId, creatorId: hemantId, completedAt: new Date("2026-04-20") },
-      { title: "Set up Q2 Google Ads structure", status: "IN_PROGRESS", priority: "HIGH", assigneeId: shivamId, creatorId: hemantId, dueDate: new Date("2026-05-20") },
-      { title: "Create Meta Ads creatives", status: "TODO", priority: "HIGH", assigneeId: jatinId, creatorId: hemantId, dueDate: new Date("2026-05-25") },
+      {
+        title: "Audit existing ad accounts",
+        status: "DONE",
+        priority: "URGENT",
+        assigneeId: hemantId,
+        creatorId: hemantId,
+        completedAt: new Date("2026-04-20"),
+      },
+      {
+        title: "Set up Q2 Google Ads structure",
+        status: "IN_PROGRESS",
+        priority: "HIGH",
+        assigneeId: shivamId,
+        creatorId: hemantId,
+        dueDate: new Date("2026-05-20"),
+      },
+      {
+        title: "Create Meta Ads creatives",
+        status: "TODO",
+        priority: "HIGH",
+        assigneeId: jatinId,
+        creatorId: hemantId,
+        dueDate: new Date("2026-05-25"),
+      },
     ],
   )
 
@@ -225,17 +345,24 @@ async function main() {
     shaileshId,
     [],
     [
-      { title: "Storyboard for product launch video", status: "TODO", priority: "HIGH", assigneeId: shaileshId, creatorId: shaileshId, dueDate: new Date("2026-05-20") },
+      {
+        title: "Storyboard for product launch video",
+        status: "TODO",
+        priority: "HIGH",
+        assigneeId: shaileshId,
+        creatorId: shaileshId,
+        dueDate: new Date("2026-05-20"),
+      },
     ],
   )
 
-  // ── Project 3: HRMS Internal Improvements ───────────────────────────────
+  // ── Project 3: DNMS Internal Improvements ───────────────────────────────
   const project3 = await prisma.project.create({
     data: {
-      name: "HRMS Internal Improvements",
+      name: "DNMS Internal Improvements",
       code: "DN00003",
       description:
-        "Q2 enhancements to the internal HRMS platform — payroll auto-gen, performance scoring, mobile responsiveness.",
+        "Q2 enhancements to the internal DNMS platform - payroll auto-gen, performance scoring, mobile responsiveness.",
       status: "PLANNING",
       priority: "MEDIUM",
       startDate: new Date("2026-06-01"),
@@ -249,12 +376,26 @@ async function main() {
   await createTeamWithMembers(
     project3.id,
     "Web Development",
-    "Engineering work on the HRMS app",
+    "Engineering work on the DNMS app",
     rupamId,
     [],
     [
-      { title: "Build payroll auto-generation", status: "TODO", priority: "HIGH", assigneeId: rupamId, creatorId: adminId, dueDate: new Date("2026-07-15") },
-      { title: "Build performance scoring engine", status: "TODO", priority: "HIGH", assigneeId: rupamId, creatorId: adminId, dueDate: new Date("2026-07-30") },
+      {
+        title: "Build payroll auto-generation",
+        status: "TODO",
+        priority: "HIGH",
+        assigneeId: rupamId,
+        creatorId: adminId,
+        dueDate: new Date("2026-07-15"),
+      },
+      {
+        title: "Build performance scoring engine",
+        status: "TODO",
+        priority: "HIGH",
+        assigneeId: rupamId,
+        creatorId: adminId,
+        dueDate: new Date("2026-07-30"),
+      },
     ],
   )
 
@@ -268,7 +409,7 @@ async function main() {
       fileSize: 2_400_000,
       mimeType: "application/pdf",
       objectKey: `projects/${project1.id}/BRIEFS/acme-website-brief.pdf`,
-      description: "Client brief from Acme team — scope, deliverables, timelines",
+      description: "Client brief from Acme team - scope, deliverables, timelines",
       uploadedById: rupamId,
     },
     {
@@ -289,7 +430,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => { console.error("Seed failed:", e); process.exit(1) })
+  .catch((e) => {
+    console.error("Seed failed:", e)
+    process.exit(1)
+  })
   .finally(async () => {
     await prisma.$disconnect()
     await pool.end()

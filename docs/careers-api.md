@@ -1,14 +1,14 @@
-# Careers API — Integration Guide
+# Careers API - Integration Guide
 
-The HRMS exposes a single public endpoint that returns the live list of open
+The DNMS exposes a single public endpoint that returns the live list of open
 roles in the exact shape your marketing site already uses. Whenever a recruiter
-creates a posting in the HRMS and ticks **Publish to Careers Site**, it
+creates a posting in the DNMS and ticks **Publish to Careers Site**, it
 appears here on the next fetch.
 
 ## Endpoint
 
 ```
-GET https://hrms.example.com/api/public/careers
+GET https://dnms.example.com/api/public/careers
 ```
 
 ### Headers
@@ -18,15 +18,15 @@ GET https://hrms.example.com/api/public/careers
 | `X-API-Key` | shared secret      | **yes**  |
 | `Accept`    | `application/json` | no       |
 
-The API key is set as `CAREERS_API_KEY` in the HRMS environment. Treat it as a
-server secret — **do not embed it in client-side JavaScript**. Fetch from a
+The API key is set as `CAREERS_API_KEY` in the DNMS environment. Treat it as a
+server secret - **do not embed it in client-side JavaScript**. Fetch from a
 Next.js Server Component / Route Handler / `getStaticProps` and surface the
 result to the browser, not the key.
 
 ### Caching
 
 Response includes `Cache-Control: public, max-age=60, s-maxage=300,
-stale-while-revalidate=600` — safe to cache aggressively on a CDN. The HRMS
+stale-while-revalidate=600` - safe to cache aggressively on a CDN. The DNMS
 side is the source of truth, so revalidating every 60–300 s keeps the careers
 page fresh without hammering the API.
 
@@ -71,12 +71,12 @@ type CareersApiResponse = {
 }
 ```
 
-A shared TS file lives at `lib/careers-types.ts` in the HRMS repo — copy it
+A shared TS file lives at `lib/careers-types.ts` in the DNMS repo - copy it
 into the marketing site to keep both ends in sync.
 
-## Mapping from HRMS → API
+## Mapping from DNMS → API
 
-| HRMS field (`JobPosting`)                | API field                                                                            |
+| DNMS field (`JobPosting`)                | API field                                                                            |
 | ---------------------------------------- | ------------------------------------------------------------------------------------ |
 | `title`                                  | `role.title`                                                                         |
 | `slug` (auto from title if blank)        | `role.id`                                                                            |
@@ -102,13 +102,13 @@ A posting is only published if **both** `publishToCareers=true` and
 import "server-only"
 import type { CareersApiResponse } from "@/lib/careers-types"
 
-const HRMS_URL = process.env.HRMS_BASE_URL! // e.g. https://hrms.example.com
-const HRMS_KEY = process.env.HRMS_CAREERS_API_KEY!
+const DNMS_URL = process.env.DNMS_BASE_URL! // e.g. https://dnms.example.com
+const DNMS_KEY = process.env.DNMS_CAREERS_API_KEY!
 
 export async function fetchCareers(): Promise<CareersApiResponse> {
-  const res = await fetch(`${HRMS_URL}/api/public/careers`, {
-    headers: { "X-API-Key": HRMS_KEY },
-    next: { revalidate: 300 }, // ISR — re-fetch every 5 min
+  const res = await fetch(`${DNMS_URL}/api/public/careers`, {
+    headers: { "X-API-Key": DNMS_KEY },
+    next: { revalidate: 300 }, // ISR - re-fetch every 5 min
   })
   if (!res.ok) {
     throw new Error(`Careers API responded ${res.status}`)
@@ -130,14 +130,14 @@ export default async function CareersPage() {
 If you previously imported `CAREERS_DEPARTMENTS` and
 `CAREERS_INTERNSHIP_DEPARTMENTS` from a static file, replace those imports
 with the `fullTime` and `internship` arrays returned here. No other render
-code needs to change — the shape is identical.
+code needs to change - the shape is identical.
 
 ## Errors
 
 | Status | Body                                                             | Cause                           |
 | ------ | ---------------------------------------------------------------- | ------------------------------- |
 | 401    | `{ "error": "Unauthorized" }`                                    | Missing or wrong `X-API-Key`    |
-| 500    | `{ "error": "CAREERS_API_KEY is not configured on the server" }` | The HRMS hasn't set the env var |
+| 500    | `{ "error": "CAREERS_API_KEY is not configured on the server" }` | The DNMS hasn't set the env var |
 
 ## Local testing
 
@@ -147,7 +147,7 @@ curl -H "X-API-Key: $CAREERS_API_KEY" http://localhost:3000/api/public/careers |
 
 ## Where the data is edited
 
-Recruiters create job postings at `/recruitment` in the HRMS dashboard. The
+Recruiters create job postings at `/recruitment` in the DNMS dashboard. The
 job-creation dialog has a **"Publish to Careers Site"** section with:
 
 - toggle to publish/unpublish
@@ -155,7 +155,7 @@ job-creation dialog has a **"Publish to Careers Site"** section with:
 - intro paragraph
 - job essence
 - key requirements (one per line)
-- current openings (one per line — for roles with multiple seniority levels)
+- current openings (one per line - for roles with multiple seniority levels)
 
 Department-level tone (`red` / `teal`) and the "Explore Open Roles" CTA label
 are set in the same dialog under **"Careers settings for {department}"** when

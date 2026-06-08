@@ -15,7 +15,14 @@ export const GET = withSession(
         where: { teamId },
         include: {
           employee: {
-            select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true, designation: { select: { title: true } } },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              employeeNo: true,
+              profilePhoto: true,
+              designation: { select: { title: true } },
+            },
           },
         },
         orderBy: { joinedAt: "asc" },
@@ -25,10 +32,10 @@ export const GET = withSession(
       console.error("[TEAM_MEMBERS_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// POST /api/projects/[id]/teams/[teamId]/members — add member (Admin or this team's Manager)
+// POST /api/projects/[id]/teams/[teamId]/members - add member (Admin or this team's Manager)
 export const POST = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -36,7 +43,8 @@ export const POST = withSession(
       const body = await req.json()
       const { employeeId } = body
 
-      if (!employeeId) return NextResponse.json({ error: "employeeId is required" }, { status: 400 })
+      if (!employeeId)
+        return NextResponse.json({ error: "employeeId is required" }, { status: 400 })
 
       const team = await db.projectTeam.findUnique({
         where: { id: teamId },
@@ -63,7 +71,7 @@ export const POST = withSession(
           {
             error: `This employee is already on the "${conflict.team.name}" team in this project. Remove them from there first.`,
           },
-          { status: 409 }
+          { status: 409 },
         )
       }
 
@@ -83,7 +91,15 @@ export const POST = withSession(
         const member = await tx.projectTeamMember.create({
           data: { teamId, projectId, employeeId },
           include: {
-            employee: { select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true } },
+            employee: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                employeeNo: true,
+                profilePhoto: true,
+              },
+            },
           },
         })
 
@@ -95,7 +111,9 @@ export const POST = withSession(
       })
 
       // Notify the added employee
-      const projectName = (await db.project.findUnique({ where: { id: projectId }, select: { name: true } }))?.name
+      const projectName = (
+        await db.project.findUnique({ where: { id: projectId }, select: { name: true } })
+      )?.name
       try {
         await createNotification({
           employeeId,
@@ -108,13 +126,17 @@ export const POST = withSession(
         })
         await sendEmail({
           to: employee.email,
-          subject: willBeManager ? `Team Manager — ${team.name} (${projectName})` : `Added to ${team.name}`,
+          subject: willBeManager
+            ? `Team Manager - ${team.name} (${projectName})`
+            : `Added to ${team.name}`,
           html: `<p>Hi ${employee.firstName},</p>
             <p>You've been added to the <strong>${team.name}</strong> team in the <strong>${projectName}</strong> project${willBeManager ? " as the team manager" : ""}.</p>
-            <p>Log in to HRMS for details.</p>`,
+            <p>Log in to DNMS for details.</p>`,
           text: `You've been added to ${team.name} in ${projectName}${willBeManager ? " as manager" : ""}.`,
         })
-      } catch (_e) { /* non-blocking */ }
+      } catch (_e) {
+        /* non-blocking */
+      }
 
       await db.auditLog.create({
         data: {
@@ -132,5 +154,5 @@ export const POST = withSession(
       console.error("[TEAM_MEMBERS_POST]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

@@ -18,7 +18,9 @@ export interface ProjectListItem {
   owner: { id: string; firstName: string; lastName: string; profilePhoto?: string | null }
   currentPhase?: { id: string; name: string; displayOrder: number } | null
   currentPhaseId?: string | null
-  members: { employee: { id: string; firstName: string; lastName: string; profilePhoto: string | null } }[]
+  members: {
+    employee: { id: string; firstName: string; lastName: string; profilePhoto: string | null }
+  }[]
   _count: { tasks: number }
 }
 
@@ -159,7 +161,10 @@ export function useProjects() {
 export function useProject(id: string | undefined) {
   return useQuery({
     queryKey: ["project", id],
-    queryFn: () => api<{ data: ProjectListItem & { teams: ProjectTeam[]; tasks: ProjectTask[] } }>(`/api/projects/${id}`),
+    queryFn: () =>
+      api<{ data: ProjectListItem & { teams: ProjectTeam[]; tasks: ProjectTask[] } }>(
+        `/api/projects/${id}`,
+      ),
     enabled: !!id,
     staleTime: 30_000,
   })
@@ -260,7 +265,9 @@ export function usePromoteTeamMember(projectId: string, teamId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (memberId: string) =>
-      api(`/api/projects/${projectId}/teams/${teamId}/members/${memberId}/promote`, { method: "PATCH" }),
+      api(`/api/projects/${projectId}/teams/${teamId}/members/${memberId}/promote`, {
+        method: "PATCH",
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["project-teams", projectId] })
       toast.success("Promoted to manager")
@@ -301,8 +308,7 @@ export function useCreateTask(projectId: string, teamId: string) {
 export function useApproveTask() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (taskId: string) =>
-      api(`/api/tasks/${taskId}/approve`, { method: "PATCH" }),
+    mutationFn: (taskId: string) => api(`/api/tasks/${taskId}/approve`, { method: "PATCH" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["team-tasks"] })
       qc.invalidateQueries({ queryKey: ["my-tasks"] })
@@ -335,7 +341,15 @@ export function useRejectTask() {
 export function useUpdateTask() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ taskId, body, silent }: { taskId: string; body: Record<string, unknown>; silent?: boolean }) =>
+    mutationFn: ({
+      taskId,
+      body,
+      silent,
+    }: {
+      taskId: string
+      body: Record<string, unknown>
+      silent?: boolean
+    }) =>
       api(`/api/tasks/${taskId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -354,8 +368,7 @@ export function useUpdateTask() {
 export function useDeleteTask() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (taskId: string) =>
-      api(`/api/tasks/${taskId}`, { method: "DELETE" }),
+    mutationFn: (taskId: string) => api(`/api/tasks/${taskId}`, { method: "DELETE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["team-tasks"] })
       qc.invalidateQueries({ queryKey: ["my-tasks"] })
@@ -367,13 +380,17 @@ export function useDeleteTask() {
 }
 
 // Resources
-export function useProjectResources(projectId: string | undefined, filters?: { teamId?: string; category?: string }) {
+export function useProjectResources(
+  projectId: string | undefined,
+  filters?: { teamId?: string; category?: string },
+) {
   const params = new URLSearchParams()
   if (filters?.teamId !== undefined) params.set("teamId", filters.teamId)
   if (filters?.category) params.set("category", filters.category)
   return useQuery({
     queryKey: ["project-resources", projectId, filters],
-    queryFn: () => api<{ data: ProjectResource[] }>(`/api/projects/${projectId}/resources?${params}`),
+    queryFn: () =>
+      api<{ data: ProjectResource[] }>(`/api/projects/${projectId}/resources?${params}`),
     enabled: !!projectId,
     staleTime: 30_000,
   })
@@ -382,7 +399,12 @@ export function useProjectResources(projectId: string | undefined, filters?: { t
 export function useUploadResource(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ file, teamId, category, description }: {
+    mutationFn: async ({
+      file,
+      teamId,
+      category,
+      description,
+    }: {
       file: File
       teamId?: string | null
       category: string
@@ -422,7 +444,9 @@ export function useDeleteResource(projectId: string) {
 }
 
 export async function getResourceDownloadUrl(projectId: string, fileId: string): Promise<string> {
-  const res = await api<{ data: { signedUrl: string } }>(`/api/projects/${projectId}/resources/${fileId}`)
+  const res = await api<{ data: { signedUrl: string } }>(
+    `/api/projects/${projectId}/resources/${fileId}`,
+  )
   return res.data.signedUrl
 }
 
@@ -466,7 +490,13 @@ export function useRevealPassword(projectId: string) {
 export function useCreatePassword(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (body: { label: string; password: string; username?: string; url?: string; notes?: string }) =>
+    mutationFn: (body: {
+      label: string
+      password: string
+      username?: string
+      url?: string
+      notes?: string
+    }) =>
       api<{ data: PasswordEntry }>(`/api/projects/${projectId}/passwords`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -483,7 +513,19 @@ export function useCreatePassword(projectId: string) {
 export function useUpdatePassword(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ entryId, body }: { entryId: string; body: Partial<{ label: string; password: string; username: string; url: string; notes: string }> }) =>
+    mutationFn: ({
+      entryId,
+      body,
+    }: {
+      entryId: string
+      body: Partial<{
+        label: string
+        password: string
+        username: string
+        url: string
+        notes: string
+      }>
+    }) =>
       api(`/api/projects/${projectId}/passwords/${entryId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -637,7 +679,13 @@ export function useCreateMessage(projectId: string) {
 export function useUpdateMessage(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ messageId, body }: { messageId: string; body: Partial<{ title: string; content: string; isPinned: boolean }> }) =>
+    mutationFn: ({
+      messageId,
+      body,
+    }: {
+      messageId: string
+      body: Partial<{ title: string; content: string; isPinned: boolean }>
+    }) =>
       api(`/api/projects/${projectId}/messages/${messageId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

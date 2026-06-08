@@ -1,4 +1,4 @@
-# HRMS - User Flows (Plain English)
+# DNMS - User Flows (Plain English)
 
 > **Test Accounts** (password for all: `Admin@123`)
 >
@@ -454,4 +454,4 @@ Best for: Offices that already have Hikvision face terminals installed.
 
 ---
 
-_Generated for HRMS v1.0 - April 2026_
+_Generated for DNMS v1.0 - April 2026_

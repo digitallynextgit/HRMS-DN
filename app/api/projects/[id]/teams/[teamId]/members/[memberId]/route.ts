@@ -37,7 +37,7 @@ export const DELETE = withSession(
             error:
               "Cannot remove the team manager while team has other members. Please promote another member to manager first.",
           },
-          { status: 422 }
+          { status: 422 },
         )
       }
 
@@ -51,7 +51,9 @@ export const DELETE = withSession(
 
       // Notify removed employee
       try {
-        const projectName = (await db.project.findUnique({ where: { id: projectId }, select: { name: true } }))?.name
+        const projectName = (
+          await db.project.findUnique({ where: { id: projectId }, select: { name: true } })
+        )?.name
         await createNotification({
           employeeId: member.employeeId,
           title: "Removed from team",
@@ -59,7 +61,9 @@ export const DELETE = withSession(
           type: "info",
           link: "/projects",
         })
-      } catch (_e) { /* non-blocking */ }
+      } catch (_e) {
+        /* non-blocking */
+      }
 
       await db.auditLog.create({
         data: {
@@ -77,5 +81,5 @@ export const DELETE = withSession(
       console.error("[TEAM_MEMBER_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

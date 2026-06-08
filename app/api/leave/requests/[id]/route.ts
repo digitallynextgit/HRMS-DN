@@ -250,7 +250,7 @@ export const PATCH = withSession(
                 <p>Hi ${emp.firstName},</p>
                 <p>Your <strong>${leaveType?.name ?? "leave"}</strong> request from <strong>${startDate}</strong> to <strong>${endDate}</strong> (${request.totalDays} day${request.totalDays !== 1 ? "s" : ""}) has been <strong>${isApproved ? "approved" : "rejected"}</strong>.</p>
                 ${!isApproved && rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
-                <p style="color:#666;font-size:14px;">Login to HRMS to view details.</p>
+                <p style="color:#666;font-size:14px;">Login to DNMS to view details.</p>
               </div>
             `,
             text: `Hi ${emp.firstName}, your ${leaveType?.name ?? "leave"} request (${startDate} – ${endDate}) has been ${isApproved ? "approved" : "rejected"}.${!isApproved && rejectionReason ? ` Reason: ${rejectionReason}` : ""}`,

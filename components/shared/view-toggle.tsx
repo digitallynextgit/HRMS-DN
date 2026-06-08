@@ -16,7 +16,7 @@ interface Props {
 export function ViewToggle({ value, onChange, showKanban = false, className }: Props) {
   return (
     <div
-      className={cn("inline-flex items-center rounded-md border bg-card p-0.5", className)}
+      className={cn("bg-card inline-flex items-center rounded-md border p-0.5", className)}
       role="tablist"
       aria-label="View mode"
     >
@@ -28,7 +28,9 @@ export function ViewToggle({ value, onChange, showKanban = false, className }: P
         onClick={() => onChange("card")}
         className={cn(
           "flex h-6 w-7 items-center justify-center rounded transition-colors",
-          value === "card" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+          value === "card"
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
         )}
       >
         <LayoutGrid className="h-3.5 w-3.5" />
@@ -41,7 +43,9 @@ export function ViewToggle({ value, onChange, showKanban = false, className }: P
         onClick={() => onChange("table")}
         className={cn(
           "flex h-6 w-7 items-center justify-center rounded transition-colors",
-          value === "table" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+          value === "table"
+            ? "bg-muted text-foreground"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
         )}
       >
         <List className="h-3.5 w-3.5" />
@@ -55,7 +59,9 @@ export function ViewToggle({ value, onChange, showKanban = false, className }: P
           onClick={() => onChange("kanban")}
           className={cn(
             "flex h-6 w-7 items-center justify-center rounded transition-colors",
-            value === "kanban" ? "bg-muted text-foreground" : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+            value === "kanban"
+              ? "bg-muted text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
           )}
         >
           <Kanban className="h-3.5 w-3.5" />
@@ -65,7 +71,10 @@ export function ViewToggle({ value, onChange, showKanban = false, className }: P
   )
 }
 
-export function useViewMode(storageKey: string, defaultMode: ViewMode = "card"): [ViewMode, (v: ViewMode) => void] {
+export function useViewMode(
+  storageKey: string,
+  defaultMode: ViewMode = "card",
+): [ViewMode, (v: ViewMode) => void] {
   const [mode, setMode] = useState<ViewMode>(defaultMode)
 
   useEffect(() => {
@@ -77,7 +86,9 @@ export function useViewMode(storageKey: string, defaultMode: ViewMode = "card"):
 
   function update(v: ViewMode) {
     setMode(v)
-    try { localStorage.setItem(storageKey, v) } catch {}
+    try {
+      localStorage.setItem(storageKey, v)
+    } catch {}
   }
 
   return [mode, update]

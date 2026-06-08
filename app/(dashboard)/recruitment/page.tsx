@@ -177,7 +177,7 @@ export default function RecruitmentPage() {
         }
       }
 
-      // Only fill empty fields — never overwrite the user's input.
+      // Only fill empty fields - never overwrite the user's input.
       setForm((f) => ({
         ...f,
         meta: f.meta.trim() ? f.meta : (data.meta ?? ""),
@@ -605,7 +605,7 @@ export default function RecruitmentPage() {
                   className="bg-background focus:ring-ring min-h-17.5 w-full resize-none rounded border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
                   value={form.jobEssence}
                   onChange={(e) => setForm((f) => ({ ...f, jobEssence: e.target.value }))}
-                  placeholder="The gist — what success in this role looks like."
+                  placeholder="The gist - what success in this role looks like."
                 />
               </div>
 

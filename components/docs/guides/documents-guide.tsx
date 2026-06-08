@@ -6,7 +6,7 @@ export function DocumentsGuide() {
   return (
     <div className="space-y-8">
       <GuideSection title="Types of Documents">
-        <p>There are two kinds of documents in HRMS:</p>
+        <p>There are two kinds of documents in DNMS:</p>
         <div className="mt-2 space-y-3">
           <div className="border-border rounded border p-4">
             <p className="text-foreground font-medium">Company Documents</p>
@@ -70,7 +70,7 @@ export function DocumentsGuide() {
       <GuideSection title="Document Expiry">
         <p>
           Some documents - like certifications, licences, or annual policies - have an expiry date.
-          HRMS helps you keep track of these.
+          DNMS helps you keep track of these.
         </p>
         <ul className="mt-2 space-y-2">
           <li className="flex gap-2">

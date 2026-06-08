@@ -192,7 +192,7 @@ export const PATCH = withSession(
                   <p>Hi ${emp.firstName},</p>
                   <p>Your Work From Home request for <strong>${dateStr}</strong> has been <strong>${approved ? "approved" : "rejected"}</strong>.</p>
                   ${!approved && rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
-                  <p style="color:#666;font-size:14px;">Login to HRMS for details.</p>
+                  <p style="color:#666;font-size:14px;">Login to DNMS for details.</p>
                 </div>
               `,
               text: `Hi ${emp.firstName}, your WFH request for ${dateStr} has been ${approved ? "approved" : "rejected"}.${!approved && rejectionReason ? ` Reason: ${rejectionReason}` : ""}`,

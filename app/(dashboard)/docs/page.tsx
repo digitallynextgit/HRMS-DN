@@ -32,7 +32,7 @@ const MODULE_CARDS: ModuleCard[] = [
   {
     slug: "getting-started",
     title: "Getting Started",
-    description: "Login, navigation, and your first steps in HRMS",
+    description: "Login, navigation, and your first steps in DNMS",
     icon: Rocket,
     tags: ["employee", "manager", "hr", "admin"],
   },
@@ -112,7 +112,7 @@ export default function DocsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Help & Guide" description="Everything you need to know about using HRMS" />
+      <PageHeader title="Help & Guide" description="Everything you need to know about using DNMS" />
 
       {/* Search + filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">

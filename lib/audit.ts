@@ -16,7 +16,7 @@ interface AuditLogInput {
  * Write an audit log entry.
  *
  * Actions performed by a super_admin (the CEO role) are intentionally NOT
- * recorded — that account is invisible to the system. Pass the session of the
+ * recorded - that account is invisible to the system. Pass the session of the
  * actor; if it carries the super_admin role the call returns silently.
  */
 export async function createAuditLog(session: Session | null, input: AuditLogInput): Promise<void> {

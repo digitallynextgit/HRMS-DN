@@ -6,7 +6,7 @@ import { createNotification } from "@/lib/notifications"
 import { sendEmail } from "@/lib/mailer"
 import type { Session } from "next-auth"
 
-// PATCH /api/tasks/[id]/approve — Manager (of the task's team) or Admin
+// PATCH /api/tasks/[id]/approve - Manager (of the task's team) or Admin
 export const PATCH = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -52,7 +52,9 @@ export const PATCH = withSession(
             text: `Task approved: ${task.title}`,
           })
         }
-      } catch (_e) { /* non-blocking */ }
+      } catch (_e) {
+        /* non-blocking */
+      }
 
       await db.auditLog.create({
         data: {
@@ -70,5 +72,5 @@ export const PATCH = withSession(
       console.error("[TASK_APPROVE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

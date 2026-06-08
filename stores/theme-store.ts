@@ -28,7 +28,7 @@ export const useThemeStore = create<ThemeStore>()(
       clearPalette: () => set({ paletteId: null, mode: null, cssVars: null }),
     }),
     {
-      name: "hrms-theme-palette",
+      name: "dnms-theme-palette",
       version: 1,
       migrate: (persisted, version) => {
         if (version < 1) {

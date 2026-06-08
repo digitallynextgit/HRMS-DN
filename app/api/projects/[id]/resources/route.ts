@@ -29,7 +29,7 @@ function fileExtension(name: string): string {
   return name.slice(idx).toLowerCase()
 }
 
-// GET /api/projects/[id]/resources — list resources (filterable)
+// GET /api/projects/[id]/resources - list resources (filterable)
 export const GET = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
     try {
@@ -57,17 +57,20 @@ export const GET = withSession(
       console.error("[RESOURCES_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// POST /api/projects/[id]/resources — upload file (multipart/form-data)
+// POST /api/projects/[id]/resources - upload file (multipart/form-data)
 export const POST = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
       const { id: projectId } = ctx.params
 
       // 1. Verify project exists
-      const project = await db.project.findUnique({ where: { id: projectId }, select: { id: true } })
+      const project = await db.project.findUnique({
+        where: { id: projectId },
+        select: { id: true },
+      })
       if (!project) {
         return NextResponse.json({ error: "Project not found" }, { status: 404 })
       }
@@ -78,7 +81,7 @@ export const POST = withSession(
       if (!isParticipant) {
         return NextResponse.json(
           { error: "You must be a project participant to upload resources" },
-          { status: 403 }
+          { status: 403 },
         )
       }
 
@@ -97,7 +100,8 @@ export const POST = withSession(
       const descriptionRaw = formData.get("description")
 
       // Normalise form values (FormData entries are FormDataEntryValue)
-      const teamId = typeof teamIdRaw === "string" && teamIdRaw && teamIdRaw !== "null" ? teamIdRaw : null
+      const teamId =
+        typeof teamIdRaw === "string" && teamIdRaw && teamIdRaw !== "null" ? teamIdRaw : null
       const category = typeof categoryRaw === "string" && categoryRaw ? categoryRaw : "OTHER"
       const description = typeof descriptionRaw === "string" ? descriptionRaw : null
 
@@ -119,7 +123,7 @@ export const POST = withSession(
       if (file.size > MAX_SIZE_BYTES) {
         return NextResponse.json(
           { error: `File exceeds 100MB limit (size: ${(file.size / 1024 / 1024).toFixed(1)} MB)` },
-          { status: 413 }
+          { status: 413 },
         )
       }
 
@@ -129,7 +133,7 @@ export const POST = withSession(
       if (ext && BLOCKED_EXTENSIONS.includes(ext)) {
         return NextResponse.json(
           { error: `Files with extension ${ext} are not allowed for security reasons` },
-          { status: 415 }
+          { status: 415 },
         )
       }
 
@@ -208,5 +212,5 @@ export const POST = withSession(
       const msg = error instanceof Error ? error.message : "Internal server error"
       return NextResponse.json({ error: msg }, { status: 500 })
     }
-  }
+  },
 )

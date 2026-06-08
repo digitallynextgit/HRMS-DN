@@ -1,8 +1,8 @@
 /**
  * Public Careers API contract.
  *
- * Shared between the HRMS (producer) and the marketing site (consumer).
- * Copy this file into the marketing site if you'd like — it has no runtime
+ * Shared between the DNMS (producer) and the marketing site (consumer).
+ * Copy this file into the marketing site if you'd like - it has no runtime
  * dependencies on Next, Prisma, or anything else.
  */
 

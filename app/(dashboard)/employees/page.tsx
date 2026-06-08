@@ -332,7 +332,7 @@ export default function EmployeesPage() {
         </div>
       )}
 
-      {/* Bulk action bar — visible when at least one row is selected */}
+      {/* Bulk action bar - visible when at least one row is selected */}
       {viewMode === "table" && selectedIds.size > 0 && (
         <div className="bg-accent/50 border-border flex flex-wrap items-center justify-between gap-3 rounded border px-3 py-2">
           <div className="flex items-center gap-3 text-sm">

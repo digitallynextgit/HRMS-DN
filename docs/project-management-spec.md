@@ -1,8 +1,8 @@
-# Project Management Module — Specification
+# Project Management Module - Specification
 
 **Version:** 2.0
 **Date:** 2026-05-21
-**Status:** ✅ Approved — answers locked, ready to implement
+**Status:** ✅ Approved - answers locked, ready to implement
 
 ---
 
@@ -15,6 +15,7 @@ The Project Management module enables Digitally Next to organise client and inte
 ## 2. Core Concepts
 
 ### 2.1 Project
+
 - Top-level container for any piece of work
 - **Created only by Admin** (super_admin / hr_admin)
 - Has metadata: name, code, description, status, priority, start/end dates, budget, owner
@@ -22,6 +23,7 @@ The Project Management module enables Digitally Next to organise client and inte
 - Holds a **Storage Area** (file repository)
 
 ### 2.2 Team
+
 - A group within a project, scoped to a discipline
 - **Team Type** examples: Web Development, Design, Marketing, Content, SEO, Video, etc.
 - Team Types are configurable (admin manages a master list)
@@ -31,10 +33,12 @@ The Project Management module enables Digitally Next to organise client and inte
   - **One Manager** (designated from among the members)
 
 ### 2.3 Team Member
+
 - An Employee assigned to a Team
 - Has a flag indicating if they're the team's Manager
 
 ### 2.4 Task
+
 - Belongs to a Team (and therefore to a Project)
 - Has assignee, status, priority, due date, description
 - **Creation rules:**
@@ -44,6 +48,7 @@ The Project Management module enables Digitally Next to organise client and inte
   - Anyone assigned to a task can update its status / log progress
 
 ### 2.5 Project Storage / Resources
+
 - Each project has a dedicated **file storage area** in Supabase Storage
 - Path convention: `projects/{projectId}/...`
 - Any project team member can upload / view files
@@ -53,39 +58,39 @@ The Project Management module enables Digitally Next to organise client and inte
 
 ## 3. Permissions Model
 
-| Permission | Scope |
-|---|---|
-| `project:read` | View projects (existing) |
-| `project:write` | Create / edit / archive projects (existing — limited to Admin) |
-| `project:delete` | Delete projects (existing) |
-| `team_type:write` | Manage master list of team types (Admin only) |
+| Permission                               | Scope                                                                                              |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `project:read`                           | View projects (existing)                                                                           |
+| `project:write`                          | Create / edit / archive projects (existing - limited to Admin)                                     |
+| `project:delete`                         | Delete projects (existing)                                                                         |
+| `team_type:write`                        | Manage master list of team types (Admin only)                                                      |
 | **Manager-level** (derived, not a scope) | If `team.managerId === currentUser.id` → can create tasks for others, delete tasks, manage members |
-| **Member-level** (derived) | If user is in `team.members` → can create self-tasks, upload to project storage |
+| **Member-level** (derived)               | If user is in `team.members` → can create self-tasks, upload to project storage                    |
 
 ### Permission matrix per action
 
-| Action | Admin | Project Owner | Team Manager | Team Member | Other Employee |
-|---|---|---|---|---|---|
-| Create project | ✅ | — | — | — | ❌ |
-| Edit project | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Archive project | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Create team in project | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Delete team | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Add member to team | ✅ | ✅ | ✅ (own team) | ❌ | ❌ |
-| Remove member from team | ✅ | ✅ | ✅ (own team) | ❌ | ❌ |
-| Promote member to manager | ✅ | ✅ | ❌ | ❌ | ❌ |
-| Create task for self | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Create task for another member | ✅ | ✅ | ✅ (own team) | ❌ | ❌ |
-| Delete task | ✅ | ✅ | ✅ (own team) | ❌ | ❌ |
-| Update own task status | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Upload resource | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Delete resource | ✅ | ✅ | ✅ (uploader or any in own team) | ✅ (own upload only) | ❌ |
+| Action                         | Admin | Project Owner | Team Manager                     | Team Member          | Other Employee |
+| ------------------------------ | ----- | ------------- | -------------------------------- | -------------------- | -------------- |
+| Create project                 | ✅    | -             | -                                | -                    | ❌             |
+| Edit project                   | ✅    | ✅            | ❌                               | ❌                   | ❌             |
+| Archive project                | ✅    | ✅            | ❌                               | ❌                   | ❌             |
+| Create team in project         | ✅    | ✅            | ❌                               | ❌                   | ❌             |
+| Delete team                    | ✅    | ✅            | ❌                               | ❌                   | ❌             |
+| Add member to team             | ✅    | ✅            | ✅ (own team)                    | ❌                   | ❌             |
+| Remove member from team        | ✅    | ✅            | ✅ (own team)                    | ❌                   | ❌             |
+| Promote member to manager      | ✅    | ✅            | ❌                               | ❌                   | ❌             |
+| Create task for self           | ✅    | ✅            | ✅                               | ✅                   | ❌             |
+| Create task for another member | ✅    | ✅            | ✅ (own team)                    | ❌                   | ❌             |
+| Delete task                    | ✅    | ✅            | ✅ (own team)                    | ❌                   | ❌             |
+| Update own task status         | ✅    | ✅            | ✅                               | ✅                   | ❌             |
+| Upload resource                | ✅    | ✅            | ✅                               | ✅                   | ❌             |
+| Delete resource                | ✅    | ✅            | ✅ (uploader or any in own team) | ✅ (own upload only) | ❌             |
 
 ---
 
 ## 4. Schema Changes
 
-### 4.1 New Models (v2 — locked decisions applied)
+### 4.1 New Models (v2 - locked decisions applied)
 
 ```prisma
 model ProjectTeam {
@@ -93,7 +98,7 @@ model ProjectTeam {
   projectId    String   @map("project_id")
   name         String                              // ad-hoc, e.g. "Web Development"
   description  String?
-  managerId    String?  @map("manager_id")         // an Employee.id — nullable when team is empty
+  managerId    String?  @map("manager_id")         // an Employee.id - nullable when team is empty
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
@@ -160,9 +165,10 @@ enum TaskApprovalStatus {
 }
 ```
 
-**Note:** `TeamType` model is NOT created — team names are ad-hoc per project (decision #1).
+**Note:** `TeamType` model is NOT created - team names are ad-hoc per project (decision #1).
 
 **Storage path conventions** (Supabase folders are virtual):
+
 - Project-level resource: `projects/{projectId}/{category}/{filename}`
 - Team-level resource: `projects/{projectId}/teams/{teamId}/{category}/{filename}`
 
@@ -192,6 +198,7 @@ model Employee {
 ```
 
 ### 4.3 Deprecation
+
 - The existing `ProjectMember` model is **dropped**. Team membership (via `ProjectTeamMember`) is the only source of project participation.
 - The 2 existing seeded projects + their members/tasks are **wiped** in the new seed (decision #12).
 
@@ -199,72 +206,82 @@ model Employee {
 
 ## 5. API Endpoints
 
-### Teams (within a project — ad-hoc names, no global type list)
-- `GET /api/projects/[id]/teams` — list teams in project
-- `POST /api/projects/[id]/teams` — create team (Admin / Project Owner only)
-- `PATCH /api/projects/[id]/teams/[teamId]` — rename, change manager
-- `DELETE /api/projects/[id]/teams/[teamId]` — delete team (cascades members + tasks)
+### Teams (within a project - ad-hoc names, no global type list)
+
+- `GET /api/projects/[id]/teams` - list teams in project
+- `POST /api/projects/[id]/teams` - create team (Admin / Project Owner only)
+- `PATCH /api/projects/[id]/teams/[teamId]` - rename, change manager
+- `DELETE /api/projects/[id]/teams/[teamId]` - delete team (cascades members + tasks)
 
 ### Team Members
-- `GET /api/projects/[id]/teams/[teamId]/members` — list members
-- `POST /api/projects/[id]/teams/[teamId]/members` — add member (Admin / Project Owner / Team Manager)
-- `DELETE /api/projects/[id]/teams/[teamId]/members/[memberId]` — remove
-- `PATCH /api/projects/[id]/teams/[teamId]/members/[memberId]/promote` — make this member the manager (Admin / Project Owner only)
+
+- `GET /api/projects/[id]/teams/[teamId]/members` - list members
+- `POST /api/projects/[id]/teams/[teamId]/members` - add member (Admin / Project Owner / Team Manager)
+- `DELETE /api/projects/[id]/teams/[teamId]/members/[memberId]` - remove
+- `PATCH /api/projects/[id]/teams/[teamId]/members/[memberId]/promote` - make this member the manager (Admin / Project Owner only)
 
 ### Tasks
-- `GET /api/projects/[id]/teams/[teamId]/tasks` — list tasks for team (all team members can see all tasks)
-- `POST /api/projects/[id]/teams/[teamId]/tasks` — create task
+
+- `GET /api/projects/[id]/teams/[teamId]/tasks` - list tasks for team (all team members can see all tasks)
+- `POST /api/projects/[id]/teams/[teamId]/tasks` - create task
   - If `assigneeId !== caller.id` → must be Manager of this team. Created task → `approvalStatus = APPROVED`, `isManagerCreated = true`.
   - If `assigneeId === caller.id` (self-task) → allowed for any team member. Created task → `approvalStatus = PENDING_APPROVAL`, `isManagerCreated = false`.
-- `PATCH /api/tasks/[id]/approve` — Manager approves a `PENDING_APPROVAL` task → `APPROVED`
-- `PATCH /api/tasks/[id]/reject` — Manager rejects a `PENDING_APPROVAL` task with reason → `REJECTED`
-- `PATCH /api/tasks/[id]` — update status (only assignee or manager)
-- `DELETE /api/tasks/[id]` — manager-of-team OR admin only
+- `PATCH /api/tasks/[id]/approve` - Manager approves a `PENDING_APPROVAL` task → `APPROVED`
+- `PATCH /api/tasks/[id]/reject` - Manager rejects a `PENDING_APPROVAL` task with reason → `REJECTED`
+- `PATCH /api/tasks/[id]` - update status (only assignee or manager)
+- `DELETE /api/tasks/[id]` - manager-of-team OR admin only
 
 ### Project Resources (storage)
-- `GET /api/projects/[id]/resources` — list resources (any project participant)
-- `POST /api/projects/[id]/resources` — upload (any project participant)
-- `GET /api/projects/[id]/resources/[fileId]/url` — get signed download URL
-- `DELETE /api/projects/[id]/resources/[fileId]` — uploader OR team manager OR admin
+
+- `GET /api/projects/[id]/resources` - list resources (any project participant)
+- `POST /api/projects/[id]/resources` - upload (any project participant)
+- `GET /api/projects/[id]/resources/[fileId]/url` - get signed download URL
+- `DELETE /api/projects/[id]/resources/[fileId]` - uploader OR team manager OR admin
 
 ---
 
 ## 6. UI Pages
 
-### 6.1 `/projects` (existing — minor changes)
+### 6.1 `/projects` (existing - minor changes)
+
 - Add team-count badge per project card
 - Add resource-count badge
 
 ### 6.2 `/projects/[id]` (major redesign)
 
 Tabbed layout:
-- **Overview** — project info, status, dates, owner, summary stats
-- **Teams** — list of teams in this project, each shows: type, member count, manager avatar, task count
+
+- **Overview** - project info, status, dates, owner, summary stats
+- **Teams** - list of teams in this project, each shows: type, member count, manager avatar, task count
   - "Add Team" button (Admin/Owner only)
   - Click a team → expand to show members + tasks
-- **Tasks** — flat task list across all teams (filterable by team)
-- **Resources** — file gallery with upload, download, delete
-- **Activity** — audit log of project events (optional Phase 2)
+- **Tasks** - flat task list across all teams (filterable by team)
+- **Resources** - file gallery with upload, download, delete
+- **Activity** - audit log of project events (optional Phase 2)
 
-### 6.3 `/projects/[id]/teams/[teamId]` (new — or modal)
+### 6.3 `/projects/[id]/teams/[teamId]` (new - or modal)
+
 - Team header: name, type, manager
 - Members section: list with avatars, role badges, add/remove buttons (manager only)
 - Tasks section: kanban or list grouped by status
-  - "Create Task" button — visible to all members; manager has assignee picker, members are forced to self-assign
+  - "Create Task" button - visible to all members; manager has assignee picker, members are forced to self-assign
 
-### 6.4 `/projects/my-tasks` (existing — minor changes)
+### 6.4 `/projects/my-tasks` (existing - minor changes)
+
 - Group tasks by Project → Team
 - Show whether task is self-created or assigned
 - Overdue highlighting
 
 ### 6.5 New: Admin → Team Types (`/admin/team-types`)
+
 - Master list of team types, add/edit/delete
 
 ---
 
 ## 7. Implementation Phases
 
-### Phase 1 — Schema + Migration (Day 1, ~3h)
+### Phase 1 - Schema + Migration (Day 1, ~3h)
+
 1. Add `ProjectTeam`, `ProjectTeamMember`, `ProjectResource` models + `ResourceCategory` + `TaskApprovalStatus` enums
 2. Add `teamId`, `approvalStatus`, `isManagerCreated`, `rejectionReason` to `ProjectTask`
 3. **Drop** `ProjectMember` model (cascade-deletes existing junk data)
@@ -272,7 +289,8 @@ Tabbed layout:
 5. Apply to Supabase
 6. Wipe existing 2 demo projects + recreate seed with: 2–3 demo projects, each with 2–3 teams (e.g., "Web Development", "Design", "Content"), 3–5 members per team, 1 manager per team, sample tasks (mix of manager-created and self-tasks pending approval), and a few seeded resources
 
-### Phase 2 — Backend APIs (Day 1 cont. / Day 2, ~5h)
+### Phase 2 - Backend APIs (Day 1 cont. / Day 2, ~5h)
+
 1. Team Types CRUD
 2. Teams CRUD (with project-owner permission check)
 3. Team Members add/remove/promote
@@ -281,7 +299,8 @@ Tabbed layout:
 6. Add `wfh:approve`-style permission scope `project:manage_teams` for project owner
 7. Audit-log entries for every CUD
 
-### Phase 3 — Frontend (Day 2 / Day 3, ~6h)
+### Phase 3 - Frontend (Day 2 / Day 3, ~6h)
+
 1. Project detail page tab layout (Overview / Teams / Tasks / Resources)
 2. Team creation dialog (admin only)
 3. Team card component (members, manager, task count)
@@ -289,9 +308,10 @@ Tabbed layout:
 5. Promote-to-manager action
 6. Task creation form with role-aware assignee picker
 7. Resources tab with file upload, drag-drop, signed-URL download, delete
-8. My Tasks redesign — group by project/team
+8. My Tasks redesign - group by project/team
 
-### Phase 4 — Polish (Day 3, ~2h)
+### Phase 4 - Polish (Day 3, ~2h)
+
 1. Notifications: assignee notified on task assignment, member notified on team add
 2. Email triggers (optional): added to a project / made team manager
 3. Empty states everywhere
@@ -306,38 +326,45 @@ Tabbed layout:
 ## 8. Locked Decisions
 
 ### Critical
-1. **Team Types — ad-hoc, per project.** No global master list. When creating a team, admin types a name (e.g., "Web Development"). The `TeamType` model is dropped entirely. ProjectTeam has a free-text `name` column with `@@unique([projectId, name])`.
+
+1. **Team Types - ad-hoc, per project.** No global master list. When creating a team, admin types a name (e.g., "Web Development"). The `TeamType` model is dropped entirely. ProjectTeam has a free-text `name` column with `@@unique([projectId, name])`.
 2. **One team per name per project.** Cannot have two teams named "Web Development" in the same project. Enforced by unique constraint above.
 3. **Employee in only ONE team per project.** Enforced via denormalised `projectId` on `ProjectTeamMember` + `@@unique([projectId, employeeId])`. Database-level guarantee.
-4. **Manager exclusivity** — moot, follows from #3. Since an employee can only be in one team per project, they can only manage that one team.
+4. **Manager exclusivity** - moot, follows from #3. Since an employee can only be in one team per project, they can only manage that one team.
 5. **Self-tasks require Manager Approval.** Added `approvalStatus` enum on `ProjectTask`:
    - `APPROVED` (default for manager-created)
    - `PENDING_APPROVAL` (default for self-created)
    - `REJECTED`
-   Member-created tasks are invisible/inactive until manager approves. Manager rejects with optional reason.
-6. **Project + Team creation = Admin only.** `project:write` permission (super_admin / hr_admin). Project `ownerId` is informational only — no elevated powers from being owner.
+     Member-created tasks are invisible/inactive until manager approves. Manager rejects with optional reason.
+6. **Project + Team creation = Admin only.** `project:write` permission (super_admin / hr_admin). Project `ownerId` is informational only - no elevated powers from being owner.
 
 ### Storage / Resources
+
 7. **Folders/categories.** Resources have a fixed category enum: `BRIEFS`, `ASSETS`, `DELIVERABLES`, `REFERENCES`, `OTHER`.
-8. **File size cap: 100MB per file.** Type allowlist deferred (default: anything except executables — `.exe`, `.bat`, `.sh`, `.cmd`).
-9. **Per-team auto-folders.** When a team is created, the storage path `projects/{projectId}/teams/{teamId}/` is reserved (folders in Supabase are virtual — the path convention is enforced on upload). Project-level files live at `projects/{projectId}/{category}/`, team-level at `projects/{projectId}/teams/{teamId}/{category}/`. The resource record stores both `teamId` (nullable for project-level) and `category`.
+8. **File size cap: 100MB per file.** Type allowlist deferred (default: anything except executables - `.exe`, `.bat`, `.sh`, `.cmd`).
+9. **Per-team auto-folders.** When a team is created, the storage path `projects/{projectId}/teams/{teamId}/` is reserved (folders in Supabase are virtual - the path convention is enforced on upload). Project-level files live at `projects/{projectId}/{category}/`, team-level at `projects/{projectId}/teams/{teamId}/{category}/`. The resource record stores both `teamId` (nullable for project-level) and `category`.
 
 ### Task visibility
+
 10. **Full visibility within the project.** All project members can see all tasks across all teams. (Approval-pending tasks visible too, but flagged.)
 
 ### Removing managers
+
 11. **Manager swap-or-empty rule:**
-   - If team has other members → must promote a replacement first; cannot just remove the manager
-   - If manager is the **only** member → may be removed; team becomes empty (managerId = null)
-   - Empty teams can be deleted by admin or filled with new members
+
+- If team has other members → must promote a replacement first; cannot just remove the manager
+- If manager is the **only** member → may be removed; team becomes empty (managerId = null)
+- Empty teams can be deleted by admin or filled with new members
 
 ### Existing data
+
 12. **Wipe and reseed.** The two existing seeded projects + their flat members/tasks will be deleted. Seed will produce fresh projects with proper teams structure.
 
 ### Defaults applied
+
 13. **Notifications:** in-app + email triggered on: added to a team, made team manager, task assigned, self-task approved/rejected.
 14. **Audit log:** every team / member / task / resource CUD is logged with before/after diff.
-15. **Resource versioning:** none — uploads overwrite by `objectKey`. Optional later.
+15. **Resource versioning:** none - uploads overwrite by `objectKey`. Optional later.
 
 ---
 

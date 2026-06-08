@@ -183,7 +183,7 @@ export const POST = withAuth(
 
       // Resolve role to assign: prefer explicit roleId from caller, fall back
       // to the default "employee" role. super_admin can never be assigned via
-      // this endpoint — that role is reserved for the CEO.
+      // this endpoint - that role is reserved for the CEO.
       let roleToAssign: { id: string } | null = null
       if (data.roleId) {
         const candidate = await db.role.findUnique({

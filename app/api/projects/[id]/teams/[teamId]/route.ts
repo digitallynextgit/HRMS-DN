@@ -4,7 +4,7 @@ import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
-// PATCH /api/projects/[id]/teams/[teamId] — rename / change manager (Admin only)
+// PATCH /api/projects/[id]/teams/[teamId] - rename / change manager (Admin only)
 export const PATCH = withAuth(
   PERMISSIONS.PROJECT_WRITE,
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
@@ -24,24 +24,32 @@ export const PATCH = withAuth(
       const data: Record<string, unknown> = {}
 
       if (name !== undefined) {
-        if (!name.trim()) return NextResponse.json({ error: "Team name cannot be empty" }, { status: 400 })
+        if (!name.trim())
+          return NextResponse.json({ error: "Team name cannot be empty" }, { status: 400 })
         const dupe = await db.projectTeam.findFirst({
           where: { projectId, name: name.trim(), NOT: { id: teamId } },
         })
-        if (dupe) return NextResponse.json({ error: "Another team in this project already has that name" }, { status: 409 })
+        if (dupe)
+          return NextResponse.json(
+            { error: "Another team in this project already has that name" },
+            { status: 409 },
+          )
         data.name = name.trim()
       }
 
       if (description !== undefined) data.description = description?.trim() || null
 
-      // Manager change — must be an existing member
+      // Manager change - must be an existing member
       if (managerId !== undefined && managerId !== team.managerId) {
         if (managerId === null) {
-          // Removing manager — only allowed if team is empty or only manager left
+          // Removing manager - only allowed if team is empty or only manager left
           if (team.members.length > 1) {
             return NextResponse.json(
-              { error: "Cannot remove manager while team has other members. Promote another member first." },
-              { status: 422 }
+              {
+                error:
+                  "Cannot remove manager while team has other members. Promote another member first.",
+              },
+              { status: 422 },
             )
           }
           data.managerId = null
@@ -50,7 +58,7 @@ export const PATCH = withAuth(
           if (!isMember) {
             return NextResponse.json(
               { error: "Selected manager must already be a member of this team" },
-              { status: 422 }
+              { status: 422 },
             )
           }
           data.managerId = managerId
@@ -62,7 +70,9 @@ export const PATCH = withAuth(
         data,
         include: {
           manager: { select: { id: true, firstName: true, lastName: true } },
-          members: { include: { employee: { select: { id: true, firstName: true, lastName: true } } } },
+          members: {
+            include: { employee: { select: { id: true, firstName: true, lastName: true } } },
+          },
         },
       })
 
@@ -82,10 +92,10 @@ export const PATCH = withAuth(
       console.error("[PROJECT_TEAM_PATCH]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
-// DELETE /api/projects/[id]/teams/[teamId] — delete team (cascades members + tasks)
+// DELETE /api/projects/[id]/teams/[teamId] - delete team (cascades members + tasks)
 export const DELETE = withAuth(
   PERMISSIONS.PROJECT_WRITE,
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
@@ -115,5 +125,5 @@ export const DELETE = withAuth(
       console.error("[PROJECT_TEAM_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

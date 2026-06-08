@@ -24,7 +24,7 @@ const GUIDES: Record<string, GuideInfo> = {
   "getting-started": {
     slug: "getting-started",
     title: "Getting Started",
-    description: "Login, navigation, and your first steps in HRMS",
+    description: "Login, navigation, and your first steps in DNMS",
     roles: ["employee", "manager", "hr", "admin"],
   },
   employees: {

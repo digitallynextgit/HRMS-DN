@@ -35,6 +35,6 @@ export async function logActivity(params: {
       },
     })
   } catch {
-    // Activity logging is best-effort — never fail the main request
+    // Activity logging is best-effort - never fail the main request
   }
 }

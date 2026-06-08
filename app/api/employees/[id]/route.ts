@@ -167,7 +167,7 @@ export const PATCH = withAuth(
  * DELETE /api/employees/[id]
  *  Default behaviour: soft-deactivate (sets isActive=false).
  *  With `?permanent=true`: hard-deletes the row. Only allowed on rows that
- *  are already inactive — protects against accidental loss of an active
+ *  are already inactive - protects against accidental loss of an active
  *  employee in one click.
  */
 export const DELETE = withAuth(

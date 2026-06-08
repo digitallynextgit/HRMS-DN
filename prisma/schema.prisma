@@ -1,5 +1,5 @@
 // =============================================================================
-// HRMS Prisma Schema - Phase 1 + Phase 2 + Phase 3 + Phase 4
+// DNMS Prisma Schema - Phase 1 + Phase 2 + Phase 3 + Phase 4
 // =============================================================================
 
 generator client {
@@ -866,7 +866,7 @@ model Project {
   ownerId         String        @map("owner_id")
   currentPhaseId  String?       @map("current_phase_id")
   startDate       DateTime?     @map("start_date") @db.Date              // "Onboarding Date" in UI
-  endDate         DateTime?     @map("end_date") @db.Date                // deprecated — kept for back-compat
+  endDate         DateTime?     @map("end_date") @db.Date                // deprecated - kept for back-compat
   budget          Float?        @map("budget")
   isArchived      Boolean       @default(false) @map("is_archived")
   createdAt       DateTime      @default(now()) @map("created_at")
@@ -874,8 +874,8 @@ model Project {
 
   owner        Employee            @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Restrict)
   currentPhase ProjectPhase?       @relation(fields: [currentPhaseId], references: [id], onDelete: SetNull)
-  members      ProjectMember[]                                            // legacy — kept for migration safety
-  teams        ProjectTeam[]                                              // v2 — primary structure
+  members      ProjectMember[]                                            // legacy - kept for migration safety
+  teams        ProjectTeam[]                                              // v2 - primary structure
   tasks        ProjectTask[]
   resources    ProjectResource[]
   timesheets   Timesheet[]
@@ -1000,7 +1000,7 @@ model ProjectMember {
 model ProjectTask {
   id               String              @id @default(uuid()) @map("id")
   projectId        String              @map("project_id")
-  teamId           String?             @map("team_id")                       // v2 — null only for legacy tasks
+  teamId           String?             @map("team_id")                       // v2 - null only for legacy tasks
   title            String              @map("title")
   description      String?             @map("description") @db.Text
   status           TaskStatus          @default(TODO) @map("status")

@@ -15,7 +15,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { getInitials, formatDate } from "@/lib/utils"
 import { Pin, PinOff, Plus, Trash2, Pencil } from "lucide-react"
@@ -34,7 +40,9 @@ export function MessagesTab({ projectId, currentUserId, canManage }: Props) {
   if (isLoading) {
     return (
       <div className="space-y-3">
-        {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded-lg" />)}
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-28 rounded-lg" />
+        ))}
       </div>
     )
   }
@@ -42,17 +50,18 @@ export function MessagesTab({ projectId, currentUserId, canManage }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           {messages.length} message{messages.length !== 1 ? "s" : ""}
         </p>
         <Button size="sm" onClick={() => setComposeOpen(true)}>
-          <Plus className="h-4 w-4 mr-1.5" />New Message
+          <Plus className="mr-1.5 h-4 w-4" />
+          New Message
         </Button>
       </div>
 
       {messages.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <CardContent className="text-muted-foreground py-12 text-center text-sm">
             No messages yet. Post an update, decision, or announcement for the team.
           </CardContent>
         </Card>
@@ -80,7 +89,10 @@ export function MessagesTab({ projectId, currentUserId, canManage }: Props) {
 }
 
 function MessageCard({
-  message, projectId, currentUserId, canManage,
+  message,
+  projectId,
+  currentUserId,
+  canManage,
 }: {
   message: ProjectMessage
   projectId: string
@@ -96,38 +108,49 @@ function MessageCard({
     <Card className={message.isPinned ? "border-amber-300 dark:border-amber-700" : ""}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            <Avatar className="h-8 w-8 shrink-0 mt-0.5">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <Avatar className="mt-0.5 h-8 w-8 shrink-0">
               {message.author.profilePhoto && <AvatarImage src={message.author.profilePhoto} />}
               <AvatarFallback className="text-[10px]">
                 {getInitials(message.author.firstName, message.author.lastName)}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="font-semibold text-sm">{message.title}</h4>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="text-sm font-semibold">{message.title}</h4>
                 {message.isPinned && (
-                  <Badge variant="outline" className="text-[10px] text-amber-700 border-amber-300 bg-amber-50 dark:bg-amber-950/30">
-                    <Pin className="h-2.5 w-2.5 mr-1" />Pinned
+                  <Badge
+                    variant="outline"
+                    className="border-amber-300 bg-amber-50 text-[10px] text-amber-700 dark:bg-amber-950/30"
+                  >
+                    <Pin className="mr-1 h-2.5 w-2.5" />
+                    Pinned
                   </Badge>
                 )}
               </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                {message.author.firstName} {message.author.lastName} · {formatDate(message.createdAt)}
+              <p className="text-muted-foreground mt-0.5 text-[11px]">
+                {message.author.firstName} {message.author.lastName} ·{" "}
+                {formatDate(message.createdAt)}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
+          <div className="flex shrink-0 items-center gap-1">
             {(isOwner || canManage) && (
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground h-7 w-7"
                 title={message.isPinned ? "Unpin" : "Pin"}
-                onClick={() => update.mutate({ messageId: message.id, body: { isPinned: !message.isPinned } })}
+                onClick={() =>
+                  update.mutate({ messageId: message.id, body: { isPinned: !message.isPinned } })
+                }
               >
-                {message.isPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                {message.isPinned ? (
+                  <PinOff className="h-3.5 w-3.5" />
+                ) : (
+                  <Pin className="h-3.5 w-3.5" />
+                )}
               </Button>
             )}
             {isOwner && (
@@ -135,7 +158,7 @@ function MessageCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                  className="text-muted-foreground hover:text-foreground h-7 w-7"
                   onClick={() => setEditOpen(true)}
                 >
                   <Pencil className="h-3.5 w-3.5" />
@@ -143,8 +166,10 @@ function MessageCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                  onClick={() => { if (confirm("Delete this message?")) del.mutate(message.id) }}
+                  className="text-muted-foreground hover:text-destructive h-7 w-7"
+                  onClick={() => {
+                    if (confirm("Delete this message?")) del.mutate(message.id)
+                  }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
@@ -153,7 +178,7 @@ function MessageCard({
           </div>
         </div>
 
-        <div className="mt-3 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+        <div className="text-muted-foreground mt-3 text-sm leading-relaxed whitespace-pre-wrap">
           {message.content}
         </div>
       </CardContent>
@@ -168,22 +193,39 @@ function MessageCard({
   )
 }
 
-function ComposeDialog({ open, onClose, projectId }: { open: boolean; onClose: () => void; projectId: string }) {
+function ComposeDialog({
+  open,
+  onClose,
+  projectId,
+}: {
+  open: boolean
+  onClose: () => void
+  projectId: string
+}) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const create = useCreateMessage(projectId)
 
   function handleSubmit() {
     if (!title.trim() || !content.trim()) return
-    create.mutate({ title: title.trim(), content: content.trim() }, {
-      onSuccess: () => { setTitle(""); setContent(""); onClose() },
-    })
+    create.mutate(
+      { title: title.trim(), content: content.trim() },
+      {
+        onSuccess: () => {
+          setTitle("")
+          setContent("")
+          onClose()
+        },
+      },
+    )
   }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !create.isPending && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>New Message</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>New Message</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Subject *</Label>
@@ -205,7 +247,9 @@ function ComposeDialog({ open, onClose, projectId }: { open: boolean; onClose: (
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={create.isPending}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={create.isPending}>
+            Cancel
+          </Button>
           <Button
             onClick={handleSubmit}
             disabled={!title.trim() || !content.trim() || create.isPending}
@@ -219,7 +263,10 @@ function ComposeDialog({ open, onClose, projectId }: { open: boolean; onClose: (
 }
 
 function EditMessageDialog({
-  open, onClose, message, projectId,
+  open,
+  onClose,
+  message,
+  projectId,
 }: {
   open: boolean
   onClose: () => void
@@ -231,15 +278,20 @@ function EditMessageDialog({
   const update = useUpdateMessage(projectId)
 
   function handleSave() {
-    update.mutate({ messageId: message.id, body: { title: title.trim(), content: content.trim() } }, {
-      onSuccess: () => onClose(),
-    })
+    update.mutate(
+      { messageId: message.id, body: { title: title.trim(), content: content.trim() } },
+      {
+        onSuccess: () => onClose(),
+      },
+    )
   }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && !update.isPending && onClose()}>
       <DialogContent>
-        <DialogHeader><DialogTitle>Edit Message</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Edit Message</DialogTitle>
+        </DialogHeader>
         <div className="space-y-3">
           <div className="space-y-1.5">
             <Label>Subject</Label>
@@ -251,7 +303,9 @@ function EditMessageDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={update.isPending}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={update.isPending}>
+            Cancel
+          </Button>
           <Button
             onClick={handleSave}
             disabled={!title.trim() || !content.trim() || update.isPending}

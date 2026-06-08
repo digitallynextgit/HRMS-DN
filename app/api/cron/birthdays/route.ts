@@ -60,7 +60,7 @@ export const GET = async (req: NextRequest) => {
                 Thank you for being an amazing part of our team!
               </p>
               <p style="color: #888; font-size: 13px; margin-top: 32px;">
-                - The HR Team at ${process.env.APP_NAME ?? "HRMS"}
+                - The HR Team at ${process.env.APP_NAME ?? "DNMS"}
               </p>
             </div>
           `,

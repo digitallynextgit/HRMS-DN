@@ -1,5 +1,5 @@
 ================================================================================
-HRMS - FEATURES INVENTORY
+DNMS - FEATURES INVENTORY
 ================================================================================
 Source: derived from the live codebase (app/, app/api/, prisma/schema.prisma,
 lib/, middleware.ts, components/, PRD.md, USER_FLOWS.md).

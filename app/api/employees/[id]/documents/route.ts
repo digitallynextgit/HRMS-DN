@@ -37,13 +37,13 @@ export const GET = withSession(
 
 /**
  * POST /api/employees/[id]/documents
- * Multipart upload — saves the file to object storage and inserts an
+ * Multipart upload - saves the file to object storage and inserts an
  * EmployeeDocument row pointing at it.
  * Form fields:
- *   file       (required) — the binary
- *   title      (required) — display name
- *   category   (optional, default OTHER) — DocumentCategory
- *   expiresAt  (optional) — ISO date
+ *   file       (required) - the binary
+ *   title      (required) - display name
+ *   category   (optional, default OTHER) - DocumentCategory
+ *   expiresAt  (optional) - ISO date
  */
 export const POST = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
