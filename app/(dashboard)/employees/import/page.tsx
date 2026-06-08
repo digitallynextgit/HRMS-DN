@@ -3,7 +3,15 @@
 import { useState, useRef } from "react"
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Upload, Loader2, CheckCircle2, XCircle, FileText, Download, ChevronLeft } from "lucide-react"
+import {
+  Upload,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  FileText,
+  Download,
+  ChevronLeft,
+} from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/shared/page-header"
@@ -49,7 +57,11 @@ function downloadTemplate() {
 export default function EmployeeImportPage() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<{ valid: number; total: number; results: ImportResult[] } | null>(null)
+  const [preview, setPreview] = useState<{
+    valid: number
+    total: number
+    results: ImportResult[]
+  } | null>(null)
   const [done, setDone] = useState<{ imported: number; total: number } | null>(null)
 
   const previewMut = useMutation({
@@ -171,7 +183,9 @@ export default function EmployeeImportPage() {
                   <tr className="bg-muted/40 border-b">
                     <th className="text-muted-foreground px-3 py-2 text-left font-medium">Row</th>
                     <th className="text-muted-foreground px-3 py-2 text-left font-medium">Name</th>
-                    <th className="text-muted-foreground px-3 py-2 text-left font-medium">Status</th>
+                    <th className="text-muted-foreground px-3 py-2 text-left font-medium">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">

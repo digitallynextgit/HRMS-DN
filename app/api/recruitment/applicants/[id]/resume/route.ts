@@ -5,7 +5,11 @@ import { PERMISSIONS } from "@/lib/constants"
 import { ensureBucket, uploadFile, getObjectKey, getSignedUrl } from "@/lib/storage"
 import type { Session } from "next-auth"
 
-const RESUME_TYPES = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+const RESUME_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+]
 const MAX_BYTES = 10 * 1024 * 1024
 const ONE_YEAR = 60 * 60 * 24 * 365
 
@@ -24,7 +28,10 @@ export const POST = withAuth(
         return NextResponse.json({ error: "No file uploaded" }, { status: 400 })
       }
       if (!RESUME_TYPES.includes(file.type)) {
-        return NextResponse.json({ error: "Resume must be a PDF or Word document" }, { status: 415 })
+        return NextResponse.json(
+          { error: "Resume must be a PDF or Word document" },
+          { status: 415 },
+        )
       }
       if (file.size > MAX_BYTES) {
         return NextResponse.json({ error: "Resume must be 10 MB or smaller" }, { status: 413 })

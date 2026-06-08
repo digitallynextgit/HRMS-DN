@@ -82,7 +82,10 @@ export default function DepartmentsPage() {
   const [code, setCode] = useState("")
   const [description, setDescription] = useState("")
 
-  const { data, isLoading } = useQuery({ queryKey: ["departments-admin"], queryFn: fetchDepartments })
+  const { data, isLoading } = useQuery({
+    queryKey: ["departments-admin"],
+    queryFn: fetchDepartments,
+  })
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["departments-admin"] })
@@ -173,11 +176,15 @@ export default function DepartmentsPage() {
               <tr className="bg-muted/40 border-b">
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Name</th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Code</th>
-                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Description</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
+                  Description
+                </th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employees</th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
                 {canWrite && (
-                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
+                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">
+                    Actions
+                  </th>
                 )}
               </tr>
             </thead>

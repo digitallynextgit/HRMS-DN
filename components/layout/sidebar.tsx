@@ -179,11 +179,7 @@ const ADMIN_ITEMS: NavItem[] = [
   },
 ]
 
-function canAccess(
-  item: { permission?: string },
-  permissions: string[],
-  roles: string[],
-): boolean {
+function canAccess(item: { permission?: string }, permissions: string[], roles: string[]): boolean {
   if (roles.includes("super_admin")) return true
   if (!item.permission) return true
   return permissions.includes(item.permission)

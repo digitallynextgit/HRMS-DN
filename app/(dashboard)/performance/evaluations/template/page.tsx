@@ -41,7 +41,8 @@ export default function EvaluationTemplatePage() {
     setLoaded(true)
   }, [data, active, loaded])
 
-  const totalWeight = Math.round(criteria.reduce((s, c) => s + (Number(c.weight) || 0), 0) * 10) / 10
+  const totalWeight =
+    Math.round(criteria.reduce((s, c) => s + (Number(c.weight) || 0), 0) * 10) / 10
   const v = validateCriteria(criteria)
 
   function update(id: string, patch: Partial<EvalCriterion>) {

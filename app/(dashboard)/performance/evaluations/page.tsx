@@ -19,7 +19,13 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 import { usePermissions } from "@/hooks/use-permissions"
 import { useEmployees } from "@/hooks/use-employees"
@@ -32,7 +38,8 @@ import {
 } from "@/hooks/use-evaluations"
 
 const STATUS: Record<string, string> = {
-  PENDING: "border-gray-200 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
+  PENDING:
+    "border-gray-200 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
   SELF_DONE:
     "border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300",
   MANAGER_DONE:
@@ -128,7 +135,9 @@ function NewEvaluationDialog() {
                   ))}
               </SelectContent>
             </Select>
-            <p className="text-muted-foreground text-xs">Leave blank to use the employee&apos;s assigned manager.</p>
+            <p className="text-muted-foreground text-xs">
+              Leave blank to use the employee&apos;s assigned manager.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label>Project Controller (optional)</Label>
@@ -146,7 +155,9 @@ function NewEvaluationDialog() {
                   ))}
               </SelectContent>
             </Select>
-            <p className="text-muted-foreground text-xs">Adds a 3rd review column. Recorded alongside; doesn&apos;t change the final score.</p>
+            <p className="text-muted-foreground text-xs">
+              Adds a 3rd review column. Recorded alongside; doesn&apos;t change the final score.
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

@@ -11,8 +11,24 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Plus, Pencil, Trash2, Settings, ChevronRight, Building2, Users, Eye, EyeOff } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Settings,
+  ChevronRight,
+  Building2,
+  Users,
+  Eye,
+  EyeOff,
+} from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface SubPhase {
@@ -447,7 +463,10 @@ async function fetchDepartments(): Promise<{ data: DepartmentRow[] }> {
 
 function DepartmentsSection() {
   const qc = useQueryClient()
-  const { data, isLoading } = useQuery({ queryKey: ["departments", "admin"], queryFn: fetchDepartments })
+  const { data, isLoading } = useQuery({
+    queryKey: ["departments", "admin"],
+    queryFn: fetchDepartments,
+  })
   const departments = data?.data ?? []
   const activeCount = departments.filter((d) => d.isActive).length
 
@@ -516,28 +535,31 @@ function DepartmentsSection() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <Building2 className="text-muted-foreground h-4 w-4" />
           <h2 className="text-sm font-semibold">Departments</h2>
-          <Badge variant="secondary" className="text-[10px] h-4 px-1.5">{activeCount}</Badge>
+          <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+            {activeCount}
+          </Badge>
         </div>
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground h-7 gap-1 px-2 text-xs"
             onClick={() => setShowInactive((s) => !s)}
           >
             {showInactive ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
             {showInactive ? "Hide inactive" : "Show inactive"}
           </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4 mr-1.5" />Add Department
+            <Plus className="mr-1.5 h-4 w-4" />
+            Add Department
           </Button>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground mb-4">
+      <p className="text-muted-foreground mb-4 text-xs">
         Used everywhere a department dropdown appears (employee form, recruitment, filters).
         Deactivate to hide from dropdowns without losing history.
       </p>
@@ -550,58 +572,75 @@ function DepartmentsSection() {
         </div>
       ) : visible.length === 0 ? (
         <Card className="border-dashed">
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            {departments.length === 0 ? "No departments yet. Add one to get started." : "No active departments. Toggle \"Show inactive\" to see deactivated ones."}
+          <CardContent className="text-muted-foreground py-10 text-center text-sm">
+            {departments.length === 0
+              ? "No departments yet. Add one to get started."
+              : 'No active departments. Toggle "Show inactive" to see deactivated ones.'}
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-2">
           {visible.map((d) => (
-            <Card key={d.id} className={cn("overflow-hidden transition-colors", !d.isActive && "opacity-60")}>
+            <Card
+              key={d.id}
+              className={cn("overflow-hidden transition-colors", !d.isActive && "opacity-60")}
+            >
               <div className="flex items-start gap-3 px-4 py-3">
-                <div className="flex items-center justify-center w-6 h-6 rounded bg-primary/10 text-primary text-[10px] font-mono font-bold mt-0.5 shrink-0">
+                <div className="bg-primary/10 text-primary mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded font-mono text-[10px] font-bold">
                   {d.code}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-semibold text-sm">{d.name}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold">{d.name}</span>
                     {!d.isActive && (
-                      <Badge variant="outline" className="text-[10px] h-4 px-1.5 text-muted-foreground">Inactive</Badge>
+                      <Badge
+                        variant="outline"
+                        className="text-muted-foreground h-4 px-1.5 text-[10px]"
+                      >
+                        Inactive
+                      </Badge>
                     )}
                     {d._count.employees > 0 && (
-                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5 gap-0.5">
+                      <Badge variant="secondary" className="h-4 gap-0.5 px-1.5 text-[10px]">
                         <Users className="h-2.5 w-2.5" />
                         {d._count.employees}
                       </Badge>
                     )}
                     {d._count.jobPostings > 0 && (
-                      <Badge variant="secondary" className="text-[10px] h-4 px-1.5">
+                      <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
                         {d._count.jobPostings} job posting{d._count.jobPostings !== 1 ? "s" : ""}
                       </Badge>
                     )}
                   </div>
                   {d.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{d.description}</p>
+                    <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
+                      {d.description}
+                    </p>
                   )}
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex shrink-0 items-center gap-1">
                   {!d.isActive ? (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-foreground"
+                      className="text-muted-foreground hover:text-foreground h-7 gap-1 px-2 text-xs"
                       onClick={() => update.mutate({ id: d.id, body: { isActive: true } })}
                     >
                       Reactivate
                     </Button>
                   ) : null}
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={() => setEditing(d)}>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-muted-foreground hover:text-foreground h-7 w-7"
+                    onClick={() => setEditing(d)}
+                  >
                     <Pencil className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    className="text-muted-foreground hover:text-destructive h-7 w-7"
                     onClick={() => confirmDelete(d)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -638,7 +677,12 @@ function DepartmentsSection() {
 }
 
 function DepartmentFormDialog({
-  open, onClose, onSubmit, pending, mode, initial,
+  open,
+  onClose,
+  onSubmit,
+  pending,
+  mode,
+  initial,
 }: {
   open: boolean
   onClose: () => void
@@ -676,7 +720,9 @@ function DepartmentFormDialog({
               placeholder="e.g. VID, WEB"
               maxLength={10}
             />
-            <p className="text-[11px] text-muted-foreground">Short uppercase tag (auto-uppercased). Must be unique.</p>
+            <p className="text-muted-foreground text-[11px]">
+              Short uppercase tag (auto-uppercased). Must be unique.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label>Description</Label>
@@ -691,7 +737,7 @@ function DepartmentFormDialog({
             <div className="space-y-1.5">
               <Label>Status</Label>
               <select
-                className="w-full h-9 rounded-md border bg-background px-2 text-sm"
+                className="bg-background h-9 w-full rounded-md border px-2 text-sm"
                 value={isActive ? "1" : "0"}
                 onChange={(e) => setIsActive(e.target.value === "1")}
               >
@@ -702,15 +748,19 @@ function DepartmentFormDialog({
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={pending}>Cancel</Button>
+          <Button variant="outline" onClick={onClose} disabled={pending}>
+            Cancel
+          </Button>
           <Button
             disabled={pending || !name.trim() || !code.trim()}
-            onClick={() => onSubmit({
-              name: name.trim(),
-              code: code.trim().toUpperCase(),
-              description: description.trim() || undefined,
-              ...(mode === "edit" && { isActive }),
-            })}
+            onClick={() =>
+              onSubmit({
+                name: name.trim(),
+                code: code.trim().toUpperCase(),
+                description: description.trim() || undefined,
+                ...(mode === "edit" && { isActive }),
+              })
+            }
           >
             {pending ? "Saving…" : mode === "create" ? "Add" : "Save"}
           </Button>

@@ -32,7 +32,13 @@ export const GET = withSession(
         orderBy: { startDate: "asc" },
         include: {
           employee: {
-            select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true },
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              employeeNo: true,
+              profilePhoto: true,
+            },
           },
           leaveType: { select: { name: true, code: true } },
         },

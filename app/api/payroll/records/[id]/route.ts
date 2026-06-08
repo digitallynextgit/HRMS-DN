@@ -43,7 +43,10 @@ export const GET = withAuth(
       }
 
       // Employees may only view their own record; HR (payroll:write) sees all.
-      if (!hasPermission(session, PERMISSIONS.PAYROLL_WRITE) && record.employeeId !== session.user.id) {
+      if (
+        !hasPermission(session, PERMISSIONS.PAYROLL_WRITE) &&
+        record.employeeId !== session.user.id
+      ) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
 

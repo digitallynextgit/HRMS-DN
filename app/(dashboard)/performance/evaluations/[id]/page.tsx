@@ -12,7 +12,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useEvaluation, useSubmitEvaluation } from "@/hooks/use-evaluations"
-import { scoreEvaluation, isRatingComplete, RATING_LABELS, type EvalCriterion } from "@/lib/evaluation"
+import {
+  scoreEvaluation,
+  isRatingComplete,
+  RATING_LABELS,
+  type EvalCriterion,
+} from "@/lib/evaluation"
 import { performanceAction } from "@/lib/performance"
 
 const TONE: Record<string, string> = {
@@ -122,9 +127,10 @@ export default function EvaluationDetailPage({ params }: { params: Promise<{ id:
     () => scoreEvaluation(criteria, managerRatings),
     [criteria, managerRatings],
   )
-  const verdict = ev?.managerSubmittedAt || (canEdit && editableSide === "MANAGER")
-    ? performanceAction(managerScore.total)
-    : null
+  const verdict =
+    ev?.managerSubmittedAt || (canEdit && editableSide === "MANAGER")
+      ? performanceAction(managerScore.total)
+      : null
 
   function handleSubmit() {
     if (!editableSide) return
@@ -142,7 +148,11 @@ export default function EvaluationDetailPage({ params }: { params: Promise<{ id:
   const renderSide = (side: "SELF" | "MANAGER" | "CONTROLLER", c: EvalCriterion) => {
     const isEditableHere = canEdit && editableSide === side
     const storedMap =
-      side === "SELF" ? ev.selfRatings : side === "CONTROLLER" ? ev.controllerRatings : ev.managerRatings
+      side === "SELF"
+        ? ev.selfRatings
+        : side === "CONTROLLER"
+          ? ev.controllerRatings
+          : ev.managerRatings
     const value = isEditableHere ? ratings[c.id] : storedMap?.[c.id]
     return (
       <Rating
@@ -220,37 +230,37 @@ export default function EvaluationDetailPage({ params }: { params: Promise<{ id:
           description={`Performance evaluation${ev.dueDate ? ` · due ${new Date(ev.dueDate).toLocaleDateString("en-IN")}` : ""}`}
         />
 
-      {/* Status / final score */}
-      <Card>
-        <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
-          <div className="flex items-center gap-6 text-sm">
-            <div>
-              <p className="text-muted-foreground">Self</p>
-              <p className="font-medium">{ev.selfSubmittedAt ? "Submitted" : "Pending"}</p>
+        {/* Status / final score */}
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-muted-foreground">Self</p>
+                <p className="font-medium">{ev.selfSubmittedAt ? "Submitted" : "Pending"}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Manager</p>
+                <p className="font-medium">{ev.managerSubmittedAt ? "Submitted" : "Pending"}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-muted-foreground">Manager</p>
-              <p className="font-medium">{ev.managerSubmittedAt ? "Submitted" : "Pending"}</p>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-muted-foreground text-sm">Final Score</p>
+                <p className="text-2xl font-bold">
+                  {ev.managerSubmittedAt || (canEdit && editableSide === "MANAGER")
+                    ? `${managerScore.total}`
+                    : "—"}
+                  <span className="text-muted-foreground text-base font-normal"> / 100</span>
+                </p>
+              </div>
+              {verdict && (
+                <Badge variant="outline" className={cn("h-fit", TONE[verdict.tone])}>
+                  {verdict.band}: {verdict.action}
+                </Badge>
+              )}
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-muted-foreground text-sm">Final Score</p>
-              <p className="text-2xl font-bold">
-                {ev.managerSubmittedAt || (canEdit && editableSide === "MANAGER")
-                  ? `${managerScore.total}`
-                  : "—"}
-                <span className="text-muted-foreground text-base font-normal"> / 100</span>
-              </p>
-            </div>
-            {verdict && (
-              <Badge variant="outline" className={cn("h-fit", TONE[verdict.tone])}>
-                {verdict.band}: {verdict.action}
-              </Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
         <Section label="A" items={sectionA} />
         <Section label="B" items={sectionB} />
@@ -267,11 +277,11 @@ export default function EvaluationDetailPage({ params }: { params: Promise<{ id:
               value={
                 canEdit
                   ? comment
-                  : (editableSide === "SELF"
+                  : ((editableSide === "SELF"
                       ? ev.selfComment
                       : editableSide === "CONTROLLER"
                         ? ev.controllerComment
-                        : ev.managerComment) ?? ""
+                        : ev.managerComment) ?? "")
               }
               onChange={(e) => setComment(e.target.value)}
               disabled={!canEdit}
@@ -281,7 +291,9 @@ export default function EvaluationDetailPage({ params }: { params: Promise<{ id:
             {canEdit ? (
               <div className="flex items-center justify-end gap-3">
                 {!isRatingComplete(criteria, ratings) && (
-                  <span className="text-muted-foreground text-xs">Rate every criterion to submit</span>
+                  <span className="text-muted-foreground text-xs">
+                    Rate every criterion to submit
+                  </span>
                 )}
                 <Button
                   onClick={handleSubmit}

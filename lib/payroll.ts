@@ -24,7 +24,8 @@ export function computeStatutoryDeductions(input: {
 }): StatutoryDeductions {
   const pfBase = Math.min(Math.max(0, input.basic), PF_WAGE_CEILING)
   const pf = Math.round(pfBase * 0.12)
-  const esi = input.gross > 0 && input.gross <= ESI_GROSS_LIMIT ? Math.round(input.gross * 0.0075) : 0
+  const esi =
+    input.gross > 0 && input.gross <= ESI_GROSS_LIMIT ? Math.round(input.gross * 0.0075) : 0
   return { pfEmployee: pf, pfEmployer: pf, esi, tds: monthlyTds(input.gross) }
 }
 

@@ -20,11 +20,16 @@ export const PATCH = withAuth(
       const data: Record<string, unknown> = {}
 
       if (name !== undefined) {
-        if (!name.trim()) return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 })
+        if (!name.trim())
+          return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 })
         const dupe = await db.projectPhase.findFirst({
           where: { name: name.trim(), parentId: existing.parentId, NOT: { id } },
         })
-        if (dupe) return NextResponse.json({ error: "Another phase at this level already has that name" }, { status: 409 })
+        if (dupe)
+          return NextResponse.json(
+            { error: "Another phase at this level already has that name" },
+            { status: 409 },
+          )
         data.name = name.trim()
       }
       if (description !== undefined) data.description = description?.trim() || null
@@ -46,7 +51,7 @@ export const PATCH = withAuth(
       console.error("[PROJECT_PHASE_PATCH]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )
 
 // DELETE /api/project-phases/[id]
@@ -78,13 +83,21 @@ export const DELETE = withAuth(
         module: "project",
         entityType: "ProjectPhase",
         entityId: id,
-        changes: { name: phase.name, deletedSubPhases: childIds.length, displacedFromProjects: inUseCount },
+        changes: {
+          name: phase.name,
+          deletedSubPhases: childIds.length,
+          displacedFromProjects: inUseCount,
+        },
       })
 
-      return NextResponse.json({ success: true, deletedSubPhases: childIds.length, displacedFromProjects: inUseCount })
+      return NextResponse.json({
+        success: true,
+        deletedSubPhases: childIds.length,
+        displacedFromProjects: inUseCount,
+      })
     } catch (error) {
       console.error("[PROJECT_PHASE_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
-  }
+  },
 )

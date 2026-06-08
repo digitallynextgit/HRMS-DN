@@ -16,7 +16,13 @@ interface Leave {
   id: string
   startDate: string
   endDate: string
-  employee: { id: string; firstName: string; lastName: string; employeeNo: string; profilePhoto: string | null }
+  employee: {
+    id: string
+    firstName: string
+    lastName: string
+    employeeNo: string
+    profilePhoto: string | null
+  }
   leaveType: { name: string; code: string }
 }
 
@@ -75,11 +81,21 @@ export default function LeaveCalendarPage() {
       <PageHeader title="Leave Calendar" description="Who's on approved leave" />
 
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+        >
           &larr;
         </Button>
-        <span className="bg-muted rounded px-3 py-1 text-sm font-medium">{format(month, "MMMM yyyy")}</span>
-        <Button variant="outline" size="sm" onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}>
+        <span className="bg-muted rounded px-3 py-1 text-sm font-medium">
+          {format(month, "MMMM yyyy")}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+        >
           &rarr;
         </Button>
       </div>
@@ -121,7 +137,10 @@ export default function LeaveCalendarPage() {
             ) : (
               <div className="divide-y">
                 {leaves.map((l) => (
-                  <div key={l.id} className={cn(isOnLeaveToday(l) && "bg-amber-50/50 dark:bg-amber-950/10")}>
+                  <div
+                    key={l.id}
+                    className={cn(isOnLeaveToday(l) && "bg-amber-50/50 dark:bg-amber-950/10")}
+                  >
                     <Row l={l} />
                   </div>
                 ))}

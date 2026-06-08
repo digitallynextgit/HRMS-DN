@@ -451,7 +451,7 @@ export default function EmployeesPage() {
                           {isActive ? "Active" : "Inactive"}
                         </span>
                         {isOnProbation(emp) && (
-                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium text-amber-700 bg-amber-500/15 dark:text-amber-400">
+                          <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
                             Probation
                           </span>
                         )}

@@ -100,10 +100,12 @@ export function validateCriteria(criteria: EvalCriterion[]): {
   if (!Array.isArray(criteria) || criteria.length === 0)
     return { ok: false, totalWeight: 0, reason: "At least one criterion is required" }
   for (const c of criteria) {
-    if (!c.label?.trim()) return { ok: false, totalWeight: 0, reason: "Every criterion needs a label" }
+    if (!c.label?.trim())
+      return { ok: false, totalWeight: 0, reason: "Every criterion needs a label" }
     if (c.section !== "A" && c.section !== "B")
       return { ok: false, totalWeight: 0, reason: "Criterion section must be A or B" }
-    if (!(Number(c.weight) > 0)) return { ok: false, totalWeight: 0, reason: "Weights must be positive" }
+    if (!(Number(c.weight) > 0))
+      return { ok: false, totalWeight: 0, reason: "Weights must be positive" }
   }
   const totalWeight = round1(criteria.reduce((s, c) => s + (Number(c.weight) || 0), 0))
   if (Math.abs(totalWeight - 100) > 0.5)

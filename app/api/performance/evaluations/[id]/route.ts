@@ -76,7 +76,10 @@ export const PATCH = withSession(
         comment?: string
       }
       if (role !== "SELF" && role !== "MANAGER" && role !== "CONTROLLER") {
-        return NextResponse.json({ error: "role must be SELF, MANAGER or CONTROLLER" }, { status: 400 })
+        return NextResponse.json(
+          { error: "role must be SELF, MANAGER or CONTROLLER" },
+          { status: 400 },
+        )
       }
 
       // Authorize the submission against the requested side.
@@ -130,7 +133,8 @@ export const PATCH = withSession(
       if (role !== "CONTROLLER") {
         const selfDone = role === "SELF" ? true : !!ev.selfSubmittedAt
         const managerDone = role === "MANAGER" ? true : !!ev.managerSubmittedAt
-        data.status = selfDone && managerDone ? "COMPLETED" : selfDone ? "SELF_DONE" : "MANAGER_DONE"
+        data.status =
+          selfDone && managerDone ? "COMPLETED" : selfDone ? "SELF_DONE" : "MANAGER_DONE"
       }
 
       const updated = await db.evaluation.update({

@@ -25,27 +25,76 @@ interface ParsedRow {
 
 const FIELD_ALIASES: Record<string, string[]> = {
   employee_no: [
-    "employee_no", "employee no", "employee code", "employee id", "emp code", "emp no",
-    "emp id", "person id", "person no", "personnel id", "personnel no", "user id", "userid",
-    "job number", "attendance no", "ac-no", "ac no", "badge number", "badgenumber", "badge",
+    "employee_no",
+    "employee no",
+    "employee code",
+    "employee id",
+    "emp code",
+    "emp no",
+    "emp id",
+    "person id",
+    "person no",
+    "personnel id",
+    "personnel no",
+    "user id",
+    "userid",
+    "job number",
+    "attendance no",
+    "ac-no",
+    "ac no",
+    "badge number",
+    "badgenumber",
+    "badge",
   ],
   date: ["date", "attendance date", "att date", "day"],
   check_in: [
-    "check_in", "check in", "checkin", "in", "clock in", "clock-in", "on duty", "first in",
-    "time in", "in time", "first punch", "sign in",
+    "check_in",
+    "check in",
+    "checkin",
+    "in",
+    "clock in",
+    "clock-in",
+    "on duty",
+    "first in",
+    "time in",
+    "in time",
+    "first punch",
+    "sign in",
   ],
   check_out: [
-    "check_out", "check out", "checkout", "out", "clock out", "clock-out", "off duty",
-    "last out", "time out", "out time", "last punch", "sign out",
+    "check_out",
+    "check out",
+    "checkout",
+    "out",
+    "clock out",
+    "clock-out",
+    "off duty",
+    "last out",
+    "time out",
+    "out time",
+    "last punch",
+    "sign out",
   ],
   datetime: [
-    "datetime", "date time", "time", "punch time", "event time", "access time", "swipe time",
-    "timestamp", "record time", "check time", "attendance time",
+    "datetime",
+    "date time",
+    "time",
+    "punch time",
+    "event time",
+    "access time",
+    "swipe time",
+    "timestamp",
+    "record time",
+    "check time",
+    "attendance time",
   ],
 }
 
 function normalize(s: unknown): string {
-  return String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ")
+  return String(s ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
 }
 
 function fieldFor(header: unknown): string | null {
@@ -63,7 +112,8 @@ function cellValue(v: unknown): unknown {
     const o = v as Record<string, unknown>
     if ("result" in o) return o.result
     if ("text" in o) return o.text
-    if (Array.isArray(o.richText)) return (o.richText as { text: string }[]).map((t) => t.text).join("")
+    if (Array.isArray(o.richText))
+      return (o.richText as { text: string }[]).map((t) => t.text).join("")
   }
   return v
 }

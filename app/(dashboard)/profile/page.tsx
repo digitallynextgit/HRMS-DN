@@ -113,8 +113,7 @@ export default function ProfilePage() {
   })
 
   const gmailMut = useMutation({
-    mutationFn: () =>
-      saveGmailAppPassword({ gmailAppPassword: gmailPw.replace(/\s+/g, "") }),
+    mutationFn: () => saveGmailAppPassword({ gmailAppPassword: gmailPw.replace(/\s+/g, "") }),
     onSuccess: () => {
       toast.success("Gmail App Password saved")
       setGmailPw("")
@@ -455,9 +454,8 @@ export default function ProfilePage() {
                 Gmail App Password
               </CardTitle>
               <p className="text-muted-foreground text-xs">
-                Lets HRMS send emails from your{" "}
-                <span className="font-medium">{emp.email}</span> address. Stored encrypted
-                (AES-256-GCM) — never shown back to you after save.
+                Lets HRMS send emails from your <span className="font-medium">{emp.email}</span>{" "}
+                address. Stored encrypted (AES-256-GCM) — never shown back to you after save.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">

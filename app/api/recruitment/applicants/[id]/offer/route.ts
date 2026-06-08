@@ -18,7 +18,9 @@ export const POST = withAuth(
 
       const applicant = await db.applicant.findUnique({
         where: { id },
-        include: { jobPosting: { select: { title: true, department: { select: { name: true } } } } },
+        include: {
+          jobPosting: { select: { title: true, department: { select: { name: true } } } },
+        },
       })
       if (!applicant) return NextResponse.json({ error: "Applicant not found" }, { status: 404 })
       if (!designation || !ctc) {

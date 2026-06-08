@@ -136,7 +136,12 @@ export const POST = withAuth(
         const label = `${r.firstName} ${r.lastName}`.trim() || r.email
         try {
           if (!r.firstName || !r.email) {
-            results.push({ row: i + 1, ok: false, error: "First name and email are required", name: label })
+            results.push({
+              row: i + 1,
+              ok: false,
+              error: "First name and email are required",
+              name: label,
+            })
             continue
           }
           if (seenEmails.has(r.email.toLowerCase())) {
@@ -145,7 +150,10 @@ export const POST = withAuth(
           }
           seenEmails.add(r.email.toLowerCase())
 
-          const clashEmail = await db.employee.findUnique({ where: { email: r.email }, select: { id: true } })
+          const clashEmail = await db.employee.findUnique({
+            where: { email: r.email },
+            select: { id: true },
+          })
           if (clashEmail) {
             results.push({ row: i + 1, ok: false, error: "Email already exists", name: label })
             continue
@@ -156,7 +164,12 @@ export const POST = withAuth(
               select: { id: true },
             })
             if (clashNo) {
-              results.push({ row: i + 1, ok: false, error: "Employee code already exists", name: label })
+              results.push({
+                row: i + 1,
+                ok: false,
+                error: "Employee code already exists",
+                name: label,
+              })
               continue
             }
           }
@@ -187,7 +200,9 @@ export const POST = withAuth(
             },
           })
           if (employeeRole) {
-            await db.employeeRole.create({ data: { employeeId: created.id, roleId: employeeRole.id } })
+            await db.employeeRole.create({
+              data: { employeeId: created.id, roleId: employeeRole.id },
+            })
           }
           imported++
           results.push({ row: i + 1, ok: true, name: label })

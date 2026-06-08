@@ -51,7 +51,10 @@ export const POST = withSession(
       })
       if (!review) return NextResponse.json({ error: "Review not found" }, { status: 404 })
       if (review.revieweeId === session.user.id) {
-        return NextResponse.json({ error: "You can't give peer feedback on your own review" }, { status: 422 })
+        return NextResponse.json(
+          { error: "You can't give peer feedback on your own review" },
+          { status: 422 },
+        )
       }
 
       const fb = await db.peerFeedback.upsert({

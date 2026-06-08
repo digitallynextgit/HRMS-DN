@@ -157,7 +157,10 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
                   <div className="flex flex-wrap items-center gap-2">
                     <EmployeeAdminActions employeeId={emp.id} status={emp.status} />
                     <Button variant="outline" size="sm" asChild>
-                      <Link href={`/employees/${emp.id}/edit`} className="flex items-center gap-1.5">
+                      <Link
+                        href={`/employees/${emp.id}/edit`}
+                        className="flex items-center gap-1.5"
+                      >
                         <Pencil className="h-3.5 w-3.5" />
                         Edit
                       </Link>
@@ -185,7 +188,9 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
                     className="border-amber-300 bg-amber-50 text-xs text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400"
                   >
                     On Probation
-                    {probation.endDate ? ` · until ${formatDate(probation.endDate.toISOString())}` : ""}
+                    {probation.endDate
+                      ? ` · until ${formatDate(probation.endDate.toISOString())}`
+                      : ""}
                   </Badge>
                 )}
               </div>

@@ -42,10 +42,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
  * approving a leave, a recruiter sending a stage-change message. System-level mail
  * (password resets, birthdays) should keep using sendEmail.
  */
-export async function sendEmailAs(
-  employeeId: string,
-  options: SendEmailOptions,
-): Promise<void> {
+export async function sendEmailAs(employeeId: string, options: SendEmailOptions): Promise<void> {
   const emp = await db.employee.findUnique({
     where: { id: employeeId },
     select: { email: true, firstName: true, lastName: true, gmailAppPassword: true },
@@ -59,7 +56,11 @@ export async function sendEmailAs(
 
   const password = tryDecrypt(emp.gmailAppPassword)
   if (!password) {
-    console.error("[sendEmailAs] Failed to decrypt App Password for", employeeId, "— falling back to system mailer")
+    console.error(
+      "[sendEmailAs] Failed to decrypt App Password for",
+      employeeId,
+      "— falling back to system mailer",
+    )
     await sendEmail(options)
     return
   }

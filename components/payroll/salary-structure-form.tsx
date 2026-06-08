@@ -235,7 +235,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
               {COMPONENTS.map((c) => (
                 <div
                   key={c.key}
-                  className="grid grid-cols-[1fr_80px_110px] items-center gap-3 min-w-0"
+                  className="grid min-w-0 grid-cols-[1fr_80px_110px] items-center gap-3"
                 >
                   <Label htmlFor={`pct-${c.key}`} className="min-w-0 truncate text-sm font-normal">
                     {c.label}
@@ -253,7 +253,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
                   {/* min-w-0 + overflow keeps a large amount scrolling inside the cell
                       instead of stretching the whole dialog wider. */}
                   <div className="min-w-0 overflow-x-auto">
-                    <span className="text-foreground block text-right text-sm font-medium tabular-nums whitespace-nowrap">
+                    <span className="text-foreground block text-right text-sm font-medium whitespace-nowrap tabular-nums">
                       {fmt(amounts[c.key] || 0)}
                     </span>
                   </div>

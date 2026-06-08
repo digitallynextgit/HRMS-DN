@@ -182,9 +182,7 @@ export default function RegularizationsPage() {
                     <td className="px-4 py-2.5">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-7 w-7">
-                          {r.employee.profilePhoto && (
-                            <AvatarImage src={r.employee.profilePhoto} />
-                          )}
+                          {r.employee.profilePhoto && <AvatarImage src={r.employee.profilePhoto} />}
                           <AvatarFallback className="text-[10px]">
                             {getInitials(r.employee.firstName, r.employee.lastName)}
                           </AvatarFallback>
@@ -204,7 +202,10 @@ export default function RegularizationsPage() {
                     {r.reason}
                   </td>
                   <td className="px-4 py-2.5">
-                    <Badge variant="outline" className={cn("text-xs", LEAVE_STATUS_COLORS[r.status])}>
+                    <Badge
+                      variant="outline"
+                      className={cn("text-xs", LEAVE_STATUS_COLORS[r.status])}
+                    >
                       {LEAVE_STATUS_LABELS[r.status]}
                     </Badge>
                   </td>
@@ -265,16 +266,31 @@ export default function RegularizationsPage() {
           <div className="space-y-4 py-1">
             <div className="space-y-1.5">
               <Label htmlFor="reg-date">Date</Label>
-              <Input id="reg-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              <Input
+                id="reg-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+              />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="reg-in">Check In</Label>
-                <Input id="reg-in" type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
+                <Input
+                  id="reg-in"
+                  type="time"
+                  value={checkIn}
+                  onChange={(e) => setCheckIn(e.target.value)}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="reg-out">Check Out</Label>
-                <Input id="reg-out" type="time" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+                <Input
+                  id="reg-out"
+                  type="time"
+                  value={checkOut}
+                  onChange={(e) => setCheckOut(e.target.value)}
+                />
               </div>
             </div>
             <div className="space-y-1.5">
@@ -293,9 +309,7 @@ export default function RegularizationsPage() {
               Cancel
             </Button>
             <Button
-              disabled={
-                !date || !reason.trim() || (!checkIn && !checkOut) || createMut.isPending
-              }
+              disabled={!date || !reason.trim() || (!checkIn && !checkOut) || createMut.isPending}
               onClick={() =>
                 createMut.mutate({
                   date,
@@ -336,7 +350,8 @@ export default function RegularizationsPage() {
               variant="destructive"
               disabled={patchMut.isPending}
               onClick={() =>
-                rejectId && patchMut.mutate({ id: rejectId, action: "REJECT", note: rejectNote.trim() })
+                rejectId &&
+                patchMut.mutate({ id: rejectId, action: "REJECT", note: rejectNote.trim() })
               }
             >
               Confirm Reject

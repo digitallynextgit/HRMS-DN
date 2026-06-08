@@ -68,7 +68,10 @@ export function useEvaluations(status?: string) {
     queryKey: ["evaluations", status ?? "all"],
     queryFn: async (): Promise<{ data: Evaluation[] }> => {
       const qs = status ? `?status=${status}` : ""
-      return jsonOrThrow(await fetch(`/api/performance/evaluations${qs}`), "Failed to load evaluations")
+      return jsonOrThrow(
+        await fetch(`/api/performance/evaluations${qs}`),
+        "Failed to load evaluations",
+      )
     },
     staleTime: 30_000,
   })
@@ -178,11 +181,14 @@ export function useSaveEvalTemplate() {
       sectionBLabel?: string
     }) =>
       jsonOrThrow(
-        await fetch(id ? `/api/performance/eval-templates/${id}` : "/api/performance/eval-templates", {
-          method: id ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        }),
+        await fetch(
+          id ? `/api/performance/eval-templates/${id}` : "/api/performance/eval-templates",
+          {
+            method: id ? "PATCH" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          },
+        ),
         "Failed to save template",
       ),
     onSuccess: () => {

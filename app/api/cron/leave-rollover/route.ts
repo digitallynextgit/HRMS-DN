@@ -30,7 +30,11 @@ export async function GET(req: NextRequest) {
       for (const type of leaveTypes) {
         const prev = await db.leaveBalance.findUnique({
           where: {
-            employeeId_leaveTypeId_year: { employeeId: emp.id, leaveTypeId: type.id, year: prevYear },
+            employeeId_leaveTypeId_year: {
+              employeeId: emp.id,
+              leaveTypeId: type.id,
+              year: prevYear,
+            },
           },
         })
         const remaining = prev ? Math.max(0, prev.allocated + prev.carried - prev.used) : 0
@@ -40,10 +44,22 @@ export async function GET(req: NextRequest) {
 
         await db.leaveBalance.upsert({
           where: {
-            employeeId_leaveTypeId_year: { employeeId: emp.id, leaveTypeId: type.id, year: newYear },
+            employeeId_leaveTypeId_year: {
+              employeeId: emp.id,
+              leaveTypeId: type.id,
+              year: newYear,
+            },
           },
           update: { carried },
-          create: { employeeId: emp.id, leaveTypeId: type.id, year: newYear, allocated, used: 0, pending: 0, carried },
+          create: {
+            employeeId: emp.id,
+            leaveTypeId: type.id,
+            year: newYear,
+            allocated,
+            used: 0,
+            pending: 0,
+            carried,
+          },
         })
         processed++
       }

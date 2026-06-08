@@ -86,7 +86,10 @@ export const PATCH = withAuth(
 
       // When the times changed but no explicit status was sent, re-derive the
       // status from hours worked (half-day / absent). Late-mark not applied yet.
-      if (body.status === undefined && (body.checkIn !== undefined || body.checkOut !== undefined)) {
+      if (
+        body.status === undefined &&
+        (body.checkIn !== undefined || body.checkOut !== undefined)
+      ) {
         updateData.status = computeAttendanceStatus({
           checkIn: resolvedCheckIn,
           workHours: resolvedWorkHours,

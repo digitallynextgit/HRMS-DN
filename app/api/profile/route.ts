@@ -47,9 +47,8 @@ export const PATCH = withSession(async (req: NextRequest, _ctx: unknown, session
 
     // Gmail App Password — strip spaces, must be exactly 16 chars when present.
     if (body.gmailAppPassword !== undefined) {
-      const raw = typeof body.gmailAppPassword === "string"
-        ? body.gmailAppPassword.replace(/\s+/g, "")
-        : ""
+      const raw =
+        typeof body.gmailAppPassword === "string" ? body.gmailAppPassword.replace(/\s+/g, "") : ""
       if (raw === "") {
         data.gmailAppPassword = null
       } else if (raw.length !== 16) {

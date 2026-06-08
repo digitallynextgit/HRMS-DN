@@ -22,11 +22,17 @@ for (const line of raw.split(/\r?\n/)) {
   const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/i)
   if (!m) continue
   let v = m[2].trim()
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1)
+  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'")))
+    v = v.slice(1, -1)
   if (!(m[1] in process.env)) process.env[m[1]] = v
 }
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL, max: 1, idleTimeoutMillis: 0, keepAlive: true })
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 1,
+  idleTimeoutMillis: 0,
+  keepAlive: true,
+})
 const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
 
 // Current employee (by employeeNo) → their Hikvision device "Employee ID".

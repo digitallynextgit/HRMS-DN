@@ -157,7 +157,9 @@ export default function DesignationsPage() {
             ))}
           </div>
         ) : designations.length === 0 ? (
-          <div className="text-muted-foreground py-12 text-center text-sm">No designations yet.</div>
+          <div className="text-muted-foreground py-12 text-center text-sm">
+            No designations yet.
+          </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -167,7 +169,9 @@ export default function DesignationsPage() {
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employees</th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
                 {canWrite && (
-                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
+                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">
+                    Actions
+                  </th>
                 )}
               </tr>
             </thead>
@@ -217,7 +221,9 @@ export default function DesignationsPage() {
                             title="Delete permanently"
                             disabled={purgeMut.isPending}
                             onClick={() => {
-                              if (confirm(`Permanently delete "${d.title}"? This cannot be undone.`))
+                              if (
+                                confirm(`Permanently delete "${d.title}"? This cannot be undone.`)
+                              )
                                 purgeMut.mutate(d.id)
                             }}
                           >

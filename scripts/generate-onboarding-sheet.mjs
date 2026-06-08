@@ -21,8 +21,18 @@ const ENV_PATH = resolve(__dirname, "..", ".env")
 // Fallback list — used only if the DB is unreachable. The live list comes from
 // the departments table (managed via Admin → Project Settings → Departments).
 const FALLBACK_DEPARTMENTS = [
-  "Video", "Web Development", "Content", "Design", "Paid Ads",
-  "SEO", "SMO", "Digital PR", "HR", "Operations", "Finance", "Sales",
+  "Video",
+  "Web Development",
+  "Content",
+  "Design",
+  "Paid Ads",
+  "SEO",
+  "SMO",
+  "Digital PR",
+  "HR",
+  "Operations",
+  "Finance",
+  "Sales",
 ]
 
 // Minimal .env loader so we can pick up DATABASE_URL without dotenv.
@@ -33,7 +43,10 @@ async function loadEnv() {
       const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/i)
       if (!m) continue
       let val = m[2].trim()
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
         val = val.slice(1, -1)
       }
       if (!(m[1] in process.env)) process.env[m[1]] = val
@@ -80,61 +93,115 @@ async function fetchDepartmentsFromDb() {
 
 function buildColumns(departmentList) {
   return [
-  // Sl. No
-  { key: "sl",        header: "Sl. No",                  width: 6,  required: false },
+    // Sl. No
+    { key: "sl", header: "Sl. No", width: 6, required: false },
 
-  // Existing HR-system employee code (numeric, e.g. 132). NOT auto-generated.
-  { key: "empCode",   header: "Employee Code",           width: 14, required: false,
-    note: "Your existing HR-system code (e.g. 132). Leave blank if you don't have one yet." },
+    // Existing HR-system employee code (numeric, e.g. 132). NOT auto-generated.
+    {
+      key: "empCode",
+      header: "Employee Code",
+      width: 14,
+      required: false,
+      note: "Your existing HR-system code (e.g. 132). Leave blank if you don't have one yet.",
+    },
 
-  // Personal
-  { key: "firstName", header: "First Name *",            width: 18, required: true  },
-  { key: "lastName",  header: "Last Name *",             width: 18, required: true  },
-  { key: "email",     header: "Work Email *",            width: 32, required: true,
-    note: "Your @digitallynext.com address" },
-  { key: "personalEmail", header: "Personal Email",      width: 28, required: false },
-  { key: "phone",     header: "Work Phone",              width: 18, required: false },
-  { key: "personalPhone", header: "Personal Phone",      width: 18, required: false },
-  { key: "dob",       header: "Date of Birth",           width: 14, required: false,
-    note: "Format: DD-MM-YYYY" },
-  { key: "gender",    header: "Gender",                  width: 14, required: false,
-    dropdown: ["Male", "Female", "Other", "Prefer not to say"] },
-  { key: "nationality", header: "Nationality",           width: 14, required: false },
-  { key: "bloodGroup", header: "Blood Group",            width: 12, required: false,
-    dropdown: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+    // Personal
+    { key: "firstName", header: "First Name *", width: 18, required: true },
+    { key: "lastName", header: "Last Name *", width: 18, required: true },
+    {
+      key: "email",
+      header: "Work Email *",
+      width: 32,
+      required: true,
+      note: "Your @digitallynext.com address",
+    },
+    { key: "personalEmail", header: "Personal Email", width: 28, required: false },
+    { key: "phone", header: "Work Phone", width: 18, required: false },
+    { key: "personalPhone", header: "Personal Phone", width: 18, required: false },
+    { key: "dob", header: "Date of Birth", width: 14, required: false, note: "Format: DD-MM-YYYY" },
+    {
+      key: "gender",
+      header: "Gender",
+      width: 14,
+      required: false,
+      dropdown: ["Male", "Female", "Other", "Prefer not to say"],
+    },
+    { key: "nationality", header: "Nationality", width: 14, required: false },
+    {
+      key: "bloodGroup",
+      header: "Blood Group",
+      width: 12,
+      required: false,
+      dropdown: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
+    },
 
-  // Employment
-  { key: "department", header: "Department",             width: 18, required: false,
-    dropdown: departmentList },
-  { key: "designation", header: "Designation",           width: 22, required: false,
-    note: "e.g. Junior Designer, Team Lead, Senior Manager" },
-  { key: "employmentType", header: "Employment Type",    width: 16, required: false,
-    dropdown: ["Full Time", "Part Time", "Contract", "Intern"] },
-  { key: "doj",       header: "Date of Joining",         width: 14, required: false,
-    note: "Format: DD-MM-YYYY" },
-  { key: "workLocation", header: "Work Location",        width: 18, required: false,
-    note: "e.g. Delhi HQ, Remote" },
+    // Employment
+    {
+      key: "department",
+      header: "Department",
+      width: 18,
+      required: false,
+      dropdown: departmentList,
+    },
+    {
+      key: "designation",
+      header: "Designation",
+      width: 22,
+      required: false,
+      note: "e.g. Junior Designer, Team Lead, Senior Manager",
+    },
+    {
+      key: "employmentType",
+      header: "Employment Type",
+      width: 16,
+      required: false,
+      dropdown: ["Full Time", "Part Time", "Contract", "Intern"],
+    },
+    {
+      key: "doj",
+      header: "Date of Joining",
+      width: 14,
+      required: false,
+      note: "Format: DD-MM-YYYY",
+    },
+    {
+      key: "workLocation",
+      header: "Work Location",
+      width: 18,
+      required: false,
+      note: "e.g. Delhi HQ, Remote",
+    },
 
-  // Address — Current
-  { key: "caLine1",   header: "Current Addr — Line 1",   width: 24, required: false },
-  { key: "caLine2",   header: "Current Addr — Line 2",   width: 18, required: false },
-  { key: "caCity",    header: "Current City",            width: 14, required: false },
-  { key: "caState",   header: "Current State",           width: 14, required: false },
-  { key: "caZip",     header: "Current ZIP",             width: 10, required: false },
+    // Address — Current
+    { key: "caLine1", header: "Current Addr — Line 1", width: 24, required: false },
+    { key: "caLine2", header: "Current Addr — Line 2", width: 18, required: false },
+    { key: "caCity", header: "Current City", width: 14, required: false },
+    { key: "caState", header: "Current State", width: 14, required: false },
+    { key: "caZip", header: "Current ZIP", width: 10, required: false },
 
-  // Address — Permanent
-  { key: "paLine1",   header: "Permanent Addr — Line 1", width: 24, required: false,
-    note: "Leave blank if same as current" },
-  { key: "paLine2",   header: "Permanent Addr — Line 2", width: 18, required: false },
-  { key: "paCity",    header: "Permanent City",          width: 14, required: false },
-  { key: "paState",   header: "Permanent State",         width: 14, required: false },
-  { key: "paZip",     header: "Permanent ZIP",           width: 10, required: false },
+    // Address — Permanent
+    {
+      key: "paLine1",
+      header: "Permanent Addr — Line 1",
+      width: 24,
+      required: false,
+      note: "Leave blank if same as current",
+    },
+    { key: "paLine2", header: "Permanent Addr — Line 2", width: 18, required: false },
+    { key: "paCity", header: "Permanent City", width: 14, required: false },
+    { key: "paState", header: "Permanent State", width: 14, required: false },
+    { key: "paZip", header: "Permanent ZIP", width: 10, required: false },
 
-  // Emergency
-  { key: "ecName",    header: "Emergency Contact Name",  width: 22, required: false },
-  { key: "ecRelation", header: "Emergency Contact Relation", width: 16, required: false,
-    note: "e.g. Spouse, Parent, Sibling" },
-  { key: "ecPhone",   header: "Emergency Contact Phone", width: 18, required: false },
+    // Emergency
+    { key: "ecName", header: "Emergency Contact Name", width: 22, required: false },
+    {
+      key: "ecRelation",
+      header: "Emergency Contact Relation",
+      width: 16,
+      required: false,
+      note: "e.g. Spouse, Parent, Sibling",
+    },
+    { key: "ecPhone", header: "Emergency Contact Phone", width: 18, required: false },
   ]
 }
 
@@ -142,14 +209,17 @@ function buildColumns(departmentList) {
 
 const HEADER_FILL_REQUIRED = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A8A" } }
 const HEADER_FILL_OPTIONAL = { type: "pattern", pattern: "solid", fgColor: { argb: "FF374151" } }
-const HEADER_FONT          = { color: { argb: "FFFFFFFF" }, bold: true, size: 11 }
-const BORDER_THIN          = { style: "thin", color: { argb: "FFD1D5DB" } }
+const HEADER_FONT = { color: { argb: "FFFFFFFF" }, bold: true, size: 11 }
+const BORDER_THIN = { style: "thin", color: { argb: "FFD1D5DB" } }
 
 function applyBorderToRange(sheet, startRow, endRow, startCol, endCol) {
   for (let r = startRow; r <= endRow; r++) {
     for (let c = startCol; c <= endCol; c++) {
       sheet.getCell(r, c).border = {
-        top: BORDER_THIN, left: BORDER_THIN, bottom: BORDER_THIN, right: BORDER_THIN,
+        top: BORDER_THIN,
+        left: BORDER_THIN,
+        bottom: BORDER_THIN,
+        right: BORDER_THIN,
       }
     }
   }
@@ -226,18 +296,36 @@ function buildInstructionsSheet(wb) {
     { text: "Employee Onboarding — Information Collection", style: "h1" },
     { text: "", style: "blank" },
     { text: "How to fill this sheet", style: "h2" },
-    { text: "1. Open the \"Employee Details\" tab.", style: "p" },
+    { text: '1. Open the "Employee Details" tab.', style: "p" },
     { text: "2. Each row = one employee. Fill in one row for yourself.", style: "p" },
-    { text: "3. Columns with a dark-blue header are REQUIRED. Dark-grey headers are optional.", style: "p" },
-    { text: "4. Cells with a small red corner have a tooltip — hover for format hints.", style: "p" },
-    { text: "5. Dropdown columns (Gender, Blood Group, Department, Employment Type) restrict input — pick from the list.", style: "p" },
+    {
+      text: "3. Columns with a dark-blue header are REQUIRED. Dark-grey headers are optional.",
+      style: "p",
+    },
+    {
+      text: "4. Cells with a small red corner have a tooltip — hover for format hints.",
+      style: "p",
+    },
+    {
+      text: "5. Dropdown columns (Gender, Blood Group, Department, Employment Type) restrict input — pick from the list.",
+      style: "p",
+    },
     { text: "6. Dates must be in DD-MM-YYYY format (e.g. 14-08-1998).", style: "p" },
-    { text: "7. If your permanent address is the same as your current address, leave the permanent columns blank.", style: "p" },
+    {
+      text: "7. If your permanent address is the same as your current address, leave the permanent columns blank.",
+      style: "p",
+    },
     { text: "", style: "blank" },
     { text: "Gmail App Password — DO NOT put it here", style: "h2_warn" },
-    { text: "Your Gmail App Password must NEVER be written into this sheet. Once admin creates your HRMS account, log in and set it via:", style: "p" },
+    {
+      text: "Your Gmail App Password must NEVER be written into this sheet. Once admin creates your HRMS account, log in and set it via:",
+      style: "p",
+    },
     { text: "      Profile → Security → Gmail App Password → Save", style: "p_mono" },
-    { text: "It is stored encrypted on the server and is never shown back to anyone — including admins.", style: "p" },
+    {
+      text: "It is stored encrypted on the server and is never shown back to anyone — including admins.",
+      style: "p",
+    },
     { text: "", style: "blank" },
     { text: "What admin will fill on your behalf", style: "h2" },
     { text: "• Employee Number (auto-generated)", style: "p" },
@@ -251,12 +339,12 @@ function buildInstructionsSheet(wb) {
   ]
 
   const STYLES = {
-    h1:      { font: { bold: true, size: 18, color: { argb: "FF1E3A8A" } } },
-    h2:      { font: { bold: true, size: 13, color: { argb: "FF111827" } } },
+    h1: { font: { bold: true, size: 18, color: { argb: "FF1E3A8A" } } },
+    h2: { font: { bold: true, size: 13, color: { argb: "FF111827" } } },
     h2_warn: { font: { bold: true, size: 13, color: { argb: "FFB91C1C" } } },
-    p:       { font: { size: 11, color: { argb: "FF374151" } }, alignment: { wrapText: true } },
-    p_mono:  { font: { size: 11, color: { argb: "FF111827" }, name: "Consolas" } },
-    blank:   {},
+    p: { font: { size: 11, color: { argb: "FF374151" } }, alignment: { wrapText: true } },
+    p_mono: { font: { size: 11, color: { argb: "FF111827" }, name: "Consolas" } },
+    blank: {},
   }
 
   lines.forEach((line, idx) => {
@@ -281,7 +369,10 @@ async function main() {
   await mkdir(dirname(OUTPUT), { recursive: true })
 
   const departments = await fetchDepartmentsFromDb()
-  console.log(`[onboarding-sheet] Using ${departments.length} department(s):`, departments.join(", "))
+  console.log(
+    `[onboarding-sheet] Using ${departments.length} department(s):`,
+    departments.join(", "),
+  )
   const columns = buildColumns(departments)
 
   const wb = new ExcelJS.Workbook()

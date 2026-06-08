@@ -144,9 +144,7 @@ export default function FloatingHolidaysPage() {
                 disabled={disabled}
                 className={cn(
                   "flex items-start justify-between gap-3 rounded-lg border p-4 text-left transition-colors",
-                  isSel
-                    ? "border-primary bg-primary/5"
-                    : "bg-card hover:bg-muted/40",
+                  isSel ? "border-primary bg-primary/5" : "bg-card hover:bg-muted/40",
                   disabled && !isSel && "cursor-not-allowed opacity-50",
                 )}
               >

@@ -98,7 +98,9 @@ export default function KpisPage() {
             ))}
           </div>
         ) : kpis.length === 0 ? (
-          <div className="text-muted-foreground py-12 text-center text-sm">No KPIs defined yet.</div>
+          <div className="text-muted-foreground py-12 text-center text-sm">
+            No KPIs defined yet.
+          </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
@@ -182,7 +184,10 @@ export default function KpisPage() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button disabled={!name.trim() || createMut.isPending} onClick={() => createMut.mutate()}>
+            <Button
+              disabled={!name.trim() || createMut.isPending}
+              onClick={() => createMut.mutate()}
+            >
               {createMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add
             </Button>

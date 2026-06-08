@@ -155,7 +155,9 @@ export function useDeleteEmployeeDocument(employeeId: string) {
   const qc = useQueryClient()
   return useMutation<void, Error, string>({
     mutationFn: async (docId: string) => {
-      const res = await fetch(`/api/employees/${employeeId}/documents/${docId}`, { method: "DELETE" })
+      const res = await fetch(`/api/employees/${employeeId}/documents/${docId}`, {
+        method: "DELETE",
+      })
       if (!res.ok) {
         const json = await res.json().catch(() => ({}))
         throw new Error(json.error ?? "Delete failed")

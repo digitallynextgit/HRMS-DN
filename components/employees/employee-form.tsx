@@ -90,10 +90,9 @@ const formSchema = z.object({
   gmailAppPassword: z
     .string()
     .optional()
-    .refine(
-      (s) => s == null || s === "" || s.replace(/\s+/g, "").length === 16,
-      { message: "Gmail App Password must be 16 characters" },
-    ),
+    .refine((s) => s == null || s === "" || s.replace(/\s+/g, "").length === 16, {
+      message: "Gmail App Password must be 16 characters",
+    }),
 
   // Step 3 - Address
   currentLine1: z.string().optional(),
@@ -372,8 +371,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
 
   // Probation fields are editable only by Super Admin / Admin / HR Manager.
   const { isSuperAdmin, roles } = usePermissions()
-  const isProbationAdmin =
-    isSuperAdmin || roles.includes("admin") || roles.includes("hr_manager")
+  const isProbationAdmin = isSuperAdmin || roles.includes("admin") || roles.includes("hr_manager")
 
   // Live preview of when probation ends, from the joining date + selected period.
   const probationPreview = getProbationStatus({
@@ -418,7 +416,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
         dateOfJoining: emp.dateOfJoining ? emp.dateOfJoining.split("T")[0] : "",
         probationEndDate: emp.probationEndDate ? emp.probationEndDate.split("T")[0] : "",
         onProbation: emp.onProbation ?? true,
-        probationMonths: (String(emp.probationMonths ?? 6) as "3" | "6"),
+        probationMonths: String(emp.probationMonths ?? 6) as "3" | "6",
         workLocation: emp.workLocation ?? "",
         deviceId: emp.deviceId ?? "",
         currentLine1: ca.line1 ?? "",
@@ -1141,7 +1139,10 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
             <CardContent className="space-y-2">
               <ReviewRow
                 label="Employee Code"
-                value={watchedValues.employeeNo?.trim() || (mode === "create" ? "Auto-generate" : undefined)}
+                value={
+                  watchedValues.employeeNo?.trim() ||
+                  (mode === "create" ? "Auto-generate" : undefined)
+                }
               />
               <ReviewRow label="Department" value={selectedDept?.name} />
               <ReviewRow label="Designation" value={selectedDesig?.title} />

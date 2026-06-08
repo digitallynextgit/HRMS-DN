@@ -17,7 +17,13 @@ import {
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
 
-export function EmployeeAdminActions({ employeeId, status }: { employeeId: string; status: string }) {
+export function EmployeeAdminActions({
+  employeeId,
+  status,
+}: {
+  employeeId: string
+  status: string
+}) {
   const { can } = usePermissions()
   const qc = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)

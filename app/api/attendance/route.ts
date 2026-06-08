@@ -100,7 +100,8 @@ export const POST = withAuth(
       // If the caller doesn't pass an explicit status, derive it from hours worked
       // (half-day / absent rules). Late-mark detection is not applied yet.
       const resolvedStatus =
-        status ?? computeAttendanceStatus({ checkIn: checkIn ? new Date(checkIn) : null, workHours })
+        status ??
+        computeAttendanceStatus({ checkIn: checkIn ? new Date(checkIn) : null, workHours })
 
       const log = await db.attendanceLog.upsert({
         where: {
