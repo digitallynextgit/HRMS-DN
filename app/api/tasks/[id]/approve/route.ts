@@ -4,6 +4,7 @@ import { withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { createNotification } from "@/lib/notifications"
 import { sendEmail } from "@/lib/mailer"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // PATCH /api/tasks/[id]/approve — Manager (of the task's team) or Admin
@@ -54,15 +55,12 @@ export const PATCH = withSession(
         }
       } catch (_e) { /* non-blocking */ }
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "APPROVE",
-          module: "project",
-          entityType: "ProjectTask",
-          entityId: id,
-          changes: { from: "PENDING_APPROVAL", to: "APPROVED" },
-        },
+      await createAuditLog(session, {
+        action: "APPROVE",
+        module: "project",
+        entityType: "ProjectTask",
+        entityId: id,
+        changes: { from: "PENDING_APPROVAL", to: "APPROVED" },
       })
 
       return NextResponse.json({ data: updated })

@@ -12,10 +12,14 @@ const createDepartmentSchema = z.object({
 })
 
 export const GET = withSession(
-  async (_req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
+  async (req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
     try {
+      // Admin pages pass ?includeInactive=true to see deactivated departments too.
+      // Default behaviour (used by every dropdown) returns only active ones.
+      const includeInactive = new URL(req.url).searchParams.get("includeInactive") === "true"
+
       const departments = await db.department.findMany({
-        where: { isActive: true },
+        where: includeInactive ? undefined : { isActive: true },
         orderBy: { name: "asc" },
         select: {
           id: true,
@@ -23,8 +27,10 @@ export const GET = withSession(
           code: true,
           description: true,
           headId: true,
+          isActive: true,
           careersTone: true,
           careersJobsLabel: true,
+          _count: { select: { employees: true, jobPostings: true } },
         },
       })
 

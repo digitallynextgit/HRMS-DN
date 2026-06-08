@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { isOnProbation, getProbationEndDate } from "@/lib/probation"
+import { notifyApprovers } from "@/lib/notifications"
 import type { Session } from "next-auth"
 
 // Calendar days inclusive - applies the sandwich rule (weekends between leave days are counted)
@@ -128,15 +130,37 @@ export const POST = withSession(
       // Fetch employee info (needed for multiple policy checks)
       const employee = await db.employee.findUnique({
         where: { id: session.user.id },
-        select: { probationEndDate: true, confirmationDate: true, dateOfJoining: true },
+        select: {
+          onProbation: true,
+          probationMonths: true,
+          dateOfJoining: true,
+          resignationDate: true,
+          lastWorkingDate: true,
+          status: true,
+        },
       })
 
-      // ── Policy: No leaves during probation ────────────────────────────────────
-      if (employee?.probationEndDate && new Date() < new Date(employee.probationEndDate)) {
+      // ── Policy: No PAID leaves during probation. Unpaid (LWP) is allowed,
+      // since it draws no quota — the day is simply deducted from salary. ──
+      if (employee && isOnProbation(employee) && leaveType.code !== "LWP") {
         return NextResponse.json(
-          { error: "Employees are not eligible for leaves during the probation period." },
+          {
+            error:
+              "Paid leave is not available during the probation period. You can still apply for Leave Without Pay.",
+          },
           { status: 422 },
         )
+      }
+
+      // ── Policy: No leaves during notice period ────────────────────────────────
+      if (employee?.resignationDate) {
+        const lwd = employee.lastWorkingDate ? new Date(employee.lastWorkingDate) : null
+        if (!lwd || new Date() <= lwd) {
+          return NextResponse.json(
+            { error: "Leave cannot be applied during the notice period." },
+            { status: 422 },
+          )
+        }
       }
 
       // ── Sandwich rule: count ALL calendar days (weekends in between are charged) ──
@@ -152,9 +176,9 @@ export const POST = withSession(
         )
       }
 
-      // ── Policy: EL eligibility (probation + 6 months) ─────────────────────────
+      // ── Policy: EL eligibility (probation end + 6 months) ─────────────────────
       if (leaveType.code === "EL") {
-        const probationEnd = employee?.probationEndDate ?? employee?.confirmationDate
+        const probationEnd = getProbationEndDate(employee ?? {})
         if (probationEnd) {
           const eligibleFrom = new Date(probationEnd)
           eligibleFrom.setMonth(eligibleFrom.getMonth() + 6)
@@ -167,6 +191,31 @@ export const POST = withSession(
               { status: 422 },
             )
           }
+        }
+
+        // ── Policy: EL is capped at 7 days per half-year (H1 Jan–Jun, H2 Jul–Dec) ──
+        const startMonth = start.getMonth()
+        const half = startMonth < 6 ? "H1" : "H2"
+        const yr = start.getFullYear()
+        const halfStart = new Date(yr, half === "H1" ? 0 : 6, 1)
+        const halfEnd = new Date(yr, half === "H1" ? 6 : 12, 0, 23, 59, 59, 999)
+        const existingEl = await db.leaveRequest.findMany({
+          where: {
+            employeeId: session.user.id,
+            leaveTypeId,
+            status: { in: ["PENDING", "APPROVED"] },
+            startDate: { gte: halfStart, lte: halfEnd },
+          },
+          select: { totalDays: true },
+        })
+        const usedInHalf = existingEl.reduce((s, r) => s + r.totalDays, 0)
+        if (usedInHalf + totalDays > 7) {
+          return NextResponse.json(
+            {
+              error: `Earned Leave is capped at 7 days per half-year (${half}). Already used/applied: ${usedInHalf} day(s).`,
+            },
+            { status: 422 },
+          )
         }
       }
 
@@ -410,6 +459,14 @@ export const POST = withSession(
         })
 
         return request
+      })
+
+      // Notify the requester's manager + HR so they can act on it.
+      await notifyApprovers({
+        requesterId: session.user.id,
+        title: "New leave request",
+        message: `${result.employee.firstName} ${result.employee.lastName} requested ${result.leaveType.name} (${totalDays} day${totalDays === 1 ? "" : "s"}) from ${start.toDateString()} to ${end.toDateString()}.`,
+        link: "/leave/team",
       })
 
       return NextResponse.json({ data: result }, { status: 201 })

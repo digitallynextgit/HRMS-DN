@@ -10,6 +10,8 @@
  * Public paths:
  *   /login                – sign-in page
  *   /api/auth/*           – NextAuth internal endpoints
+ *   /api/cron/*           – cron jobs (self-protected by CRON_SECRET bearer token)
+ *   /api/public/*         – headless public APIs (self-protected by X-API-Key)
  *   /_next/*              – Next.js static/image assets
  *   /favicon.ico          – browser favicon
  *   /public/*             – static public assets served from /public
@@ -18,8 +20,18 @@ import { auth } from "@/lib/auth-options"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-// Paths that are accessible without a session.
-const PUBLIC_PREFIXES = ["/login", "/api/auth", "/_next", "/favicon.ico", "/public"]
+// Paths that are accessible without a session. The /api/cron and /api/public
+// endpoints do their own token-based auth, so the session guard must let them
+// through (otherwise cron-job.org / the careers site get 401 before the handler).
+const PUBLIC_PREFIXES = [
+  "/login",
+  "/api/auth",
+  "/api/cron",
+  "/api/public",
+  "/_next",
+  "/favicon.ico",
+  "/public",
+]
 
 function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIXES.some(

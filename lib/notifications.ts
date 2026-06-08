@@ -32,6 +32,51 @@ export async function createNotification(opts: CreateNotificationOptions): Promi
 }
 
 /**
+ * Notifies the people who can act on a request (leave / WFH) the moment it is
+ * submitted: the requester's direct manager plus all active HR approvers
+ * (hr_manager / admin roles). Non-blocking, deduped, excludes the requester.
+ */
+export async function notifyApprovers(opts: {
+  requesterId: string
+  title: string
+  message: string
+  link?: string
+}): Promise<void> {
+  try {
+    const [requester, hrApprovers] = await Promise.all([
+      db.employee.findUnique({
+        where: { id: opts.requesterId },
+        select: { managerId: true },
+      }),
+      db.employee.findMany({
+        where: {
+          isActive: true,
+          employeeRoles: { some: { role: { name: { in: ["hr_manager", "admin"] } } } },
+        },
+        select: { id: true },
+      }),
+    ])
+
+    const recipientIds = new Set<string>()
+    if (requester?.managerId) recipientIds.add(requester.managerId)
+    for (const a of hrApprovers) recipientIds.add(a.id)
+    recipientIds.delete(opts.requesterId)
+
+    for (const employeeId of recipientIds) {
+      await createNotification({
+        employeeId,
+        title: opts.title,
+        message: opts.message,
+        type: "info",
+        link: opts.link,
+      })
+    }
+  } catch (err) {
+    console.error("[notifyApprovers] failed:", err)
+  }
+}
+
+/**
  * Creates in-app notifications for multiple employees at once.
  */
 export async function createNotifications(

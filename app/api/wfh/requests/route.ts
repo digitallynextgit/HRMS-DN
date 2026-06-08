@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { isOnProbation, getProbationEndDate, type ProbationInput } from "@/lib/probation"
+import { notifyApprovers } from "@/lib/notifications"
 import type { Session } from "next-auth"
 
 // ─── Eligibility tiers per Digitally Next WFH Policy ──────────────────────────
@@ -10,10 +12,11 @@ import type { Session } from "next-auth"
 // Tier 3 - Post probation + 6 months:      1 WFH/month, manager approval, HR notification
 type Tier = 1 | 2 | 3
 
-function getEmployeeTier(probationEndDate: Date | null, confirmationDate: Date | null): Tier {
+function getEmployeeTier(emp: ProbationInput): Tier {
   const now = new Date()
-  const probationEnd = probationEndDate ?? confirmationDate
-  if (!probationEnd || now < new Date(probationEnd)) return 1
+  if (isOnProbation(emp, now)) return 1
+  const probationEnd = getProbationEndDate(emp)
+  if (!probationEnd) return 3 // confirmed and no joining date on file → fully eligible
   const sixMonthsAfter = new Date(probationEnd)
   sixMonthsAfter.setMonth(sixMonthsAfter.getMonth() + 6)
   if (now < sixMonthsAfter) return 2
@@ -128,13 +131,10 @@ export const POST = withSession(
       // Fetch employee tier
       const employee = await db.employee.findUnique({
         where: { id: session.user.id },
-        select: { probationEndDate: true, confirmationDate: true },
+        select: { onProbation: true, probationMonths: true, dateOfJoining: true },
       })
 
-      const tier = getEmployeeTier(
-        employee?.probationEndDate ?? null,
-        employee?.confirmationDate ?? null,
-      )
+      const tier = getEmployeeTier(employee ?? {})
 
       // ── Tier rules ──
       if (tier === 1 || tier === 2) {
@@ -218,6 +218,16 @@ export const POST = withSession(
             },
           },
         },
+      })
+
+      // Notify the requester's manager + HR so they can act on it.
+      await notifyApprovers({
+        requesterId: session.user.id,
+        title: isEmergency ? "Emergency WFH request" : "New WFH request",
+        message: `${request.employee.firstName} ${request.employee.lastName} requested Work From Home for ${wfhDate.toDateString()}.${
+          isEmergency ? " (Emergency — needs Manager + HR approval)" : ""
+        }`,
+        link: "/wfh/team",
       })
 
       return NextResponse.json({ data: request, tier }, { status: 201 })

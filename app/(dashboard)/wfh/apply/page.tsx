@@ -26,12 +26,11 @@ export default function ApplyWfhPage() {
 
   const today = new Date().toISOString().split("T")[0]
 
-  // For tier 1 or 2, emergency must be checked
+  // For tier 1 or 2 the request is implicitly an emergency (there is no checkbox —
+  // the submit handler forces isEmergency: true), so it only needs a detailed
+  // reason. Don't gate canSubmit on the isEmergency state or it can never enable.
   const mustBeEmergency = eligibility?.canApplyEmergencyOnly ?? false
-  const canSubmit =
-    !!date &&
-    (!mustBeEmergency || isEmergency) &&
-    (mustBeEmergency ? reason.trim().length >= 10 : true)
+  const canSubmit = !!date && (mustBeEmergency ? reason.trim().length >= 10 : true)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

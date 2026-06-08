@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // PATCH /api/projects/[id]/teams/[teamId] — rename / change manager (Admin only)
@@ -66,15 +67,12 @@ export const PATCH = withAuth(
         },
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "UPDATE",
-          module: "project",
-          entityType: "ProjectTeam",
-          entityId: teamId,
-          changes: data as object,
-        },
+      await createAuditLog(session, {
+        action: "UPDATE",
+        module: "project",
+        entityType: "ProjectTeam",
+        entityId: teamId,
+        changes: data as object,
       })
 
       return NextResponse.json({ data: updated })
@@ -99,15 +97,12 @@ export const DELETE = withAuth(
 
       await db.projectTeam.delete({ where: { id: teamId } })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "DELETE",
-          module: "project",
-          entityType: "ProjectTeam",
-          entityId: teamId,
-          changes: { name: team.name },
-        },
+      await createAuditLog(session, {
+        action: "DELETE",
+        module: "project",
+        entityType: "ProjectTeam",
+        entityId: teamId,
+        changes: { name: team.name },
       })
 
       return NextResponse.json({ success: true })

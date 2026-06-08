@@ -6,8 +6,15 @@ import { createEmployeeSchema, employeeFilterSchema } from "@/lib/schemas/employ
 import { generateEmployeeNo } from "@/lib/utils"
 import { addEmailJob } from "@/lib/queue"
 import { createAuditLog } from "@/lib/audit"
+import { encrypt } from "@/lib/crypto"
 import bcrypt from "bcryptjs"
 import type { Session } from "next-auth"
+
+// Never leak this column on the wire.
+function stripSecret<T extends { gmailAppPassword?: string | null }>(emp: T): Omit<T, "gmailAppPassword"> {
+  const { gmailAppPassword: _omit, ...safe } = emp
+  return safe
+}
 
 export const GET = withAuth(
   PERMISSIONS.EMPLOYEE_READ,
@@ -27,7 +34,10 @@ export const GET = withAuth(
       const { search, departmentId, designationId, status, page, limit } = parsed.data
       const skip = (page - 1) * limit
 
-      const where: Record<string, unknown> = {}
+      // The super_admin (CEO) account is invisible — never list it as an employee.
+      const where: Record<string, unknown> = {
+        employeeRoles: { none: { role: { name: { in: [...HIDDEN_ROLES] } } } },
+      }
 
       if (search) {
         where.OR = [
@@ -58,7 +68,7 @@ export const GET = withAuth(
       ])
 
       return NextResponse.json({
-        data: employees,
+        data: employees.map(stripSecret),
         pagination: {
           total,
           page,
@@ -127,9 +137,25 @@ export const POST = withAuth(
 
       const data = parsed.data
 
-      // Auto-generate employee number
-      const totalCount = await db.employee.count()
-      const employeeNo = generateEmployeeNo(totalCount + 1)
+      // Use the provided employee code if given (e.g. existing HR-system code like "132").
+      // Otherwise auto-generate as EMP-YYYY-####. Uniqueness is enforced by the DB.
+      let employeeNo: string
+      if (data.employeeNo) {
+        const existing = await db.employee.findUnique({
+          where: { employeeNo: data.employeeNo },
+          select: { id: true },
+        })
+        if (existing) {
+          return NextResponse.json(
+            { error: `Employee code "${data.employeeNo}" is already in use` },
+            { status: 409 },
+          )
+        }
+        employeeNo = data.employeeNo
+      } else {
+        const totalCount = await db.employee.count()
+        employeeNo = generateEmployeeNo(totalCount + 1)
+      }
 
       // Hash password if provided
       let passwordHash: string | undefined
@@ -152,6 +178,7 @@ export const POST = withAuth(
       const employee = await db.employee.create({
         data: {
           employeeNo,
+          deviceId: data.deviceId || null,
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
@@ -169,11 +196,14 @@ export const POST = withAuth(
           employmentType: data.employmentType,
           dateOfJoining: data.dateOfJoining ? new Date(data.dateOfJoining) : null,
           probationEndDate: data.probationEndDate ? new Date(data.probationEndDate) : null,
+          onProbation: data.onProbation ?? true,
+          probationMonths: data.probationMonths ?? 6,
           workLocation: data.workLocation || null,
           currentAddress,
           permanentAddress,
           emergencyContact,
           passwordHash,
+          gmailAppPassword: encrypt(data.gmailAppPassword),
         },
         include: {
           department: { select: { id: true, name: true } },

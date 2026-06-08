@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
-import { sendEmail } from "@/lib/mailer"
+import { sendEmailAs } from "@/lib/mailer"
 import { createNotification } from "@/lib/notifications"
+import { actorStampId } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 export const GET = withSession(
@@ -143,7 +144,7 @@ export const PATCH = withSession(
             where: { id },
             data: {
               status: "APPROVED",
-              approverId: session.user.id,
+              approverId: actorStampId(session),
               approvedAt: new Date(),
             },
             include: {
@@ -183,7 +184,7 @@ export const PATCH = withSession(
             where: { id },
             data: {
               status: "REJECTED",
-              approverId: session.user.id,
+              approverId: actorStampId(session),
               rejectionReason: String(rejectionReason).trim(),
             },
             include: {
@@ -241,7 +242,7 @@ export const PATCH = withSession(
             ? `Your ${leaveType?.name ?? "Leave"} request has been approved`
             : `Your ${leaveType?.name ?? "Leave"} request has been rejected`
           const endDate = new Date(request.endDate).toDateString()
-          await sendEmail({
+          await sendEmailAs(session.user.id, {
             to: emp.email,
             subject,
             html: `

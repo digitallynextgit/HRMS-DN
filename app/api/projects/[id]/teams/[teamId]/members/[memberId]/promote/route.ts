@@ -4,6 +4,7 @@ import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { createNotification } from "@/lib/notifications"
 import { sendEmail } from "@/lib/mailer"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // PATCH /api/projects/[id]/teams/[teamId]/members/[memberId]/promote
@@ -54,15 +55,12 @@ export const PATCH = withAuth(
         })
       } catch (_e) { /* non-blocking */ }
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "PROMOTE",
-          module: "project",
-          entityType: "ProjectTeam",
-          entityId: teamId,
-          changes: { newManagerId: member.employeeId, previousManagerId: team.managerId },
-        },
+      await createAuditLog(session, {
+        action: "PROMOTE",
+        module: "project",
+        entityType: "ProjectTeam",
+        entityId: teamId,
+        changes: { newManagerId: member.employeeId, previousManagerId: team.managerId },
       })
 
       return NextResponse.json({ success: true })

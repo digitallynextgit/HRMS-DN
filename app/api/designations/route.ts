@@ -11,15 +11,21 @@ const createDesignationSchema = z.object({
 })
 
 export const GET = withSession(
-  async (_req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
+  async (req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
     try {
+      // Admin page passes ?includeInactive=true to manage deactivated designations too.
+      // Default (used by every dropdown) returns only active ones.
+      const includeInactive = new URL(req.url).searchParams.get("includeInactive") === "true"
+
       const designations = await db.designation.findMany({
-        where: { isActive: true },
+        where: includeInactive ? undefined : { isActive: true },
         orderBy: { level: "asc" },
         select: {
           id: true,
           title: true,
           level: true,
+          isActive: true,
+          _count: { select: { employees: true } },
         },
       })
 

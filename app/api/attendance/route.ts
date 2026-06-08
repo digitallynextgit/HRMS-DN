@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { computeAttendanceStatus } from "@/lib/attendance"
 import type { Session } from "next-auth"
 
+// Overview (all employees) is HR/admin-only. Employees use /attendance/me instead.
 export const GET = withAuth(
-  PERMISSIONS.ATTENDANCE_READ,
+  PERMISSIONS.ATTENDANCE_WRITE,
   async (req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
     try {
       const { searchParams } = new URL(req.url)
@@ -95,6 +97,11 @@ export const POST = withAuth(
         }
       }
 
+      // If the caller doesn't pass an explicit status, derive it from hours worked
+      // (half-day / absent rules). Late-mark detection is not applied yet.
+      const resolvedStatus =
+        status ?? computeAttendanceStatus({ checkIn: checkIn ? new Date(checkIn) : null, workHours })
+
       const log = await db.attendanceLog.upsert({
         where: {
           employeeId_date: {
@@ -108,7 +115,7 @@ export const POST = withAuth(
           checkIn: checkIn ? new Date(checkIn) : null,
           checkOut: checkOut ? new Date(checkOut) : null,
           workHours,
-          status: status ?? "PRESENT",
+          status: resolvedStatus,
           isManual: true,
           notes: notes ?? null,
         },
@@ -116,7 +123,7 @@ export const POST = withAuth(
           checkIn: checkIn ? new Date(checkIn) : null,
           checkOut: checkOut ? new Date(checkOut) : null,
           workHours,
-          status: status ?? "PRESENT",
+          status: resolvedStatus,
           isManual: true,
           notes: notes ?? null,
         },

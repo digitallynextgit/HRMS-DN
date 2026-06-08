@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 export const PATCH = withAuth(
@@ -34,15 +35,12 @@ export const PATCH = withAuth(
         data: updateData,
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "UPDATE",
-          module: "leave",
-          entityType: "LeaveType",
-          entityId: id,
-          changes: updateData as object,
-        },
+      await createAuditLog(session, {
+        action: "UPDATE",
+        module: "leave",
+        entityType: "LeaveType",
+        entityId: id,
+        changes: updateData as object,
       })
 
       return NextResponse.json({ data: leaveType })
@@ -80,15 +78,12 @@ export const DELETE = withAuth(
         data: { isActive: false },
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "DELETE",
-          module: "leave",
-          entityType: "LeaveType",
-          entityId: id,
-          changes: { softDeleted: true },
-        },
+      await createAuditLog(session, {
+        action: "DELETE",
+        module: "leave",
+        entityType: "LeaveType",
+        entityId: id,
+        changes: { softDeleted: true },
       })
 
       return NextResponse.json({ message: "Leave type deactivated successfully" })

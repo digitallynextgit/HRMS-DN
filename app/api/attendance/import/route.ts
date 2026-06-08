@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withSession } from "@/lib/permissions"
+import { withAuth } from "@/lib/permissions"
+import { PERMISSIONS } from "@/lib/constants"
+import { computeAttendanceStatus } from "@/lib/attendance"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // CSV format: employee_no,date,check_in,check_out
@@ -18,7 +21,7 @@ function parseTimeOnDate(dateStr: string, timeStr: string): Date | null {
   }
 }
 
-export const POST = withSession(async (req: NextRequest, _ctx: unknown, session: Session) => {
+export const POST = withAuth(PERMISSIONS.ATTENDANCE_WRITE, async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {
   try {
     const body = await req.json()
     const { rows, preview } = body // rows: [{employee_no, date, check_in, check_out}]
@@ -33,7 +36,11 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
       // Validate only - don't write
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]
-        const emp = await db.employee.findFirst({ where: { employeeNo: row.employee_no } })
+        // Match the file's ID against the biometric device ID first, then the
+        // employee code (so a Hikvision "Employee ID" resolves either way).
+        const emp = await db.employee.findFirst({
+          where: { OR: [{ deviceId: row.employee_no }, { employeeNo: row.employee_no }] },
+        })
         if (!emp) {
           results.push({
             row: i + 1,
@@ -59,7 +66,11 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
       try {
-        const emp = await db.employee.findFirst({ where: { employeeNo: row.employee_no } })
+        // Match the file's ID against the biometric device ID first, then the
+        // employee code (so a Hikvision "Employee ID" resolves either way).
+        const emp = await db.employee.findFirst({
+          where: { OR: [{ deviceId: row.employee_no }, { employeeNo: row.employee_no }] },
+        })
         if (!emp) {
           results.push({
             row: i + 1,
@@ -75,12 +86,27 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
         const checkOut = parseTimeOnDate(row.date, row.check_out)
 
         const existing = await db.attendanceLog.findFirst({ where: { employeeId: emp.id, date } })
+
+        // Keep existing punches when the CSV cell is blank.
+        const effCheckIn = checkIn ?? existing?.checkIn ?? null
+        const effCheckOut = checkOut ?? existing?.checkOut ?? null
+        let workHours: number | null = null
+        if (effCheckIn && effCheckOut && effCheckOut.getTime() > effCheckIn.getTime()) {
+          workHours =
+            Math.round(((effCheckOut.getTime() - effCheckIn.getTime()) / (1000 * 60 * 60)) * 100) /
+            100
+        }
+        // Status from hours worked (half-day / absent). Late-mark not applied yet.
+        const status = computeAttendanceStatus({ checkIn: effCheckIn, workHours })
+
         if (existing) {
           await db.attendanceLog.update({
             where: { id: existing.id },
             data: {
-              checkIn: checkIn ?? existing.checkIn,
-              checkOut: checkOut ?? existing.checkOut,
+              checkIn: effCheckIn,
+              checkOut: effCheckOut,
+              workHours,
+              status,
               source: "CSV",
             } as never,
           })
@@ -89,11 +115,12 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
             data: {
               employeeId: emp.id,
               date,
-              checkIn,
-              checkOut,
+              checkIn: effCheckIn,
+              checkOut: effCheckOut,
+              workHours,
+              status,
               source: "CSV",
-              status: (checkIn ? "PRESENT" : "ABSENT") as never,
-            },
+            } as never,
           })
         }
         results.push({ row: i + 1, success: true, employeeNo: row.employee_no })
@@ -103,14 +130,11 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
       }
     }
 
-    await db.auditLog.create({
-      data: {
-        actorId: session.user.id,
-        action: "IMPORT",
-        module: "attendance",
-        entityType: "AttendanceLog",
-        changes: { imported, total: rows.length },
-      },
+    await createAuditLog(session, {
+      action: "IMPORT",
+      module: "attendance",
+      entityType: "AttendanceLog",
+      changes: { imported, total: rows.length },
     })
 
     return NextResponse.json({ imported, total: rows.length, results })

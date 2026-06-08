@@ -39,6 +39,7 @@ export const PATCH = withAuth(
       if (body.code !== undefined) data.code = String(body.code).toUpperCase()
       if (body.description !== undefined) data.description = body.description || null
       if (body.headId !== undefined) data.headId = body.headId || null
+      if (body.isActive !== undefined) data.isActive = !!body.isActive
       if (body.careersTone !== undefined) {
         const tone = body.careersTone
         data.careersTone = tone === "red" || tone === "teal" ? tone : null
@@ -57,6 +58,7 @@ export const PATCH = withAuth(
           code: true,
           description: true,
           headId: true,
+          isActive: true,
           careersTone: true,
           careersJobsLabel: true,
         },
@@ -76,6 +78,48 @@ export const PATCH = withAuth(
         )
       }
       console.error("[DEPARTMENTS_PATCH]", error)
+      return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    }
+  },
+)
+
+/**
+ * DELETE /api/departments/[id]
+ *  Default: soft-deactivate (sets isActive=false) — keeps history, hides from dropdowns.
+ *  With `?permanent=true`: hard-deletes. Allowed only if no employees reference it.
+ */
+export const DELETE = withAuth(
+  PERMISSIONS.EMPLOYEE_WRITE,
+  async (req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
+    try {
+      const { id } = ctx.params
+      const permanent = new URL(req.url).searchParams.get("permanent") === "true"
+
+      const dept = await db.department.findUnique({
+        where: { id },
+        include: { _count: { select: { employees: true, jobPostings: true } } },
+      })
+      if (!dept) return NextResponse.json({ error: "Department not found" }, { status: 404 })
+
+      if (permanent) {
+        if (dept._count.employees > 0 || dept._count.jobPostings > 0) {
+          return NextResponse.json(
+            {
+              error: `Cannot permanently delete: ${dept._count.employees} employee(s) and ${dept._count.jobPostings} job posting(s) reference this department. Deactivate instead.`,
+            },
+            { status: 409 },
+          )
+        }
+        await db.department.delete({ where: { id } })
+        return NextResponse.json({ message: "Department deleted permanently" })
+      }
+
+      await db.department.update({ where: { id }, data: { isActive: false } })
+      return NextResponse.json({
+        message: `Department deactivated. ${dept._count.employees} employee(s) still assigned.`,
+      })
+    } catch (error) {
+      console.error("[DEPARTMENTS_DELETE]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
     }
   },

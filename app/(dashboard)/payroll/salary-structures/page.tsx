@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Plus, Pencil, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -38,6 +40,17 @@ function formatDate(dateStr: string): string {
 
 export default function SalaryStructuresPage() {
   const { can } = usePermissions()
+  const router = useRouter()
+  const { status: sessionStatus } = useSession()
+  const canWrite = can(PERMISSIONS.PAYROLL_WRITE)
+
+  // HR-only page; employees use My Payslips.
+  useEffect(() => {
+    if (sessionStatus === "authenticated" && !canWrite) {
+      router.replace("/payroll/me")
+    }
+  }, [sessionStatus, canWrite, router])
+
   const [formOpen, setFormOpen] = useState(false)
   const [editData, setEditData] = useState<SalaryStructure | null>(null)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -103,9 +116,9 @@ export default function SalaryStructuresPage() {
                 <th className="text-muted-foreground px-4 py-3 text-right font-medium">Basic</th>
                 <th className="text-muted-foreground px-4 py-3 text-right font-medium">HRA</th>
                 <th className="text-muted-foreground px-4 py-3 text-right font-medium">Gross</th>
-                <th className="text-muted-foreground px-4 py-3 text-right font-medium">PF</th>
-                <th className="text-muted-foreground px-4 py-3 text-right font-medium">TDS</th>
-                <th className="text-muted-foreground px-4 py-3 text-right font-medium">Net</th>
+                <th className="text-muted-foreground px-4 py-3 text-right font-medium">
+                  Net (in-hand)
+                </th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">
                   Effective From
                 </th>
@@ -123,8 +136,10 @@ export default function SalaryStructuresPage() {
                   structure.hra +
                   structure.conveyance +
                   structure.medicalAllowance +
+                  structure.telephoneAllowance +
                   structure.otherAllowances
-                const net = gross - structure.pfEmployee - structure.esi - structure.tds
+                // No statutory deductions — net is the full gross, paid in hand.
+                const net = gross
 
                 return (
                   <tr key={structure.id} className="hover:bg-muted/20 transition-colors">
@@ -148,12 +163,6 @@ export default function SalaryStructuresPage() {
                       {fmt(structure.hra)}
                     </td>
                     <td className="px-4 py-3 text-right font-medium">{fmt(gross)}</td>
-                    <td className="text-muted-foreground px-4 py-3 text-right">
-                      {fmt(structure.pfEmployee)}
-                    </td>
-                    <td className="text-muted-foreground px-4 py-3 text-right">
-                      {fmt(structure.tds)}
-                    </td>
                     <td className="px-4 py-3 text-right font-semibold text-emerald-600">
                       {fmt(net)}
                     </td>

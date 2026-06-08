@@ -4,7 +4,14 @@ import { withAuth, withSession, canAccessEmployee } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { updateEmployeeSchema } from "@/lib/schemas/employee"
 import { createAuditLog } from "@/lib/audit"
+import { encrypt } from "@/lib/crypto"
 import type { Session } from "next-auth"
+
+// Never leak the encrypted Gmail App Password on the wire.
+function stripSecret<T extends { gmailAppPassword?: string | null }>(emp: T): Omit<T, "gmailAppPassword"> {
+  const { gmailAppPassword: _omit, ...safe } = emp
+  return safe
+}
 
 export const GET = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
@@ -44,7 +51,10 @@ export const GET = withSession(
         return NextResponse.json({ error: "Employee not found" }, { status: 404 })
       }
 
-      return NextResponse.json({ data: employee })
+      // Expose only a boolean flag for the secret — never the value.
+      return NextResponse.json({
+        data: { ...stripSecret(employee), hasGmailAppPassword: !!employee.gmailAppPassword },
+      })
     } catch (error) {
       console.error("[EMPLOYEE_GET]", error)
       return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -77,6 +87,33 @@ export const PATCH = withAuth(
 
       const updateData: Record<string, unknown> = {}
 
+      // Employee code change — check uniqueness up-front so we can give a clean error
+      // (avoids relying on Prisma's P2002 to disambiguate email vs employeeNo conflicts).
+      if (data.employeeNo !== undefined && data.employeeNo !== before.employeeNo) {
+        const clash = await db.employee.findUnique({
+          where: { employeeNo: data.employeeNo },
+          select: { id: true },
+        })
+        if (clash && clash.id !== id) {
+          return NextResponse.json(
+            { error: `Employee code "${data.employeeNo}" is already in use` },
+            { status: 409 },
+          )
+        }
+        updateData.employeeNo = data.employeeNo
+      }
+
+      if (data.deviceId !== undefined) updateData.deviceId = data.deviceId || null
+      // Offboarding: status + dates, and keep isActive in sync.
+      if (data.status !== undefined) {
+        updateData.status = data.status
+        if (data.status === "RESIGNED" || data.status === "TERMINATED") updateData.isActive = false
+        if (data.status === "ACTIVE") updateData.isActive = true
+      }
+      if (data.resignationDate !== undefined)
+        updateData.resignationDate = data.resignationDate ? new Date(data.resignationDate) : null
+      if (data.lastWorkingDate !== undefined)
+        updateData.lastWorkingDate = data.lastWorkingDate ? new Date(data.lastWorkingDate) : null
       if (data.firstName !== undefined) updateData.firstName = data.firstName
       if (data.lastName !== undefined) updateData.lastName = data.lastName
       if (data.email !== undefined) updateData.email = data.email
@@ -96,6 +133,8 @@ export const PATCH = withAuth(
         updateData.dateOfJoining = data.dateOfJoining ? new Date(data.dateOfJoining) : null
       if (data.probationEndDate !== undefined)
         updateData.probationEndDate = data.probationEndDate ? new Date(data.probationEndDate) : null
+      if (data.onProbation !== undefined) updateData.onProbation = data.onProbation
+      if (data.probationMonths !== undefined) updateData.probationMonths = data.probationMonths
       if (data.workLocation !== undefined) updateData.workLocation = data.workLocation || null
       if (data.currentAddress !== undefined)
         updateData.currentAddress = data.currentAddress
@@ -109,6 +148,11 @@ export const PATCH = withAuth(
         updateData.emergencyContact = data.emergencyContact
           ? JSON.parse(JSON.stringify(data.emergencyContact))
           : null
+      if (data.gmailAppPassword !== undefined) {
+        updateData.gmailAppPassword = data.gmailAppPassword
+          ? encrypt(data.gmailAppPassword)
+          : null
+      }
 
       const employee = await db.employee.update({
         where: { id },
@@ -120,31 +164,31 @@ export const PATCH = withAuth(
         },
       })
 
-      // Compute diff for audit
+      // Compute diff for audit (mask the secret — never log plaintext or ciphertext).
       const changedFields: Record<string, { before: unknown; after: unknown }> = {}
       for (const key of Object.keys(updateData)) {
         const beforeVal = (before as Record<string, unknown>)[key]
         const afterVal = updateData[key]
         if (String(beforeVal) !== String(afterVal)) {
-          changedFields[key] = { before: beforeVal, after: afterVal }
+          if (key === "gmailAppPassword") {
+            changedFields[key] = { before: beforeVal ? "***" : null, after: "***" }
+          } else {
+            changedFields[key] = { before: beforeVal, after: afterVal }
+          }
         }
       }
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "UPDATE",
-          module: "employee",
-          entityType: "Employee",
-          entityId: id,
-          changes: changedFields as object,
-          ipAddress:
-            req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
-          userAgent: req.headers.get("user-agent") ?? undefined,
-        },
+      await createAuditLog(session, {
+        action: "UPDATE",
+        module: "employee",
+        entityType: "Employee",
+        entityId: id,
+        changes: changedFields as object,
+        ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
+        userAgent: req.headers.get("user-agent"),
       })
 
-      return NextResponse.json({ data: employee })
+      return NextResponse.json({ data: stripSecret(employee) })
     } catch (error: unknown) {
       console.error("[EMPLOYEE_PATCH]", error)
       if (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth, withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 export const GET = withSession(
@@ -90,15 +91,12 @@ export const POST = withAuth(
         include: { leaveType: true },
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "ALLOCATE",
-          module: "leave",
-          entityType: "LeaveBalance",
-          entityId: balance.id,
-          changes: { employeeId, leaveTypeId, year, allocated, carried },
-        },
+      await createAuditLog(session, {
+        action: "ALLOCATE",
+        module: "leave",
+        entityType: "LeaveBalance",
+        entityId: balance.id,
+        changes: { employeeId, leaveTypeId, year, allocated, carried },
       })
 
       return NextResponse.json({ data: balance }, { status: 201 })

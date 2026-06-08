@@ -7,7 +7,9 @@ interface AuditLogInput {
   module: string
   entityType?: string
   entityId?: string
-  changes?: Record<string, unknown>
+  // `object` (not Record<string, unknown>) so callers can pass loosely-typed
+  // change payloads / `as object` casts; it's stored as Prisma JSON regardless.
+  changes?: object
   ipAddress?: string | null
   userAgent?: string | null
 }
@@ -39,4 +41,15 @@ export async function createAuditLog(session: Session | null, input: AuditLogInp
 /** Returns true when the given session represents a super_admin account. */
 export function isSuperAdminSession(session: Session | null): boolean {
   return !!session?.user?.roles?.includes(SYSTEM_ROLES.SUPER_ADMIN)
+}
+
+/**
+ * The actor id to stamp onto a record's "who did this" field (approver,
+ * reviewer, etc.). Returns null for a super_admin so that account is never named
+ * on a record — the same invisibility policy as createAuditLog. The action still
+ * happens (status + timestamps are set normally); only the identity is withheld,
+ * so completion logic must key off timestamps/status, never the stamped id.
+ */
+export function actorStampId(session: Session | null): string | null {
+  return isSuperAdminSession(session) ? null : (session?.user?.id ?? null)
 }

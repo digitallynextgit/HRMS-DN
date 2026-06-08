@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession } from "@/lib/permissions"
-import { sendEmail } from "@/lib/mailer"
+import { sendEmailAs } from "@/lib/mailer"
 import type { Session } from "next-auth"
 
 const STAGE_EMAIL_CONFIG: Record<
@@ -47,7 +47,7 @@ const STAGE_EMAIL_CONFIG: Record<
 }
 
 export const PATCH = withSession(
-  async (req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
+  async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
       const body = await req.json()
       const prevApplicant = await db.applicant.findUnique({
@@ -83,7 +83,7 @@ export const PATCH = withSession(
         const firstName = applicant.firstName
         const jobTitle = applicant.jobPosting?.title ?? "the position"
         try {
-          await sendEmail({
+          await sendEmailAs(session.user.id, {
             to: applicant.email,
             subject: cfg.subject(jobTitle),
             html: cfg.body(firstName, jobTitle),

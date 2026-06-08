@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withSession } from "@/lib/permissions"
+import { withAuth } from "@/lib/permissions"
+import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
-export const GET = withSession(async (_req: NextRequest, _ctx: unknown, _session: Session) => {
+export const GET = withAuth(
+  PERMISSIONS.ANALYTICS_READ,
+  async (_req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
   try {
     const now = new Date()
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)

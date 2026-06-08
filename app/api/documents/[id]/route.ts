@@ -3,6 +3,7 @@ import { withAuth, withSession, hasPermission } from "@/lib/permissions"
 import { getSignedUrl, deleteFile } from "@/lib/storage"
 import { db } from "@/lib/db"
 import { PERMISSIONS } from "@/lib/constants"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // GET - return pre-signed download URL for the document
@@ -62,23 +63,20 @@ export const DELETE = withAuth(
 
       await db.document.delete({ where: { id } })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "document.delete",
-          module: "document",
-          entityType: "Document",
-          entityId: id,
-          changes: {
-            title: document.title,
-            fileName: document.fileName,
-            category: document.category,
-            employeeId: document.employeeId,
-          },
-          ipAddress:
-            req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
-          userAgent: req.headers.get("user-agent") ?? undefined,
+      // Routed through createAuditLog so super_admin actions stay unlogged.
+      await createAuditLog(session, {
+        action: "document.delete",
+        module: "document",
+        entityType: "Document",
+        entityId: id,
+        changes: {
+          title: document.title,
+          fileName: document.fileName,
+          category: document.category,
+          employeeId: document.employeeId,
         },
+        ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
+        userAgent: req.headers.get("user-agent"),
       })
 
       return NextResponse.json({ data: { success: true } })

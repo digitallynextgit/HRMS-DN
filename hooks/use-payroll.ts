@@ -21,6 +21,7 @@ export interface SalaryStructure {
   hra: number
   conveyance: number
   medicalAllowance: number
+  telephoneAllowance: number
   otherAllowances: number
   pfEmployee: number
   pfEmployer: number
@@ -46,6 +47,7 @@ export interface PayrollRecord {
   hra: number
   conveyance: number
   medicalAllowance: number
+  telephoneAllowance: number
   otherAllowances: number
   overtime: number
   grossSalary: number

@@ -99,17 +99,15 @@ async function patchWfh({
   id,
   action,
   rejectionReason,
-  approverRole,
 }: {
   id: string
   action: "CANCEL" | "APPROVE" | "REJECT"
   rejectionReason?: string
-  approverRole?: "MANAGER" | "HR"
 }): Promise<{ data: WfhRequest }> {
   const res = await fetch(`/api/wfh/requests/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, rejectionReason, approverRole }),
+    body: JSON.stringify({ action, rejectionReason }),
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: "Failed to update WFH request" }))
@@ -171,8 +169,7 @@ export function useCancelWfh() {
 export function useApproveWfh() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, approverRole }: { id: string; approverRole?: "MANAGER" | "HR" }) =>
-      patchWfh({ id, action: "APPROVE", approverRole }),
+    mutationFn: (id: string) => patchWfh({ id, action: "APPROVE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["wfh-requests"] })
       toast.success("WFH request approved")
@@ -184,15 +181,8 @@ export function useApproveWfh() {
 export function useRejectWfh() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      id,
-      rejectionReason,
-      approverRole,
-    }: {
-      id: string
-      rejectionReason: string
-      approverRole?: "MANAGER" | "HR"
-    }) => patchWfh({ id, action: "REJECT", rejectionReason, approverRole }),
+    mutationFn: ({ id, rejectionReason }: { id: string; rejectionReason: string }) =>
+      patchWfh({ id, action: "REJECT", rejectionReason }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["wfh-requests"] })
       toast.success("WFH request rejected")

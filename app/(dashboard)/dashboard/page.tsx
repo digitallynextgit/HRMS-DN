@@ -334,7 +334,7 @@ export default function DashboardPage() {
             </Button>
 
             <Button asChild variant="outline" className="h-9 w-full justify-start gap-2 text-sm">
-              <Link href="/documents/upload">
+              <Link href="/documents">
                 <Upload className="text-muted-foreground h-4 w-4" />
                 <span>Upload Document</span>
               </Link>

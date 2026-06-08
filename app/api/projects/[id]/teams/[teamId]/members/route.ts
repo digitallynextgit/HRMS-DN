@@ -4,6 +4,7 @@ import { withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { createNotification } from "@/lib/notifications"
 import { sendEmail } from "@/lib/mailer"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // GET /api/projects/[id]/teams/[teamId]/members
@@ -116,15 +117,12 @@ export const POST = withSession(
         })
       } catch (_e) { /* non-blocking */ }
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: willBeManager ? "ADD_AND_PROMOTE" : "ADD",
-          module: "project",
-          entityType: "ProjectTeamMember",
-          entityId: created.id,
-          changes: { teamId, employeeId, autoManager: willBeManager },
-        },
+      await createAuditLog(session, {
+        action: willBeManager ? "ADD_AND_PROMOTE" : "ADD",
+        module: "project",
+        entityType: "ProjectTeamMember",
+        entityId: created.id,
+        changes: { teamId, employeeId, autoManager: willBeManager },
       })
 
       return NextResponse.json({ data: created, isManager: willBeManager }, { status: 201 })

@@ -22,20 +22,6 @@ interface ImportResult {
   employeeNo?: string
 }
 
-function parseCsv(text: string): CsvRow[] {
-  const lines = text.trim().split(/\r?\n/)
-  if (lines.length < 2) return []
-  const header = lines[0].split(",").map((h) => h.trim().toLowerCase())
-  return lines.slice(1).map((line) => {
-    const values = line.split(",").map((v) => v.trim())
-    const obj: Record<string, string> = {}
-    header.forEach((h, i) => {
-      obj[h] = values[i] ?? ""
-    })
-    return obj as unknown as CsvRow
-  })
-}
-
 async function previewImport(
   rows: CsvRow[],
 ): Promise<{ preview: boolean; results: ImportResult[]; valid: number; total: number }> {
@@ -83,16 +69,32 @@ export default function AttendanceImportPage() {
   } | null>(null)
   const [importResult, setImportResult] = useState<{ imported: number; total: number } | null>(null)
 
+  const parseMut = useMutation({
+    mutationFn: async (file: File) => {
+      const fd = new FormData()
+      fd.append("file", file)
+      const res = await fetch("/api/attendance/import/parse", { method: "POST", body: fd })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed to read file" }))
+        throw new Error(err.error || "Failed to read file")
+      }
+      return res.json() as Promise<{ rows: CsvRow[] }>
+    },
+    onSuccess: (data) => {
+      setRows(data.rows)
+      if (data.rows.length === 0) {
+        toast.error("No rows detected — make sure the file has employee, date and time columns")
+      }
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
   const handleFile = (file: File) => {
     setFileName(file.name)
     setPreview(null)
     setImportResult(null)
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const text = e.target?.result as string
-      setRows(parseCsv(text))
-    }
-    reader.readAsText(file)
+    setRows([])
+    parseMut.mutate(file)
   }
 
   const previewMut = useMutation({
@@ -114,11 +116,11 @@ export default function AttendanceImportPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="CSV Attendance Import"
-        description="Import attendance records from any legacy system via CSV"
+        title="Imports"
+        description="Import attendance from a CSV or an Excel export (e.g. Hikvision)"
         actions={
           <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-2">
-            <Download className="h-4 w-4" /> Download Template
+            <Download className="h-4 w-4" /> Download CSV Template
           </Button>
         }
       />
@@ -126,18 +128,34 @@ export default function AttendanceImportPage() {
       {/* Format info */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">CSV Format</CardTitle>
+          <CardTitle className="text-sm">Supported files</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="bg-muted rounded p-3 font-mono text-xs">
-            employee_no,date,check_in,check_out
+          <p className="text-muted-foreground mb-2 text-xs">
+            Upload a <strong>.csv</strong>, <strong>.xlsx</strong> or <strong>.xls</strong> file.
+            The <strong>Hikvision monthly &ldquo;Attendance Record&rdquo;</strong> export (employees
+            as rows, days 1&ndash;31 as columns) is detected automatically — the month is read from
+            its <em>Made Date</em> line and each day&rsquo;s earliest punch becomes check-in, the
+            latest check-out.
+          </p>
+          <p className="text-muted-foreground mb-2 text-xs">
+            A simple flat list also works — columns are matched by name (any of these):
+          </p>
+          <div className="bg-muted rounded p-3 font-mono text-[11px] leading-5">
+            employee no / employee id / person id&nbsp;&nbsp;→ employee
             <br />
-            EMP001,2026-04-01,09:00,18:00
+            date / attendance date&nbsp;&nbsp;→ date
             <br />
-            EMP002,2026-04-01,09:30,17:30
+            check in / on duty / in time&nbsp;&nbsp;→ check-in
+            <br />
+            check out / off duty / out time&nbsp;&nbsp;→ check-out
+            <br />
+            date time / punch time / time&nbsp;&nbsp;→ per-punch (auto in/out)
           </div>
           <p className="text-muted-foreground mt-2 text-xs">
-            Dates: YYYY-MM-DD · Times: HH:MM (24h) · check_out is optional
+            Note: rows are matched to staff by <strong>Employee Code</strong>, so the Hikvision
+            &ldquo;Employee ID&rdquo; must equal the employee&rsquo;s code in HRMS (e.g. 132, 136).
+            Unmatched IDs are skipped and listed in the validation step.
           </p>
         </CardContent>
       </Card>
@@ -152,16 +170,24 @@ export default function AttendanceImportPage() {
             )}
             onClick={() => fileRef.current?.click()}
           >
-            <Upload className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
-            <p className="text-sm font-medium">{fileName || "Click to upload CSV file"}</p>
-            {rows.length > 0 && (
+            {parseMut.isPending ? (
+              <Loader2 className="text-muted-foreground mx-auto mb-3 h-8 w-8 animate-spin" />
+            ) : (
+              <Upload className="text-muted-foreground mx-auto mb-3 h-8 w-8" />
+            )}
+            <p className="text-sm font-medium">
+              {parseMut.isPending
+                ? "Reading file…"
+                : fileName || "Click to upload a CSV or Excel file"}
+            </p>
+            {!parseMut.isPending && rows.length > 0 && (
               <p className="text-muted-foreground mt-1 text-xs">{rows.length} rows detected</p>
             )}
           </div>
           <input
             ref={fileRef}
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls"
             className="hidden"
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
           />

@@ -38,9 +38,8 @@ interface AnalyticsData {
   payroll: {
     totalGross: number
     totalNet: number
-    status: string
     periodLabel: string
-    _count: { slips: number }
+    count: number
   } | null
   recruitment: {
     openJobs: number
@@ -194,7 +193,7 @@ export default function AnalyticsPage() {
           <StatCard
             title="Last Payroll Net"
             value={formatCurrency(d.payroll.totalNet)}
-            sub={`${d.payroll.periodLabel} · ${d.payroll._count.slips} slips`}
+            sub={`${d.payroll.periodLabel} · ${d.payroll.count} slips`}
             icon={TrendingUp}
           />
         )}

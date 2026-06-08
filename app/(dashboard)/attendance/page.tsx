@@ -1,7 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { Plus, Users, UserX, Clock, Timer } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { Plus, Users, UserX, Clock, Timer, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/shared/page-header"
 import { StatCard } from "@/components/shared/stat-card"
@@ -17,6 +19,16 @@ import { format, startOfMonth, endOfMonth } from "date-fns"
 
 export default function AttendancePage() {
   const { can } = usePermissions()
+  const { status: sessionStatus } = useSession()
+  const router = useRouter()
+  const canWrite = can(PERMISSIONS.ATTENDANCE_WRITE)
+
+  // Overview (all employees) is HR/admin-only; send everyone else to their own view.
+  useEffect(() => {
+    if (sessionStatus === "authenticated" && !canWrite) {
+      router.replace("/attendance/me")
+    }
+  }, [sessionStatus, canWrite, router])
 
   // ── Filters ───────────────────────────────────────────────────────────────
   const [employeeSearch, setEmployeeSearch] = useState("")
@@ -47,7 +59,9 @@ export default function AttendancePage() {
   // Derive summary from the current loaded page for display purposes
   const presentCount = logs.filter((l) => l.status === "PRESENT").length
   const absentCount = logs.filter((l) => l.status === "ABSENT").length
-  const lateCount = logs.filter((l) => l.status === "LATE").length
+  const halfDayCount = logs.filter((l) => l.status === "HALF_DAY").length
+  // Late-mark tracking disabled for now (do not delete):
+  // const lateCount = logs.filter((l) => l.status === "LATE").length
   const totalHoursOnPage = logs.reduce((sum, l) => sum + (l.workHours ?? 0), 0)
   const avgHours =
     logs.filter((l) => l.workHours).length > 0
@@ -72,7 +86,17 @@ export default function AttendancePage() {
     setDeleteId(null)
   }
 
-  const canWrite = can(PERMISSIONS.ATTENDANCE_WRITE)
+  function handleExport() {
+    const params = new URLSearchParams()
+    if (dateFrom) params.set("dateFrom", dateFrom)
+    if (dateTo) params.set("dateTo", dateTo)
+    if (status) params.set("status", status)
+    window.open(`/api/attendance/export?${params.toString()}`, "_blank")
+  }
+
+  if (sessionStatus === "authenticated" && !canWrite) {
+    return null
+  }
 
   return (
     <div className="space-y-6">
@@ -81,10 +105,16 @@ export default function AttendancePage() {
         description="Monitor and manage employee attendance records"
         actions={
           canWrite ? (
-            <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Manual Record
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={handleExport} className="gap-2">
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Button>
+              <Button onClick={() => setAddDialogOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Manual Record
+              </Button>
+            </div>
           ) : undefined
         }
       />
@@ -106,12 +136,20 @@ export default function AttendancePage() {
           iconBg="bg-red-50"
         />
         <StatCard
+          title="Half-Day (this page)"
+          value={halfDayCount}
+          icon={Clock}
+          iconColor="text-amber-600"
+          iconBg="bg-amber-50"
+        />
+        {/* Late-mark tracking disabled for now (do not delete):
+        <StatCard
           title="Late (this page)"
           value={lateCount}
           icon={Clock}
           iconColor="text-orange-600"
           iconBg="bg-orange-50"
-        />
+        /> */}
         <StatCard
           title="Avg Work Hours"
           value={`${avgHours}h`}

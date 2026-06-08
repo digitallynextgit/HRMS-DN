@@ -8,6 +8,7 @@ import { toast } from "sonner"
 export interface EmployeeListItem {
   id: string
   employeeNo: string
+  deviceId: string | null
   firstName: string
   lastName: string
   email: string
@@ -23,6 +24,8 @@ export interface EmployeeListItem {
   employmentType: string
   dateOfJoining: string | null
   probationEndDate: string | null
+  onProbation: boolean
+  probationMonths: number
   workLocation: string | null
   isActive: boolean
   createdAt: string
@@ -35,6 +38,7 @@ export interface EmployeeDetail extends EmployeeListItem {
   currentAddress: Record<string, string> | null
   permanentAddress: Record<string, string> | null
   emergencyContact: Record<string, string> | null
+  hasGmailAppPassword?: boolean
   _count: { subordinates: number; documents: number }
   employeeRoles: Array<{
     id: string

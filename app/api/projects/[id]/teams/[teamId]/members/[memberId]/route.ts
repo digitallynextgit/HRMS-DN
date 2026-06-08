@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { createNotification } from "@/lib/notifications"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // DELETE /api/projects/[id]/teams/[teamId]/members/[memberId]
@@ -61,15 +62,12 @@ export const DELETE = withSession(
         })
       } catch (_e) { /* non-blocking */ }
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "REMOVE",
-          module: "project",
-          entityType: "ProjectTeamMember",
-          entityId: memberId,
-          changes: { teamId, employeeId: member.employeeId },
-        },
+      await createAuditLog(session, {
+        action: "REMOVE",
+        module: "project",
+        entityType: "ProjectTeamMember",
+        entityId: memberId,
+        changes: { teamId, employeeId: member.employeeId },
       })
 
       return NextResponse.json({ success: true })

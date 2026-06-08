@@ -3,11 +3,12 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Pencil, Power, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/page-header"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { cn } from "@/lib/utils"
 
 interface Department {
   id: string
@@ -26,29 +28,52 @@ interface Department {
   code: string
   description: string | null
   headId: string | null
+  isActive: boolean
+  _count: { employees: number; jobPostings: number }
 }
 
 async function fetchDepartments(): Promise<{ data: Department[] }> {
-  const res = await fetch("/api/departments")
+  const res = await fetch("/api/departments?includeInactive=true")
   if (!res.ok) throw new Error("Failed to fetch departments")
   return res.json()
 }
 
-async function createDepartment(body: {
+async function saveDepartment(body: {
+  id?: string
   name: string
   code: string
   description?: string
 }): Promise<{ data: Department }> {
-  const res = await fetch("/api/departments", {
-    method: "POST",
+  const res = await fetch(body.id ? `/api/departments/${body.id}` : "/api/departments", {
+    method: body.id ? "PATCH" : "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ name: body.name, code: body.code, description: body.description }),
   })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to create department" }))
-    throw new Error(err.error || "Failed to create department")
+    const err = await res.json().catch(() => ({ error: "Failed to save department" }))
+    throw new Error(err.error || "Failed to save department")
   }
   return res.json()
+}
+
+async function patchActive(id: string, isActive: boolean): Promise<void> {
+  const res = await fetch(`/api/departments/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ isActive }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Failed to update department" }))
+    throw new Error(err.error || "Failed to update department")
+  }
+}
+
+async function purgeDepartment(id: string): Promise<void> {
+  const res = await fetch(`/api/departments/${id}?permanent=true`, { method: "DELETE" })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Failed to delete department" }))
+    throw new Error(err.error || "Failed to delete department")
+  }
 }
 
 export default function DepartmentsPage() {
@@ -57,27 +82,69 @@ export default function DepartmentsPage() {
   const queryClient = useQueryClient()
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<Department | null>(null)
   const [name, setName] = useState("")
   const [code, setCode] = useState("")
   const [description, setDescription] = useState("")
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["departments"],
-    queryFn: fetchDepartments,
-  })
+  const { data, isLoading } = useQuery({ queryKey: ["departments-admin"], queryFn: fetchDepartments })
 
-  const createMut = useMutation({
-    mutationFn: createDepartment,
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["departments-admin"] })
+    queryClient.invalidateQueries({ queryKey: ["departments"] })
+  }
+
+  const saveMut = useMutation({
+    mutationFn: saveDepartment,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["departments"] })
-      toast.success("Department created")
-      setDialogOpen(false)
-      setName("")
-      setCode("")
-      setDescription("")
+      invalidate()
+      toast.success(editing ? "Department updated" : "Department created")
+      closeDialog()
     },
     onError: (e: Error) => toast.error(e.message),
   })
+
+  const activeMut = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => patchActive(id, isActive),
+    onSuccess: (_d, v) => {
+      invalidate()
+      toast.success(v.isActive ? "Department activated" : "Department deactivated")
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const purgeMut = useMutation({
+    mutationFn: purgeDepartment,
+    onSuccess: () => {
+      invalidate()
+      toast.success("Department deleted")
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  function openCreate() {
+    setEditing(null)
+    setName("")
+    setCode("")
+    setDescription("")
+    setDialogOpen(true)
+  }
+
+  function openEdit(d: Department) {
+    setEditing(d)
+    setName(d.name)
+    setCode(d.code)
+    setDescription(d.description ?? "")
+    setDialogOpen(true)
+  }
+
+  function closeDialog() {
+    setDialogOpen(false)
+    setEditing(null)
+    setName("")
+    setCode("")
+    setDescription("")
+  }
 
   const departments = data?.data ?? []
 
@@ -88,7 +155,7 @@ export default function DepartmentsPage() {
         description={`${departments.length} department${departments.length !== 1 ? "s" : ""} total`}
         actions={
           canWrite ? (
-            <Button onClick={() => setDialogOpen(true)} className="gap-2">
+            <Button onClick={openCreate} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Department
             </Button>
@@ -111,17 +178,71 @@ export default function DepartmentsPage() {
               <tr className="bg-muted/40 border-b">
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Name</th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Code</th>
-                <th className="text-muted-foreground px-4 py-3 text-left font-medium">
-                  Description
-                </th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Description</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employees</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
+                {canWrite && (
+                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y">
               {departments.map((d) => (
-                <tr key={d.id} className="hover:bg-muted/20 transition-colors">
+                <tr
+                  key={d.id}
+                  className={cn("hover:bg-muted/20 transition-colors", !d.isActive && "opacity-60")}
+                >
                   <td className="px-4 py-3 font-medium">{d.name}</td>
                   <td className="text-muted-foreground px-4 py-3 font-mono text-xs">{d.code}</td>
                   <td className="text-muted-foreground px-4 py-3">{d.description ?? "-"}</td>
+                  <td className="text-muted-foreground px-4 py-3 tabular-nums">
+                    {d._count.employees}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline" className="text-xs">
+                      {d.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </td>
+                  {canWrite && (
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="Edit"
+                          onClick={() => openEdit(d)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title={d.isActive ? "Deactivate" : "Activate"}
+                          disabled={activeMut.isPending}
+                          onClick={() => activeMut.mutate({ id: d.id, isActive: !d.isActive })}
+                        >
+                          <Power className="h-3.5 w-3.5" />
+                        </Button>
+                        {d._count.employees === 0 && d._count.jobPostings === 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:bg-destructive/10 h-7 w-7"
+                            title="Delete permanently"
+                            disabled={purgeMut.isPending}
+                            onClick={() => {
+                              if (confirm(`Permanently delete "${d.name}"? This cannot be undone.`))
+                                purgeMut.mutate(d.id)
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -129,10 +250,10 @@ export default function DepartmentsPage() {
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(o) => (o ? setDialogOpen(true) : closeDialog())}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Department</DialogTitle>
+            <DialogTitle>{editing ? "Edit Department" : "Add Department"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
@@ -165,24 +286,27 @@ export default function DepartmentsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={closeDialog}>
               Cancel
             </Button>
             <Button
-              disabled={!name.trim() || !code.trim() || createMut.isPending}
+              disabled={!name.trim() || !code.trim() || saveMut.isPending}
               onClick={() =>
-                createMut.mutate({
+                saveMut.mutate({
+                  id: editing?.id,
                   name: name.trim(),
                   code: code.trim(),
                   description: description.trim() || undefined,
                 })
               }
             >
-              {createMut.isPending ? (
+              {saveMut.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Saving...
                 </>
+              ) : editing ? (
+                "Save"
               ) : (
                 "Create"
               )}

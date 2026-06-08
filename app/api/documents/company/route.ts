@@ -10,10 +10,18 @@ export const GET = withAuth(
     try {
       const { searchParams } = new URL(req.url)
       const category = searchParams.get("category")
+      const search = searchParams.get("search")?.trim()
 
       const where: Record<string, unknown> = { isCompanyDoc: true }
       if (category) {
         where.category = category
+      }
+      if (search) {
+        where.OR = [
+          { title: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+          { fileName: { contains: search, mode: "insensitive" } },
+        ]
       }
 
       const documents = await db.document.findMany({

@@ -5,7 +5,7 @@ import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
 export const GET = withAuth(
-  PERMISSIONS.ATTENDANCE_READ,
+  PERMISSIONS.ATTENDANCE_WRITE,
   async (_req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
     try {
       const { id } = ctx.params

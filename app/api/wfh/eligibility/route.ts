@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession } from "@/lib/permissions"
+import { isOnProbation, getProbationEndDate } from "@/lib/probation"
 import type { Session } from "next-auth"
 
 export const GET = withSession(
@@ -8,36 +9,33 @@ export const GET = withSession(
     try {
       const employee = await db.employee.findUnique({
         where: { id: session.user.id },
-        select: { probationEndDate: true, confirmationDate: true, dateOfJoining: true },
+        select: { onProbation: true, probationMonths: true, dateOfJoining: true },
       })
 
       const now = new Date()
-      const probationEnd = employee?.probationEndDate ?? employee?.confirmationDate ?? null
+      const probationEnd = getProbationEndDate(employee ?? {})
+      const onProbation = employee ? isOnProbation(employee, now) : true
+
+      // Tier 3 unlocks 6 months after probation ends.
+      const tier3From = probationEnd ? new Date(probationEnd) : null
+      if (tier3From) tier3From.setMonth(tier3From.getMonth() + 6)
 
       let tier: 1 | 2 | 3 = 1
       let eligibleFromDate: string | null = null
       let label = ""
 
-      if (!probationEnd || now < new Date(probationEnd)) {
+      if (onProbation) {
         tier = 1
         label = "On Probation - WFH allowed only in emergencies (Manager + HR approval required)"
-        if (probationEnd) {
-          const sixMonthsAfter = new Date(probationEnd)
-          sixMonthsAfter.setMonth(sixMonthsAfter.getMonth() + 6)
-          eligibleFromDate = sixMonthsAfter.toISOString().split("T")[0]
-        }
+        eligibleFromDate = tier3From ? tier3From.toISOString().split("T")[0] : null
+      } else if (tier3From && now < tier3From) {
+        tier = 2
+        label =
+          "Within 6 months of probation completion - WFH allowed only in emergencies (Manager + HR approval required)"
+        eligibleFromDate = tier3From.toISOString().split("T")[0]
       } else {
-        const sixMonthsAfter = new Date(probationEnd)
-        sixMonthsAfter.setMonth(sixMonthsAfter.getMonth() + 6)
-        if (now < sixMonthsAfter) {
-          tier = 2
-          label =
-            "Within 6 months of probation completion - WFH allowed only in emergencies (Manager + HR approval required)"
-          eligibleFromDate = sixMonthsAfter.toISOString().split("T")[0]
-        } else {
-          tier = 3
-          label = "Eligible for 1 WFH day per month"
-        }
+        tier = 3
+        label = "Eligible for 1 WFH day per month"
       }
 
       // For tier 3, return WFH usage this month

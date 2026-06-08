@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { withSession, hasPermission } from "@/lib/permissions"
 import { db } from "@/lib/db"
-import { uploadFile, getObjectKey } from "@/lib/storage"
+import { uploadFile, getObjectKey, ensureBucket } from "@/lib/storage"
 import { PERMISSIONS, ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from "@/lib/constants"
 import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
@@ -10,15 +10,17 @@ import type { DocumentCategory } from "@prisma/client"
 /**
  * GET /api/employees/[id]/documents
  * Returns the personal document list for an employee.
- * Allowed when the caller has document:read OR is viewing their own profile.
+ * Allowed when viewing your OWN locker, or when you're HR (employee:read).
+ * Note: every employee has document:read (for company docs), so that can't gate
+ * access to another person's *personal* locker.
  */
 export const GET = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
       const { id } = ctx.params
-      const canRead = hasPermission(session, PERMISSIONS.DOCUMENT_READ)
+      const canViewOthers = hasPermission(session, PERMISSIONS.EMPLOYEE_READ)
       const isSelf = session.user.id === id
-      if (!canRead && !isSelf) {
+      if (!canViewOthers && !isSelf) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
 
@@ -95,6 +97,7 @@ export const POST = withSession(
       const objectKey = getObjectKey(`employee-documents/${employeeId}`, file.name, docId)
 
       const buffer = Buffer.from(await file.arrayBuffer())
+      await ensureBucket()
       await uploadFile(objectKey, buffer, file.type, file.size)
 
       const document = await db.employeeDocument.create({

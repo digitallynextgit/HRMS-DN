@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth, withSession } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { computeAttendanceStatus } from "@/lib/attendance"
 import type { Session } from "next-auth"
 
 export const GET = withSession(
@@ -74,13 +75,22 @@ export const PATCH = withAuth(
             : null
           : existing.checkOut
 
+      let resolvedWorkHours: number | null = null
       if (resolvedCheckIn && resolvedCheckOut) {
         const diff = resolvedCheckOut.getTime() - resolvedCheckIn.getTime()
         if (diff > 0) {
-          updateData.workHours = Math.round((diff / (1000 * 60 * 60)) * 100) / 100
+          resolvedWorkHours = Math.round((diff / (1000 * 60 * 60)) * 100) / 100
         }
-      } else {
-        updateData.workHours = null
+      }
+      updateData.workHours = resolvedWorkHours
+
+      // When the times changed but no explicit status was sent, re-derive the
+      // status from hours worked (half-day / absent). Late-mark not applied yet.
+      if (body.status === undefined && (body.checkIn !== undefined || body.checkOut !== undefined)) {
+        updateData.status = computeAttendanceStatus({
+          checkIn: resolvedCheckIn,
+          workHours: resolvedWorkHours,
+        })
       }
 
       const updated = await db.attendanceLog.update({

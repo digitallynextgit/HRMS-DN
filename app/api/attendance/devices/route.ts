@@ -5,7 +5,7 @@ import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
 export const GET = withAuth(
-  PERMISSIONS.ATTENDANCE_READ,
+  PERMISSIONS.ATTENDANCE_WRITE,
   async (_req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
     try {
       const devices = await db.hikvisionDevice.findMany({

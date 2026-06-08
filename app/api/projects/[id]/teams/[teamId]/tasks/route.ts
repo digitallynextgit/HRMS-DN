@@ -5,6 +5,7 @@ import { logActivity } from "@/lib/activity"
 import { PERMISSIONS } from "@/lib/constants"
 import { createNotification } from "@/lib/notifications"
 import { sendEmail } from "@/lib/mailer"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // GET /api/projects/[id]/teams/[teamId]/tasks — list tasks for team (all project members can view)
@@ -131,15 +132,12 @@ export const POST = withSession(
         }
       } catch (_e) { /* non-blocking */ }
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "CREATE",
-          module: "project",
-          entityType: "ProjectTask",
-          entityId: task.id,
-          changes: { teamId, title: task.title, assigneeId: finalAssigneeId, approvalStatus, isManagerCreated },
-        },
+      await createAuditLog(session, {
+        action: "CREATE",
+        module: "project",
+        entityType: "ProjectTask",
+        entityId: task.id,
+        changes: { teamId, title: task.title, assigneeId: finalAssigneeId, approvalStatus, isManagerCreated },
       })
 
       await logActivity({

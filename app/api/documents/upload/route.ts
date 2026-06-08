@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import { withAuth } from "@/lib/permissions"
-import { uploadFile, getObjectKey } from "@/lib/storage"
+import { uploadFile, getObjectKey, ensureBucket } from "@/lib/storage"
 import { db } from "@/lib/db"
 import { uploadDocumentSchema } from "@/lib/schemas/document"
 import { PERMISSIONS, ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from "@/lib/constants"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 export const POST = withAuth(
@@ -52,6 +53,7 @@ export const POST = withAuth(
       const objectKey = getObjectKey(`documents/${meta.employeeId || "company"}`, file.name, id)
 
       const buffer = Buffer.from(await file.arrayBuffer())
+      await ensureBucket()
       await uploadFile(objectKey, buffer, file.type, file.size)
 
       const isCompanyDoc = !meta.employeeId
@@ -73,25 +75,22 @@ export const POST = withAuth(
         },
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "document.upload",
-          module: "document",
-          entityType: "Document",
-          entityId: document.id,
-          changes: {
-            title: document.title,
-            category: document.category,
-            fileName: document.fileName,
-            fileSize: document.fileSize,
-            employeeId: document.employeeId,
-            isCompanyDoc: document.isCompanyDoc,
-          },
-          ipAddress:
-            req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip") ?? undefined,
-          userAgent: req.headers.get("user-agent") ?? undefined,
+      // Routed through createAuditLog so super_admin actions stay unlogged.
+      await createAuditLog(session, {
+        action: "document.upload",
+        module: "document",
+        entityType: "Document",
+        entityId: document.id,
+        changes: {
+          title: document.title,
+          category: document.category,
+          fileName: document.fileName,
+          fileSize: document.fileSize,
+          employeeId: document.employeeId,
+          isCompanyDoc: document.isCompanyDoc,
         },
+        ipAddress: req.headers.get("x-forwarded-for") ?? req.headers.get("x-real-ip"),
+        userAgent: req.headers.get("user-agent"),
       })
 
       return NextResponse.json({ data: document }, { status: 201 })

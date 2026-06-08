@@ -30,12 +30,18 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useSidebarStore } from "@/stores/sidebar-store"
 import { PERMISSIONS } from "@/lib/constants"
 
+interface NavChild {
+  label: string
+  href: string
+  permission?: string
+}
+
 interface NavItem {
   label: string
   href?: string
   icon: React.ElementType
   permission?: string
-  children?: { label: string; href: string }[]
+  children?: NavChild[]
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -51,6 +57,7 @@ const NAV_ITEMS: NavItem[] = [
     permission: PERMISSIONS.EMPLOYEE_READ,
     children: [
       { label: "Employee Directory", href: "/employees" },
+      { label: "Bulk Import", href: "/employees/import", permission: PERMISSIONS.EMPLOYEE_WRITE },
       { label: "Departments", href: "/employees/departments" },
       { label: "Designations", href: "/employees/designations" },
     ],
@@ -63,13 +70,13 @@ const NAV_ITEMS: NavItem[] = [
     icon: Clock,
     permission: PERMISSIONS.ATTENDANCE_READ,
     children: [
-      { label: "Overview", href: "/attendance" },
+      { label: "Overview", href: "/attendance", permission: PERMISSIONS.ATTENDANCE_WRITE },
       { label: "My Attendance", href: "/attendance/me" },
-      { label: "GPS Check-In", href: "/attendance/checkin" },
-      { label: "QR Kiosk", href: "/attendance/kiosk" },
-      { label: "CSV Import", href: "/attendance/import" },
-      { label: "Devices", href: "/attendance/devices" },
+      { label: "Imports", href: "/attendance/import", permission: PERMISSIONS.ATTENDANCE_WRITE },
+      { label: "Devices", href: "/attendance/devices", permission: PERMISSIONS.ATTENDANCE_WRITE },
       { label: "Holidays", href: "/attendance/holidays" },
+      { label: "Floating Holidays", href: "/attendance/floating-holidays" },
+      { label: "Regularization", href: "/attendance/regularizations" },
     ],
   },
   {
@@ -79,8 +86,9 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "My Leaves", href: "/leave" },
       { label: "Apply Leave", href: "/leave/apply" },
-      { label: "Team Leaves", href: "/leave/team" },
-      { label: "Leave Types", href: "/leave/types" },
+      { label: "Leave Calendar", href: "/leave/calendar" },
+      { label: "Team Leaves", href: "/leave/team", permission: PERMISSIONS.LEAVE_APPROVE },
+      { label: "Leave Types", href: "/leave/types", permission: PERMISSIONS.LEAVE_APPROVE },
     ],
   },
   {
@@ -90,7 +98,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "My WFH", href: "/wfh" },
       { label: "Apply WFH", href: "/wfh/apply" },
-      { label: "Team WFH", href: "/wfh/team" },
+      { label: "Team WFH", href: "/wfh/team", permission: PERMISSIONS.WFH_APPROVE },
     ],
   },
   {
@@ -98,9 +106,13 @@ const NAV_ITEMS: NavItem[] = [
     icon: DollarSign,
     permission: PERMISSIONS.PAYROLL_READ,
     children: [
-      { label: "Overview", href: "/payroll" },
+      { label: "Overview", href: "/payroll", permission: PERMISSIONS.PAYROLL_WRITE },
       { label: "My Payslips", href: "/payroll/me" },
-      { label: "Salary Structures", href: "/payroll/salary-structures" },
+      {
+        label: "Salary Structures",
+        href: "/payroll/salary-structures",
+        permission: PERMISSIONS.PAYROLL_WRITE,
+      },
     ],
   },
   {
@@ -117,9 +129,11 @@ const NAV_ITEMS: NavItem[] = [
     icon: Star,
     permission: PERMISSIONS.PERFORMANCE_READ,
     children: [
+      { label: "Evaluations", href: "/performance/evaluations" },
       { label: "Reviews", href: "/performance" },
       { label: "My Review", href: "/performance/me" },
       { label: "Goals", href: "/performance/goals" },
+      { label: "KPIs", href: "/performance/kpis", permission: PERMISSIONS.PERFORMANCE_REVIEW },
     ],
   },
   {
@@ -165,7 +179,11 @@ const ADMIN_ITEMS: NavItem[] = [
   },
 ]
 
-function canAccess(item: NavItem, permissions: string[], roles: string[]): boolean {
+function canAccess(
+  item: { permission?: string },
+  permissions: string[],
+  roles: string[],
+): boolean {
   if (roles.includes("super_admin")) return true
   if (!item.permission) return true
   return permissions.includes(item.permission)
@@ -187,7 +205,11 @@ function SidebarNavItem({ item, isCollapsed, permissions, roles }: SidebarNavIte
   if (!canAccess(item, permissions, roles)) return null
 
   if (item.children) {
-    const isActive = item.children.some((c) => pathname.startsWith(c.href))
+    // Hide individual sub-items the user lacks permission for; hide the whole
+    // group if nothing is left visible.
+    const visibleChildren = item.children.filter((c) => canAccess(c, permissions, roles))
+    if (visibleChildren.length === 0) return null
+    const isActive = visibleChildren.some((c) => pathname.startsWith(c.href))
 
     if (isCollapsed) {
       return (
@@ -235,7 +257,7 @@ function SidebarNavItem({ item, isCollapsed, permissions, roles }: SidebarNavIte
         </button>
         {open && (
           <div className="border-border mt-0.5 ml-[26px] space-y-0.5 border-l pl-3">
-            {item.children.map((child) => {
+            {visibleChildren.map((child) => {
               const childActive = pathname === child.href || pathname.startsWith(child.href + "/")
               return (
                 <Link

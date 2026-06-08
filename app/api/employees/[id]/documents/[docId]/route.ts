@@ -14,9 +14,11 @@ export const GET = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
       const { id: employeeId, docId } = ctx.params
-      const canRead = hasPermission(session, PERMISSIONS.DOCUMENT_READ)
+      // Every employee has document:read (company docs), so gate access to
+      // someone else's personal file on employee:read (HR) instead.
+      const canViewOthers = hasPermission(session, PERMISSIONS.EMPLOYEE_READ)
       const isSelf = session.user.id === employeeId
-      if (!canRead && !isSelf) {
+      if (!canViewOthers && !isSelf) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
       }
 

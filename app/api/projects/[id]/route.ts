@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth, withSession } from "@/lib/permissions"
+import { createAuditLog } from "@/lib/audit"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
@@ -80,15 +81,12 @@ export const PATCH = withAuth(
         },
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "UPDATE",
-          module: "project",
-          entityType: "Project",
-          entityId: ctx.params.id,
-          changes: { name, description, status, priority, startDate, budget, accountManagerId, isArchived, currentPhaseId } as object,
-        },
+      await createAuditLog(session, {
+        action: "UPDATE",
+        module: "project",
+        entityType: "Project",
+        entityId: ctx.params.id,
+        changes: { name, description, status, priority, startDate, budget, accountManagerId, isArchived, currentPhaseId } as object,
       })
 
       return NextResponse.json({ data: project })

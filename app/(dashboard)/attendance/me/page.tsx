@@ -30,7 +30,9 @@ export default function MyAttendancePage() {
   // Summary cards
   const presentDays = logs.filter((l) => l.status === "PRESENT").length
   const absentDays = logs.filter((l) => l.status === "ABSENT").length
-  const lateDays = logs.filter((l) => l.status === "LATE").length
+  const halfDays = logs.filter((l) => l.status === "HALF_DAY").length
+  // Late-mark tracking disabled for now (do not delete):
+  // const lateDays = logs.filter((l) => l.status === "LATE").length
   const workingLogs = logs.filter(
     (l) => l.workHours !== null && l.workHours !== undefined && l.workHours > 0,
   )
@@ -62,12 +64,20 @@ export default function MyAttendancePage() {
           iconBg="bg-red-50"
         />
         <StatCard
+          title="Half Days"
+          value={isLoading ? "-" : halfDays}
+          icon={Clock}
+          iconColor="text-amber-600"
+          iconBg="bg-amber-50"
+        />
+        {/* Late-mark tracking disabled for now (do not delete):
+        <StatCard
           title="Late Days"
           value={isLoading ? "-" : lateDays}
           icon={Clock}
           iconColor="text-orange-600"
           iconBg="bg-orange-50"
-        />
+        /> */}
         <StatCard
           title="Avg Work Hours"
           value={isLoading ? "-" : `${avgHours}h`}

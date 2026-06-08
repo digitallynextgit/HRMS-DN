@@ -20,6 +20,10 @@ const emergencyContactSchema = z
   .optional()
 
 export const createEmployeeSchema = z.object({
+  // Optional override for the employee code/number. Blank or omitted ⇒ auto-generated
+  // as EMP-YYYY-####. When provided, must be unique across the table.
+  employeeNo: z.string().trim().min(1).max(32).optional(),
+
   // Personal
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -41,6 +45,20 @@ export const createEmployeeSchema = z.object({
   employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]).default("FULL_TIME"),
   dateOfJoining: z.string().optional(),
   probationEndDate: z.string().optional(),
+  // Offboarding
+  status: z.enum(["ACTIVE", "ON_LEAVE", "SUSPENDED", "RESIGNED", "TERMINATED"]).optional(),
+  resignationDate: z.string().optional(),
+  lastWorkingDate: z.string().optional(),
+  // Biometric device person ID (e.g. Hikvision "Employee ID") used to match
+  // imported/synced punches to this employee.
+  deviceId: z.string().optional(),
+  // Probation (admin-controlled). Effective status is computed from dateOfJoining + probationMonths.
+  onProbation: z.boolean().optional(),
+  probationMonths: z.coerce
+    .number()
+    .int()
+    .refine((v) => v === 3 || v === 6, "Probation must be 3 or 6 months")
+    .optional(),
   workLocation: z.string().optional(),
 
   // Address & Emergency
@@ -50,6 +68,13 @@ export const createEmployeeSchema = z.object({
 
   // Optional initial password
   password: z.string().min(8).optional(),
+
+  // Required Gmail App Password (16-char string Google generates).
+  // We strip spaces before validation since Google formats it as "abcd efgh ijkl mnop".
+  gmailAppPassword: z
+    .string()
+    .transform((s) => s.replace(/\s+/g, ""))
+    .pipe(z.string().min(16, "Gmail App Password must be 16 characters").max(16)),
 })
 
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>

@@ -1,6 +1,6 @@
 "use client"
 
-import { use } from "react"
+import { use, useState } from "react"
 import Link from "next/link"
 import {
   ChevronLeft,
@@ -14,18 +14,24 @@ import {
   ShieldCheck,
   CalendarDays,
   Wallet,
+  Upload,
 } from "lucide-react"
 import { EmployeeLeaveTab } from "@/components/employees/employee-leave-tab"
 import { EmployeeSalaryTab } from "@/components/employees/employee-salary-tab"
+import { DocumentList } from "@/components/documents/document-list"
+import { DocumentUploadDialog } from "@/components/documents/document-upload-dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { EmployeeAdminActions } from "@/components/employees/employee-admin-actions"
+import { ManageRolesDialog } from "@/components/employees/manage-roles-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { useEmployee } from "@/hooks/use-employees"
 import { usePermissions } from "@/hooks/use-permissions"
+import { getProbationStatus } from "@/lib/probation"
 import { cn, getInitials, getAvatarColor, formatDate } from "@/lib/utils"
 import {
   EMPLOYEE_STATUS_COLORS,
@@ -72,6 +78,7 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
   const { id } = use(params)
   const { data, isLoading, error } = useEmployee(id)
   const { can } = usePermissions()
+  const [uploadOpen, setUploadOpen] = useState(false)
 
   if (isLoading) return <ProfileSkeleton />
 
@@ -95,6 +102,9 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
   const avatarBg = getAvatarColor(fullName)
   const statusColor = EMPLOYEE_STATUS_COLORS[emp.status] ?? "bg-gray-100 text-gray-700"
   const statusLabel = EMPLOYEE_STATUS_LABELS[emp.status] ?? emp.status
+  const probation = getProbationStatus(emp)
+  const canUploadDocs = can(PERMISSIONS.DOCUMENT_WRITE)
+  const canDeleteDocs = can(PERMISSIONS.DOCUMENT_DELETE)
 
   const ca = (emp.currentAddress ?? {}) as Record<string, string>
   const pa = (emp.permanentAddress ?? {}) as Record<string, string>
@@ -116,15 +126,10 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
           <div className="flex flex-col items-start gap-6 sm:flex-row">
             {/* Avatar */}
             <Avatar className="h-24 w-24 shrink-0">
-              {emp.profilePhoto ? (
-                <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
-                  {initials}
-                </AvatarFallback>
-              ) : (
-                <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
-                  {initials}
-                </AvatarFallback>
-              )}
+              {emp.profilePhoto && <AvatarImage src={emp.profilePhoto} alt={fullName} />}
+              <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
+                {initials}
+              </AvatarFallback>
             </Avatar>
 
             {/* Name block */}
@@ -149,12 +154,15 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
                 </div>
 
                 {can(PERMISSIONS.EMPLOYEE_WRITE) && (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/employees/${emp.id}/edit`} className="flex items-center gap-1.5">
-                      <Pencil className="h-3.5 w-3.5" />
-                      Edit
-                    </Link>
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <EmployeeAdminActions employeeId={emp.id} status={emp.status} />
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/employees/${emp.id}/edit`} className="flex items-center gap-1.5">
+                        <Pencil className="h-3.5 w-3.5" />
+                        Edit
+                      </Link>
+                    </Button>
+                  </div>
                 )}
               </div>
 
@@ -171,6 +179,15 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
                 >
                   {statusLabel}
                 </span>
+                {probation.onProbation && (
+                  <Badge
+                    variant="outline"
+                    className="border-amber-300 bg-amber-50 text-xs text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400"
+                  >
+                    On Probation
+                    {probation.endDate ? ` · until ${formatDate(probation.endDate.toISOString())}` : ""}
+                  </Badge>
+                )}
               </div>
 
               {/* Contact row */}
@@ -320,20 +337,33 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
         <TabsContent value="documents">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <FileText className="h-4 w-4" />
-                Documents
-                {emp._count?.documents != null && (
-                  <Badge variant="secondary">{emp._count.documents}</Badge>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <FileText className="h-4 w-4" />
+                  Documents
+                </CardTitle>
+                {canUploadDocs && (
+                  <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
+                    <Upload className="mr-2 h-3.5 w-3.5" />
+                    Upload
+                  </Button>
                 )}
-              </CardTitle>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Documents will load here. The Documents module (M3) will populate this tab.
-              </p>
+              <DocumentList
+                employeeId={emp.id}
+                canUpload={canUploadDocs}
+                canDelete={canDeleteDocs}
+                onUploadClick={() => setUploadOpen(true)}
+              />
             </CardContent>
           </Card>
+          <DocumentUploadDialog
+            open={uploadOpen}
+            onOpenChange={setUploadOpen}
+            employeeId={emp.id}
+          />
         </TabsContent>
 
         {/* ── Leave Tab ─────────────────────────────────────────────────────── */}
@@ -356,9 +386,11 @@ export default function EmployeeProfilePage({ params }: { params: Promise<{ id: 
                   Assigned Roles
                 </CardTitle>
                 {can(PERMISSIONS.ROLE_WRITE) && (
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/admin/roles?employeeId=${emp.id}`}>Manage Roles</Link>
-                  </Button>
+                  <ManageRolesDialog
+                    employeeId={emp.id}
+                    employeeName={`${emp.firstName} ${emp.lastName}`}
+                    currentRoleIds={(emp.employeeRoles ?? []).map((er) => er.role.id)}
+                  />
                 )}
               </div>
             </CardHeader>

@@ -3,10 +3,11 @@
 import { useState } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Pencil, Power, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Badge } from "@/components/ui/badge"
 import {
   Dialog,
   DialogContent,
@@ -18,33 +19,57 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { PageHeader } from "@/components/shared/page-header"
 import { usePermissions } from "@/hooks/use-permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { cn } from "@/lib/utils"
 
 interface Designation {
   id: string
   title: string
   level: number
+  isActive: boolean
+  _count: { employees: number }
 }
 
 async function fetchDesignations(): Promise<{ data: Designation[] }> {
-  const res = await fetch("/api/designations")
+  const res = await fetch("/api/designations?includeInactive=true")
   if (!res.ok) throw new Error("Failed to fetch designations")
   return res.json()
 }
 
-async function createDesignation(body: {
+async function saveDesignation(body: {
+  id?: string
   title: string
   level: number
 }): Promise<{ data: Designation }> {
-  const res = await fetch("/api/designations", {
-    method: "POST",
+  const res = await fetch(body.id ? `/api/designations/${body.id}` : "/api/designations", {
+    method: body.id ? "PATCH" : "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ title: body.title, level: body.level }),
   })
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Failed to create designation" }))
-    throw new Error(err.error || "Failed to create designation")
+    const err = await res.json().catch(() => ({ error: "Failed to save designation" }))
+    throw new Error(err.error || "Failed to save designation")
   }
   return res.json()
+}
+
+async function patchActive(id: string, isActive: boolean): Promise<void> {
+  const res = await fetch(`/api/designations/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ isActive }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Failed to update designation" }))
+    throw new Error(err.error || "Failed to update designation")
+  }
+}
+
+async function purgeDesignation(id: string): Promise<void> {
+  const res = await fetch(`/api/designations/${id}?permanent=true`, { method: "DELETE" })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Failed to delete designation" }))
+    throw new Error(err.error || "Failed to delete designation")
+  }
 }
 
 export default function DesignationsPage() {
@@ -53,25 +78,68 @@ export default function DesignationsPage() {
   const queryClient = useQueryClient()
 
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [editing, setEditing] = useState<Designation | null>(null)
   const [title, setTitle] = useState("")
   const [level, setLevel] = useState<string>("1")
 
   const { data, isLoading } = useQuery({
-    queryKey: ["designations"],
+    queryKey: ["designations-admin"],
     queryFn: fetchDesignations,
   })
 
-  const createMut = useMutation({
-    mutationFn: createDesignation,
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["designations-admin"] })
+    queryClient.invalidateQueries({ queryKey: ["designations"] })
+  }
+
+  const saveMut = useMutation({
+    mutationFn: saveDesignation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["designations"] })
-      toast.success("Designation created")
-      setDialogOpen(false)
-      setTitle("")
-      setLevel("1")
+      invalidate()
+      toast.success(editing ? "Designation updated" : "Designation created")
+      closeDialog()
     },
     onError: (e: Error) => toast.error(e.message),
   })
+
+  const activeMut = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => patchActive(id, isActive),
+    onSuccess: (_d, v) => {
+      invalidate()
+      toast.success(v.isActive ? "Designation activated" : "Designation deactivated")
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const purgeMut = useMutation({
+    mutationFn: purgeDesignation,
+    onSuccess: () => {
+      invalidate()
+      toast.success("Designation deleted")
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  function openCreate() {
+    setEditing(null)
+    setTitle("")
+    setLevel("1")
+    setDialogOpen(true)
+  }
+
+  function openEdit(d: Designation) {
+    setEditing(d)
+    setTitle(d.title)
+    setLevel(String(d.level))
+    setDialogOpen(true)
+  }
+
+  function closeDialog() {
+    setDialogOpen(false)
+    setEditing(null)
+    setTitle("")
+    setLevel("1")
+  }
 
   const designations = data?.data ?? []
 
@@ -82,7 +150,7 @@ export default function DesignationsPage() {
         description={`${designations.length} designation${designations.length !== 1 ? "s" : ""} total`}
         actions={
           canWrite ? (
-            <Button onClick={() => setDialogOpen(true)} className="gap-2">
+            <Button onClick={openCreate} className="gap-2">
               <Plus className="h-4 w-4" />
               Add Designation
             </Button>
@@ -98,22 +166,76 @@ export default function DesignationsPage() {
             ))}
           </div>
         ) : designations.length === 0 ? (
-          <div className="text-muted-foreground py-12 text-center text-sm">
-            No designations yet.
-          </div>
+          <div className="text-muted-foreground py-12 text-center text-sm">No designations yet.</div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted/40 border-b">
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Title</th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">Level</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Employees</th>
+                <th className="text-muted-foreground px-4 py-3 text-left font-medium">Status</th>
+                {canWrite && (
+                  <th className="text-muted-foreground px-4 py-3 text-right font-medium">Actions</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y">
               {designations.map((d) => (
-                <tr key={d.id} className="hover:bg-muted/20 transition-colors">
+                <tr
+                  key={d.id}
+                  className={cn("hover:bg-muted/20 transition-colors", !d.isActive && "opacity-60")}
+                >
                   <td className="px-4 py-3 font-medium">{d.title}</td>
                   <td className="text-muted-foreground px-4 py-3">L{d.level}</td>
+                  <td className="text-muted-foreground px-4 py-3 tabular-nums">
+                    {d._count.employees}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge variant="outline" className="text-xs">
+                      {d.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </td>
+                  {canWrite && (
+                    <td className="px-4 py-3">
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="Edit"
+                          onClick={() => openEdit(d)}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title={d.isActive ? "Deactivate" : "Activate"}
+                          disabled={activeMut.isPending}
+                          onClick={() => activeMut.mutate({ id: d.id, isActive: !d.isActive })}
+                        >
+                          <Power className="h-3.5 w-3.5" />
+                        </Button>
+                        {d._count.employees === 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:bg-destructive/10 h-7 w-7"
+                            title="Delete permanently"
+                            disabled={purgeMut.isPending}
+                            onClick={() => {
+                              if (confirm(`Permanently delete "${d.title}"? This cannot be undone.`))
+                                purgeMut.mutate(d.id)
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -121,10 +243,10 @@ export default function DesignationsPage() {
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(o) => (o ? setDialogOpen(true) : closeDialog())}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Designation</DialogTitle>
+            <DialogTitle>{editing ? "Edit Designation" : "Add Designation"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
@@ -149,23 +271,26 @@ export default function DesignationsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            <Button variant="outline" onClick={closeDialog}>
               Cancel
             </Button>
             <Button
-              disabled={!title.trim() || createMut.isPending}
+              disabled={!title.trim() || saveMut.isPending}
               onClick={() =>
-                createMut.mutate({
+                saveMut.mutate({
+                  id: editing?.id,
                   title: title.trim(),
                   level: Number(level) || 1,
                 })
               }
             >
-              {createMut.isPending ? (
+              {saveMut.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Saving...
                 </>
+              ) : editing ? (
+                "Save"
               ) : (
                 "Create"
               )}

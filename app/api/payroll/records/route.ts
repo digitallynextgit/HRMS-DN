@@ -1,27 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withAuth } from "@/lib/permissions"
+import { withAuth, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { createNotification } from "@/lib/notifications"
 import type { Session } from "next-auth"
 
-/**
- * Returns the number of business days (Mon–Fri) in a given month/year.
- */
-function getBusinessDaysInMonth(year: number, month: number): number {
-  // month is 1-based
-  const daysInMonth = new Date(year, month, 0).getDate()
-  let count = 0
-  for (let d = 1; d <= daysInMonth; d++) {
-    const day = new Date(year, month - 1, d).getDay()
-    if (day !== 0 && day !== 6) count++
-  }
-  return count
-}
-
 export const GET = withAuth(
   PERMISSIONS.PAYROLL_READ,
-  async (req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
+  async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {
     try {
       const { searchParams } = new URL(req.url)
       const month = searchParams.get("month") ? Number(searchParams.get("month")) : undefined
@@ -33,7 +19,12 @@ export const GET = withAuth(
       if (month) where.month = month
       if (year) where.year = year
       if (status) where.status = status
-      if (employeeId) where.employeeId = employeeId
+      // HR (payroll:write) sees everyone; employees only their own payslips.
+      if (hasPermission(session, PERMISSIONS.PAYROLL_WRITE)) {
+        if (employeeId) where.employeeId = employeeId
+      } else {
+        where.employeeId = session.user.id
+      }
 
       const records = await db.payrollRecord.findMany({
         where,
@@ -103,7 +94,12 @@ export const POST = withAuth(
         )
       }
 
-      const workingDays = getBusinessDaysInMonth(yearNum, monthNum)
+      // Pay model: a flat 1/30 of the monthly salary per day (fixed 30-day
+      // divisor), paid across the actual calendar days of the month minus unpaid
+      // days. So a 31-day month pays salary×31/30, a 28-day month salary×28/30,
+      // and one unpaid day docks exactly salary/30.
+      const daysInMonth = new Date(yearNum, monthNum, 0).getDate()
+      const STANDARD_MONTH_DAYS = 30
 
       // Month boundaries for attendance and leave queries
       const monthStart = new Date(yearNum, monthNum - 1, 1)
@@ -148,10 +144,13 @@ export const POST = withAuth(
               status: "APPROVED",
               OR: [{ startDate: { lte: monthEnd }, endDate: { gte: monthStart } }],
             },
+            include: { leaveType: { select: { code: true } } },
           })
 
-          // Count approved leave days that fall in this month
+          // Count approved leave days that fall in this month. LWP (unpaid) is
+          // tracked separately so it never counts as a paid/earned day.
           let leaveDaysInMonth = 0
+          let lwpDays = 0
           for (const leave of approvedLeaves) {
             const leaveStart = leave.startDate > monthStart ? leave.startDate : monthStart
             const leaveEnd = leave.endDate < monthEnd ? leave.endDate : monthEnd
@@ -159,56 +158,56 @@ export const POST = withAuth(
             const start = new Date(leaveStart)
             const end = new Date(leaveEnd)
             const curr = new Date(start)
+            let days = 0
             while (curr <= end) {
               const day = curr.getDay()
-              if (day !== 0 && day !== 6) leaveDaysInMonth++
+              if (day !== 0 && day !== 6) days++
               curr.setDate(curr.getDate() + 1)
             }
+            if (leave.leaveType.code === "LWP") lwpDays += days
+            else leaveDaysInMonth += days
           }
 
-          // Present days from attendance logs (PRESENT, LATE, HALF_DAY count)
-          let presentDays = 0
-          for (const log of attendanceLogs) {
-            if (log.status === "PRESENT" || log.status === "LATE") presentDays += 1
-            else if (log.status === "HALF_DAY") presentDays += 0.5
-            else if (log.status === "ON_LEAVE") presentDays += 1 // approved leave counts
+          // ── Unpaid (loss-of-pay) days ──────────────────────────────────────
+          // Each unpaid day docks a flat 1/30 of the monthly salary. Unpaid =
+          // LWP + absences NOT covered by approved paid leave (half-day = 0.5).
+          // Approved PAID leave is fully paid. No attendance data → only LWP docks.
+          let lopDays = lwpDays
+          if (attendanceLogs.length > 0) {
+            const absentDays = attendanceLogs.filter((l) => l.status === "ABSENT").length
+            const halfDays = attendanceLogs.filter((l) => l.status === "HALF_DAY").length
+            lopDays += absentDays + 0.5 * halfDays
           }
+          lopDays = Math.min(lopDays, daysInMonth)
 
-          // LOP = absent days not covered by approved leave
-          const absentDays = attendanceLogs.filter((l) => l.status === "ABSENT").length
-          const lopDays = Math.max(
-            0,
-            absentDays -
-              Math.max(
-                0,
-                leaveDaysInMonth - attendanceLogs.filter((l) => l.status === "ON_LEAVE").length,
-              ),
-          )
-
-          // If no attendance data at all, assume full attendance
-          const effectivePresentDays =
-            attendanceLogs.length === 0
-              ? workingDays
-              : Math.min(presentDays + leaveDaysInMonth, workingDays)
-
-          const ratio = workingDays > 0 ? effectivePresentDays / workingDays : 1
+          // Pay = (monthly salary ÷ 30) × (calendar days in month − unpaid days).
+          const payableDays = Math.max(0, daysInMonth - lopDays)
+          const ratio = payableDays / STANDARD_MONTH_DAYS
 
           // Scale earnings proportionally
           const basicSalary = Math.round(ss.basicSalary * ratio * 100) / 100
           const hra = Math.round(ss.hra * ratio * 100) / 100
           const conveyance = Math.round(ss.conveyance * ratio * 100) / 100
           const medicalAllowance = Math.round(ss.medicalAllowance * ratio * 100) / 100
+          const telephoneAllowance = Math.round(ss.telephoneAllowance * ratio * 100) / 100
           const otherAllowances = Math.round(ss.otherAllowances * ratio * 100) / 100
           const overtime = 0
 
           const grossSalary =
-            basicSalary + hra + conveyance + medicalAllowance + otherAllowances + overtime
+            basicSalary +
+            hra +
+            conveyance +
+            medicalAllowance +
+            telephoneAllowance +
+            otherAllowances +
+            overtime
 
-          // Deductions are fixed (not prorated)
-          const pfEmployee = ss.pfEmployee
-          const pfEmployer = ss.pfEmployer
-          const esi = ss.esi
-          const tds = ss.tds
+          // Company has < 20 employees → no statutory deductions; salary is fully
+          // in-hand. Net = Gross (LWP/absences already reduced gross via proration).
+          const pfEmployee = 0
+          const pfEmployer = 0
+          const esi = 0
+          const tds = 0
           const otherDeductions = 0
 
           const totalDeductions = pfEmployee + esi + tds + otherDeductions
@@ -220,14 +219,15 @@ export const POST = withAuth(
               salaryStructureId: ss.id,
               month: monthNum,
               year: yearNum,
-              workingDays,
-              presentDays: effectivePresentDays,
+              workingDays: daysInMonth,
+              presentDays: payableDays,
               leaveDays: leaveDaysInMonth,
               lopDays,
               basicSalary,
               hra,
               conveyance,
               medicalAllowance,
+              telephoneAllowance,
               otherAllowances,
               overtime,
               grossSalary,

@@ -29,6 +29,9 @@ import {
 } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
+import { usePermissions } from "@/hooks/use-permissions"
+import { getProbationStatus } from "@/lib/probation"
 import { cn, formatDate } from "@/lib/utils"
 import {
   EMPLOYMENT_TYPE_LABELS,
@@ -66,12 +69,26 @@ const formSchema = z.object({
   employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]),
   dateOfJoining: z.string().optional(),
   probationEndDate: z.string().optional(),
+  onProbation: z.boolean().optional(),
+  probationMonths: z.enum(["3", "6"]).optional(),
   workLocation: z.string().optional(),
+  deviceId: z.string().optional(),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
     .optional()
     .or(z.literal("")),
+  // Optional existing HR-system code. Blank ⇒ server auto-generates.
+  employeeNo: z.string().max(32, "Max 32 characters").optional().or(z.literal("")),
+  // Format check only — required-on-create is enforced in goNext() so edit mode
+  // can leave the field blank to mean "leave unchanged".
+  gmailAppPassword: z
+    .string()
+    .optional()
+    .refine(
+      (s) => s == null || s === "" || s.replace(/\s+/g, "").length === 16,
+      { message: "Gmail App Password must be 16 characters" },
+    ),
 
   // Step 3 - Address
   currentLine1: z.string().optional(),
@@ -339,6 +356,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
     handleSubmit,
     watch,
     setValue,
+    setError,
     formState: { errors },
     reset,
     trigger,
@@ -346,12 +364,35 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       employmentType: "FULL_TIME",
+      onProbation: true,
+      probationMonths: "6",
       sameAsCurrent: false,
     },
   })
 
   const sameAsCurrent = watch("sameAsCurrent")
   const watchedValues = watch()
+
+  // Probation fields are editable only by Super Admin / Admin / HR Manager.
+  const { isSuperAdmin, roles } = usePermissions()
+  const isProbationAdmin =
+    isSuperAdmin || roles.includes("admin") || roles.includes("hr_manager")
+
+  // Live preview of when probation ends, from the joining date + selected period.
+  const probationPreview = getProbationStatus({
+    onProbation: watchedValues.onProbation ?? true,
+    probationMonths: watchedValues.probationMonths ? Number(watchedValues.probationMonths) : 6,
+    dateOfJoining: watchedValues.dateOfJoining || null,
+  })
+  const probationHint = !watchedValues.dateOfJoining
+    ? "Set a date of joining first"
+    : probationPreview.endDate
+      ? `${formatDate(probationPreview.endDate.toISOString())}${
+          probationPreview.onProbation
+            ? ` · ${probationPreview.daysRemaining} day(s) left`
+            : " · completed"
+        }`
+      : "-"
 
   // Populate form when editing
   useEffect(() => {
@@ -362,6 +403,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
       const ec = (emp.emergencyContact ?? {}) as Record<string, string>
 
       reset({
+        employeeNo: emp.employeeNo ?? "",
         firstName: emp.firstName,
         lastName: emp.lastName,
         email: emp.email,
@@ -378,7 +420,10 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
         employmentType: (emp.employmentType as FormData["employmentType"]) ?? "FULL_TIME",
         dateOfJoining: emp.dateOfJoining ? emp.dateOfJoining.split("T")[0] : "",
         probationEndDate: emp.probationEndDate ? emp.probationEndDate.split("T")[0] : "",
+        onProbation: emp.onProbation ?? true,
+        probationMonths: (String(emp.probationMonths ?? 6) as "3" | "6"),
         workLocation: emp.workLocation ?? "",
+        deviceId: emp.deviceId ?? "",
         currentLine1: ca.line1 ?? "",
         currentLine2: ca.line2 ?? "",
         currentCity: ca.city ?? "",
@@ -392,13 +437,17 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
         emergencyName: ec.name ?? "",
         emergencyRelation: ec.relation ?? "",
         emergencyPhone: ec.phone ?? "",
+        // Never repopulated — API never returns the stored value. Blank = unchanged.
+        gmailAppPassword: "",
       })
     }
   }, [employeeData, mode, reset])
 
   const stepFields: Record<number, (keyof FormData)[]> = {
     1: ["firstName", "lastName", "email"],
-    2: [],
+    // Format validation runs via Zod. "Required on create" is enforced manually
+    // in goNext() below so edit mode can leave the field blank to mean "unchanged".
+    2: ["gmailAppPassword"],
     3: [], // Documents step — no schema fields to validate (files only)
     4: [],
     5: [],
@@ -407,6 +456,20 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
   async function goNext() {
     const fieldsToValidate = stepFields[currentStep]
     const valid = fieldsToValidate.length > 0 ? await trigger(fieldsToValidate) : true
+
+    // On create, the Gmail App Password is required. Zod allows empty (because edit
+    // mode treats blank as "leave unchanged"), so enforce required-on-create here.
+    if (currentStep === 2 && mode === "create") {
+      const raw = (watchedValues.gmailAppPassword ?? "").replace(/\s+/g, "")
+      if (raw === "") {
+        setError("gmailAppPassword", {
+          type: "required",
+          message: "Gmail App Password is required",
+        })
+        return
+      }
+    }
+
     if (valid) setCurrentStep((s) => Math.min(s + 1, STEPS.length))
   }
 
@@ -416,6 +479,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
 
   async function onSubmit(data: FormData) {
     const payload = {
+      employeeNo: data.employeeNo?.trim() || undefined,
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
@@ -432,7 +496,10 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
       employmentType: data.employmentType,
       dateOfJoining: data.dateOfJoining || undefined,
       probationEndDate: data.probationEndDate || undefined,
+      onProbation: data.onProbation ?? true,
+      probationMonths: data.probationMonths ? Number(data.probationMonths) : undefined,
       workLocation: data.workLocation || undefined,
+      deviceId: data.deviceId || undefined,
       password: data.password || undefined,
       currentAddress:
         data.currentLine1 || data.currentCity
@@ -468,6 +535,8 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
             phone: data.emergencyPhone,
           }
         : undefined,
+      // Send only when the user typed something. Empty on edit = "leave unchanged".
+      gmailAppPassword: data.gmailAppPassword?.replace(/\s+/g, "") || undefined,
     }
 
     if (mode === "create") {
@@ -586,6 +655,19 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
             <CardTitle className="text-base">Employment Details</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <FormField label="Employee Code" error={errors.employeeNo?.message}>
+              <Input
+                {...register("employeeNo")}
+                placeholder={mode === "create" ? "Leave blank to auto-generate" : "e.g. 132"}
+                autoComplete="off"
+              />
+              <p className="text-muted-foreground mt-1 text-xs">
+                {mode === "create"
+                  ? "Existing HR-system code (e.g. 132). Blank ⇒ auto-generated as EMP-YYYY-####."
+                  : "Changing this updates the unique employee identifier."}
+              </p>
+            </FormField>
+
             <FormField label="Department" error={errors.departmentId?.message}>
               <Select
                 value={watchedValues.departmentId || ""}
@@ -652,14 +734,60 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
               <Input {...register("dateOfJoining")} type="date" />
             </FormField>
 
-            <FormField label="Probation End Date" error={errors.probationEndDate?.message}>
-              <Input {...register("probationEndDate")} type="date" />
-            </FormField>
+            {isProbationAdmin && (
+              <div className="border-border bg-muted/30 space-y-3 rounded-lg border p-4 sm:col-span-2">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">On Probation</Label>
+                    <p className="text-muted-foreground text-xs">
+                      New hires start on probation. Turn off to confirm early. (Admin only)
+                    </p>
+                  </div>
+                  <Switch
+                    checked={watchedValues.onProbation ?? true}
+                    onCheckedChange={(v) => setValue("onProbation", v)}
+                  />
+                </div>
+
+                {(watchedValues.onProbation ?? true) && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <FormField label="Probation Period">
+                      <Select
+                        value={watchedValues.probationMonths ?? "6"}
+                        onValueChange={(v) => setValue("probationMonths", v as "3" | "6")}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="3">3 months</SelectItem>
+                          <SelectItem value="6">6 months</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormField>
+
+                    <FormField label="Probation Ends">
+                      <div className="border-input bg-background text-muted-foreground flex h-9 items-center rounded-md border px-3 text-sm">
+                        {probationHint}
+                      </div>
+                    </FormField>
+                  </div>
+                )}
+              </div>
+            )}
 
             <FormField label="Work Location" error={errors.workLocation?.message}>
               <Input
                 {...register("workLocation")}
                 placeholder="e.g. Mumbai HQ, Remote"
+                autoComplete="off"
+              />
+            </FormField>
+
+            <FormField label="Biometric Device ID" error={errors.deviceId?.message}>
+              <Input
+                {...register("deviceId")}
+                placeholder="Hikvision Employee ID (for attendance import)"
                 autoComplete="off"
               />
             </FormField>
@@ -674,6 +802,40 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
                 />
               </FormField>
             )}
+
+            {/* Gmail App Password — encrypted at rest, used to send emails as this employee. */}
+            <div className="sm:col-span-2">
+              <FormField
+                label={
+                  mode === "create"
+                    ? "Gmail App Password"
+                    : employeeData?.data?.hasGmailAppPassword
+                      ? "Gmail App Password (currently set — leave blank to keep)"
+                      : "Gmail App Password (not set)"
+                }
+                required={mode === "create"}
+                error={errors.gmailAppPassword?.message}
+              >
+                <Input
+                  {...register("gmailAppPassword")}
+                  type="password"
+                  placeholder="abcd efgh ijkl mnop"
+                  autoComplete="off"
+                />
+                <p className="text-muted-foreground mt-1 text-xs">
+                  16-character App Password from{" "}
+                  <a
+                    href="https://myaccount.google.com/apppasswords"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="underline"
+                  >
+                    myaccount.google.com → Security → App Passwords
+                  </a>
+                  . Stored encrypted (AES-256-GCM); never shown again after save.
+                </p>
+              </FormField>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -980,6 +1142,10 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
               <CardTitle className="text-base">Employment Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              <ReviewRow
+                label="Employee Code"
+                value={watchedValues.employeeNo?.trim() || (mode === "create" ? "Auto-generate" : undefined)}
+              />
               <ReviewRow label="Department" value={selectedDept?.name} />
               <ReviewRow label="Designation" value={selectedDesig?.title} />
               <ReviewRow
@@ -997,11 +1163,15 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
                 }
               />
               <ReviewRow
-                label="Probation End"
+                label="Probation"
                 value={
-                  watchedValues.probationEndDate
-                    ? formatDate(watchedValues.probationEndDate)
-                    : undefined
+                  (watchedValues.onProbation ?? true)
+                    ? `On probation (${watchedValues.probationMonths ?? "6"} months)${
+                        probationPreview.endDate
+                          ? ` · ends ${formatDate(probationPreview.endDate.toISOString())}`
+                          : ""
+                      }`
+                    : "Confirmed (not on probation)"
                 }
               />
             </CardContent>
