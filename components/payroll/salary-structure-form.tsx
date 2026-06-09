@@ -70,7 +70,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
   const createMutation = useCreateSalaryStructure()
   const updateMutation = useUpdateSalaryStructure()
 
-  // limit ≤ 100 — the employees API rejects larger and returns an empty list.
+  // limit ≤ 100 - the employees API rejects larger and returns an empty list.
   const { data: employeesData } = useEmployees({ limit: 100, status: "ACTIVE" })
   const employees = employeesData?.data ?? []
 
@@ -138,7 +138,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
       medicalAllowance: amounts.medical,
       telephoneAllowance: amounts.telephone,
       otherAllowances: amounts.special,
-      // No user-facing "effective from" — default to today on create, leave
+      // No user-facing "effective from" - default to today on create, leave
       // the existing date untouched on edit.
       ...(isEdit ? {} : { effectiveFrom: new Date().toISOString().split("T")[0] }),
     }
@@ -170,7 +170,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
                 <SelectContent>
                   {employees.map((emp) => (
                     <SelectItem key={emp.id} value={emp.id}>
-                      {emp.firstName} {emp.lastName} — {emp.employeeNo}
+                      {emp.firstName} {emp.lastName} - {emp.employeeNo}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -205,7 +205,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
               }}
             />
             <p className="text-muted-foreground text-xs">
-              No deductions — the full amount is paid in hand. It&apos;s split across the brackets
+              No deductions - the full amount is paid in hand. It&apos;s split across the brackets
               below by the percentages.
             </p>
           </div>
@@ -264,7 +264,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
 
           <Separator />
 
-          {/* Preview — gross == net, no deductions */}
+          {/* Preview - gross == net, no deductions */}
           <div className="bg-muted/30 grid grid-cols-2 gap-4 rounded border p-4 text-sm">
             <div className="min-w-0">
               <p className="text-muted-foreground">Gross (= Net, no deductions)</p>

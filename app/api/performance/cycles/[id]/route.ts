@@ -4,7 +4,7 @@ import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
-// PATCH a review cycle — close/reopen (isClosed) or activate/deactivate (isActive).
+// PATCH a review cycle - close/reopen (isClosed) or activate/deactivate (isActive).
 export const PATCH = withAuth(
   PERMISSIONS.PERFORMANCE_REVIEW,
   async (req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {

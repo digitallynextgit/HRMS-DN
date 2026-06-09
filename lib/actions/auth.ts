@@ -1,7 +1,7 @@
 "use server"
 
 // =============================================================================
-// Forgot-password (OTP) server actions — replace the former /api/auth/* routes.
+// Forgot-password (OTP) server actions - replace the former /api/auth/* routes.
 // These run unauthenticated (the user has no session yet), so they do their own
 // validation and return ActionResult instead of relying on the auth guards.
 // =============================================================================
@@ -20,9 +20,9 @@ const MAX_ATTEMPTS = 5
 const INVALID_CODE = "Invalid or expired code. Please request a new one."
 
 // ---------------------------------------------------------------------------
-// Step 1 — verify the email belongs to an active employee, then email a code.
+// Step 1 - verify the email belongs to an active employee, then email a code.
 // (This flow deliberately reveals whether an active account exists, per
-// product requirement — it is not anti-enumeration.)
+// product requirement - it is not anti-enumeration.)
 // ---------------------------------------------------------------------------
 export async function requestPasswordOtp(email: string): Promise<ActionResult<{ sent: true }>> {
   return runAction(async () => {
@@ -36,7 +36,7 @@ export async function requestPasswordOtp(email: string): Promise<ActionResult<{ 
       return fail("No active employee account was found for this email.")
     }
 
-    // One live code per employee — drop any previous ones first.
+    // One live code per employee - drop any previous ones first.
     await db.passwordReset.deleteMany({ where: { employeeId: employee.id } })
 
     const otp = String(randomInt(0, 1_000_000)).padStart(6, "0")
@@ -52,14 +52,14 @@ export async function requestPasswordOtp(email: string): Promise<ActionResult<{ 
       firstName: employee.firstName,
       otp,
     })
-    await sendEmail({ to: employee.email, subject, html, text })
+    await sendEmail({ to: employee.email, subject, html, text, profile: "notifications" })
 
     return ok({ sent: true as const })
   })
 }
 
 // ---------------------------------------------------------------------------
-// Step 2 — verify the code; on success hand back the token for the reset step.
+// Step 2 - verify the code; on success hand back the token for the reset step.
 // ---------------------------------------------------------------------------
 export async function verifyPasswordOtp(
   email: string,
@@ -111,7 +111,7 @@ export async function verifyPasswordOtp(
 }
 
 // ---------------------------------------------------------------------------
-// Step 3 — set the new password (only valid once the OTP cleared the token).
+// Step 3 - set the new password (only valid once the OTP cleared the token).
 // ---------------------------------------------------------------------------
 export async function resetPasswordWithToken(
   token: string,

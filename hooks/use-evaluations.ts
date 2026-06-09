@@ -108,7 +108,7 @@ export function useCreateEvaluation() {
       ),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["evaluations"] })
-      toast.success("Evaluation created — employee and manager notified")
+      toast.success("Evaluation created - employee and manager notified")
     },
     onError: (e: Error) => toast.error(e.message),
   })

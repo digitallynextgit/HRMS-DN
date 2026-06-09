@@ -92,7 +92,7 @@ export const PATCH = withAuth(
       const updateData: Record<string, unknown> = {}
       if (notes !== undefined) updateData.notes = notes
 
-      // ── Adjustments (overtime / one-off deductions) — DRAFT only ──
+      // ── Adjustments (overtime / one-off deductions) - DRAFT only ──
       if (
         existing.status === "DRAFT" &&
         (body.overtime !== undefined || body.otherDeductions !== undefined)
@@ -166,10 +166,10 @@ export const PATCH = withAuth(
         if (emp?.email) {
           await sendEmail({
             to: emp.email,
-            subject: `Payslip — ${monthName} ${updated.year}`,
+            subject: `Payslip - ${monthName} ${updated.year}`,
             html: `
               <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
-                <h2 style="color:#1d4ed8;">Payslip — ${monthName} ${updated.year}</h2>
+                <h2 style="color:#1d4ed8;">Payslip - ${monthName} ${updated.year}</h2>
                 <p>Hi ${emp.firstName},</p>
                 <p>Your salary for <strong>${monthName} ${updated.year}</strong> has been paid.</p>
                 <table style="width:100%;border-collapse:collapse;font-size:14px;">

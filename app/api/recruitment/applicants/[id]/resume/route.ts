@@ -13,7 +13,7 @@ const RESUME_TYPES = [
 const MAX_BYTES = 10 * 1024 * 1024
 const ONE_YEAR = 60 * 60 * 24 * 365
 
-// POST /api/recruitment/applicants/[id]/resume — upload a resume file.
+// POST /api/recruitment/applicants/[id]/resume - upload a resume file.
 export const POST = withAuth(
   PERMISSIONS.RECRUITMENT_WRITE,
   async (req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {

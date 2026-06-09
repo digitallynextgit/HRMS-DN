@@ -155,7 +155,7 @@ export default function EvaluationTemplatePage() {
             v.ok ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
           )}
         >
-          Total weight: {totalWeight}%{v.ok ? "" : ` — ${v.reason}`}
+          Total weight: {totalWeight}%{v.ok ? "" : ` - ${v.reason}`}
         </span>
         <Button onClick={handleSave} disabled={!v.ok || !name.trim() || save.isPending}>
           {save.isPending ? "Saving…" : "Save Template"}

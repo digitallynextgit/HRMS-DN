@@ -9,7 +9,7 @@ const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024 // 5 MB
 const ONE_YEAR = 60 * 60 * 24 * 365
 
-/** POST /api/employees/[id]/photo — upload a profile photo (self or HR). */
+/** POST /api/employees/[id]/photo - upload a profile photo (self or HR). */
 export const POST = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {

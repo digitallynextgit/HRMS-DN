@@ -24,7 +24,7 @@ function viewerRole(
   return null
 }
 
-// GET — one evaluation. Participants only. An employee can't see the manager's
+// GET - one evaluation. Participants only. An employee can't see the manager's
 // ratings/score until the manager has actually submitted them.
 export const GET = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
@@ -59,7 +59,7 @@ export const GET = withSession(
   },
 )
 
-// PATCH — submit one side's ratings. body: { role: "SELF"|"MANAGER", ratings, comment? }
+// PATCH - submit one side's ratings. body: { role: "SELF"|"MANAGER", ratings, comment? }
 export const PATCH = withSession(
   async (req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -123,7 +123,7 @@ export const PATCH = withSession(
         data.managerSubmittedAt = now
         data.finalScore = scoreEvaluation(criteria, ratings).total
       } else {
-        // CONTROLLER — recorded alongside; doesn't drive status or final score.
+        // CONTROLLER - recorded alongside; doesn't drive status or final score.
         data.controllerRatings = ratings
         data.controllerComment = comment?.trim() || null
         data.controllerSubmittedAt = now
@@ -178,7 +178,7 @@ export const PATCH = withSession(
   },
 )
 
-// DELETE — remove an evaluation (HR only).
+// DELETE - remove an evaluation (HR only).
 export const DELETE = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, session: Session) => {
     try {

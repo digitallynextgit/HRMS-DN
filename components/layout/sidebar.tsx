@@ -252,7 +252,7 @@ function SidebarNavItem({ item, isCollapsed, permissions, roles }: SidebarNavIte
           />
         </button>
         {open && (
-          <div className="border-border mt-0.5 ml-[26px] space-y-0.5 border-l pl-3">
+          <div className="border-border mt-0.5 ml-6.5 space-y-0.5 border-l pl-3">
             {visibleChildren.map((child) => {
               const childActive = pathname === child.href || pathname.startsWith(child.href + "/")
               return (
@@ -350,26 +350,35 @@ export function Sidebar({ session }: { session: Session }) {
         isCollapsed ? "w-14" : "w-56",
       )}
     >
-      {/* Logo */}
+      {/* Logo — theme-aware wordmark. Light mode shows the black-text logo,
+          dark / custom themes show the white-text one. On the collapsed rail the
+          row is clipped so only the left X mark shows. */}
       <div
         className={cn(
-          "border-border flex h-[57px] shrink-0 items-center border-b px-3",
-          isCollapsed ? "justify-center" : "gap-2.5",
+          "border-border flex h-14.25 shrink-0 items-center overflow-hidden border-b",
+          isCollapsed ? "justify-center px-2" : "px-4",
         )}
       >
-        <Image
-          src="/brand-mark.png"
-          alt="DNMS"
-          width={2505}
-          height={2200}
-          className="h-7 w-7 shrink-0 object-contain"
-        />
-        {!isCollapsed && (
-          <div>
-            <p className="text-foreground text-sm font-semibold tracking-tight">DNMS</p>
-            <p className="text-muted-foreground text-[10px]">Management System</p>
-          </div>
-        )}
+        <div className={cn("flex items-center overflow-hidden", isCollapsed ? "w-9" : "w-auto")}>
+          {/* Light mode → black-text logo */}
+          <Image
+            src="/logo_white_bg.png"
+            alt="Digitally Next"
+            width={4500}
+            height={1167}
+            priority
+            className="h-10 w-auto max-w-none dark:hidden"
+          />
+          {/* Dark / custom themes → white-text logo */}
+          <Image
+            src="/logo_dark_bg.webp"
+            alt="Digitally Next"
+            width={4500}
+            height={1167}
+            priority
+            className="hidden h-10 w-auto max-w-none dark:block"
+          />
+        </div>
       </div>
 
       {/* Nav */}

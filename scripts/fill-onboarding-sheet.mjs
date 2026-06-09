@@ -16,9 +16,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const INPUT = resolve(__dirname, "..", "docs", "Employee_Onboarding_Template.xlsx")
 const OUTPUT = resolve(__dirname, "..", "docs", "Employee_Onboarding_Filled.xlsx")
 
-// ── Employee data — keyed by the column keys defined in generate-onboarding-sheet.mjs
+// ── Employee data - keyed by the column keys defined in generate-onboarding-sheet.mjs
 // Unmatched HTML fields (Aadhaar, Emp Code, Direct/Dotted Reporting) are dropped
-// — they aren't columns in our template. Department names use the DB list where
+// - they aren't columns in our template. Department names use the DB list where
 // a confident mapping exists; ambiguous ones stay blank (flagged in the script log).
 
 const EMPLOYEES = [
@@ -26,7 +26,7 @@ const EMPLOYEES = [
     empCode: "132",
     firstName: "Mridul",
     lastName: "Singh Bisht",
-    email: "", // work email — set when @digitallynext.com is provisioned
+    email: "", // work email - set when @digitallynext.com is provisioned
     personalEmail: "mridulsinghbisht1008@gmail.com",
     phone: "9958784985",
     personalPhone: "",
@@ -171,7 +171,7 @@ const EMPLOYEES = [
     phone: "9891231109",
     personalPhone: "",
     dob: "01-07-2003",
-    department: "Research", // RAW — no clean match in DB list
+    department: "Research", // RAW - no clean match in DB list
     designation: "Market Research Specialist",
     employmentType: "Full Time",
     doj: "05-01-2026",
@@ -283,7 +283,7 @@ const EMPLOYEES = [
     phone: "7987424526",
     personalPhone: "",
     dob: "19-04-2001", // parsed from "4/19/2001"
-    department: "MSG", // RAW — unclear abbreviation
+    department: "MSG", // RAW - unclear abbreviation
     designation: "Content Strategist",
     employmentType: "Full Time",
     doj: "11-05-2026",
@@ -311,7 +311,7 @@ const EMPLOYEES = [
     phone: "9718182459",
     personalPhone: "",
     dob: "08-12-1999",
-    department: "MAP", // RAW — unclear abbreviation
+    department: "MAP", // RAW - unclear abbreviation
     designation: "Creative Lead",
     employmentType: "Full Time",
     doj: "18-05-2026",
@@ -339,7 +339,7 @@ const EMPLOYEES = [
     phone: "9372650233",
     personalPhone: "",
     dob: "27-08-2001",
-    department: "SMG", // RAW — best guess "SMO" but unsure
+    department: "SMG", // RAW - best guess "SMO" but unsure
     designation: "Brand Manager",
     employmentType: "Full Time",
     doj: "18-05-2026",

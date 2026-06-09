@@ -33,7 +33,7 @@ const DEFAULT_PHASES = [
   },
 ]
 
-// GET /api/project-phases — anyone signed in can read
+// GET /api/project-phases - anyone signed in can read
 // Auto-initialises the 5 default PMI phases the first time (when the table is empty).
 export const GET = withSession(async (_req: NextRequest, _ctx: unknown, _session: Session) => {
   try {
@@ -60,7 +60,7 @@ export const GET = withSession(async (_req: NextRequest, _ctx: unknown, _session
   }
 })
 
-// POST /api/project-phases — admin only
+// POST /api/project-phases - admin only
 export const POST = withAuth(
   PERMISSIONS.PROJECT_WRITE,
   async (req: NextRequest, _ctx: unknown, session: Session) => {

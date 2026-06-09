@@ -521,12 +521,12 @@ function DepartmentsSection() {
 
   function confirmDelete(d: DepartmentRow) {
     if (d._count.employees > 0 || d._count.jobPostings > 0) {
-      // Has dependants — soft delete only.
+      // Has dependants - soft delete only.
       const msg = `Deactivate "${d.name}"? It has ${d._count.employees} employee(s) and ${d._count.jobPostings} job posting(s). They will stay assigned but the department will be hidden from dropdowns.`
       if (confirm(msg)) del.mutate({ id: d.id })
       return
     }
-    // No dependants — offer hard delete.
+    // No dependants - offer hard delete.
     const msg = `Delete "${d.name}" permanently? It has no employees or job postings.`
     if (confirm(msg)) del.mutate({ id: d.id, permanent: true })
   }

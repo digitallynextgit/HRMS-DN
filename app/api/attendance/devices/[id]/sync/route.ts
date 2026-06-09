@@ -43,7 +43,7 @@ async function syncFromDevice(
   lateGraceMins: number,
   datesToSync: Date[],
 ): Promise<{ synced: number; errors: string[]; usedSimulation: false }> {
-  // const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins // late-mark (DISABLED — do not delete)
+  // const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins // late-mark (DISABLED - do not delete)
 
   // Fetch events for the entire range in one batch
   const rangeStart = new Date(datesToSync[datesToSync.length - 1]) // oldest date
@@ -147,7 +147,7 @@ async function syncFromDevice(
           // Derive status from hours worked (half-day / absent rules).
           const status = computeAttendanceStatus({ checkIn, workHours })
 
-          // ── Late-mark logic (DISABLED for now — do not delete) ──────────────
+          // ── Late-mark logic (DISABLED for now - do not delete) ──────────────
           // Re-enable when late-mark policy (>9:45 grace, 3 marks/month) ships.
           // let status: $Enums.AttendanceStatus = $Enums.AttendanceStatus.ABSENT
           // if (checkIn) {
@@ -206,7 +206,7 @@ async function syncSimulated(
   lateGraceMins: number,
   datesToSync: Date[],
 ): Promise<{ synced: number; errors: string[]; usedSimulation: true }> {
-  // const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins // late-mark (DISABLED — do not delete)
+  // const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins // late-mark (DISABLED - do not delete)
 
   const employees = await db.employee.findMany({
     where: { isActive: true, status: "ACTIVE" },
@@ -279,7 +279,7 @@ async function syncSimulated(
         // Derive status from hours worked (half-day / absent rules).
         const status = computeAttendanceStatus({ checkIn, workHours })
 
-        // ── Late-mark logic (DISABLED for now — do not delete) ────────────────
+        // ── Late-mark logic (DISABLED for now - do not delete) ────────────────
         // const checkInTotalMins = checkInHour * 60 + checkInMin
         // const status: $Enums.AttendanceStatus =
         //   checkInTotalMins > lateThresholdMins

@@ -8,7 +8,7 @@ import type { Session } from "next-auth"
 /**
  * PUT /api/employees/[id]/roles
  * Replace an employee's assignable (global, non-hidden) role grants.
- * Hidden roles (e.g. super_admin) are preserved untouched — they can never be
+ * Hidden roles (e.g. super_admin) are preserved untouched - they can never be
  * stripped or granted through this endpoint, so an admin can't accidentally
  * lock out the super admin from the role picker.
  */
@@ -54,11 +54,11 @@ export const PUT = withAuth(
       }
 
       await db.$transaction(async (tx) => {
-        // Replace only assignable global grants — leave hidden + scoped grants intact.
+        // Replace only assignable global grants - leave hidden + scoped grants intact.
         await tx.employeeRole.deleteMany({
           where: { employeeId: id, scopeType: null, role: { name: { notIn: [...HIDDEN_ROLES] } } },
         })
-        // createMany is avoided (pg-adapter quirk) — insert one row at a time.
+        // createMany is avoided (pg-adapter quirk) - insert one row at a time.
         for (const roleId of uniqueIds) {
           await tx.employeeRole.create({ data: { employeeId: id, roleId } })
         }

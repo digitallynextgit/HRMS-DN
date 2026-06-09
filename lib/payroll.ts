@@ -1,5 +1,5 @@
 // =============================================================================
-// Payroll statutory computation (India). Simplified but rule-based — replaces
+// Payroll statutory computation (India). Simplified but rule-based - replaces
 // the old flat passthrough of structure values.
 //   - PF:  12% of basic, capped at the ₹15,000 wage ceiling (both shares).
 //   - ESI: 0.75% of gross, only when gross ≤ ₹21,000/month.

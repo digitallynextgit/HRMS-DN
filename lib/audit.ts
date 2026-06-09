@@ -46,7 +46,7 @@ export function isSuperAdminSession(session: Session | null): boolean {
 /**
  * The actor id to stamp onto a record's "who did this" field (approver,
  * reviewer, etc.). Returns null for a super_admin so that account is never named
- * on a record — the same invisibility policy as createAuditLog. The action still
+ * on a record - the same invisibility policy as createAuditLog. The action still
  * happens (status + timestamps are set normally); only the identity is withheld,
  * so completion logic must key off timestamps/status, never the stamped id.
  */

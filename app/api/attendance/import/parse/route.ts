@@ -401,7 +401,7 @@ export const POST = withAuth(
       }
 
       const buf = Buffer.from(await file.arrayBuffer())
-      // Detect the REAL format by content, not the extension — Hikvision's .xls
+      // Detect the REAL format by content, not the extension - Hikvision's .xls
       // is often an HTML table (or old binary), not a true .xlsx.
       const isZip = buf[0] === 0x50 && buf[1] === 0x4b // "PK" → real .xlsx
       const isOle = buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0 // old .xls

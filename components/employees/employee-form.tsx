@@ -85,7 +85,7 @@ const formSchema = z.object({
     .or(z.literal("")),
   // Optional existing HR-system code. Blank ⇒ server auto-generates.
   employeeNo: z.string().max(32, "Max 32 characters").optional().or(z.literal("")),
-  // Format check only — required-on-create is enforced in goNext() so edit mode
+  // Format check only - required-on-create is enforced in goNext() so edit mode
   // can leave the field blank to mean "leave unchanged".
   gmailAppPassword: z
     .string()
@@ -432,7 +432,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
         emergencyName: ec.name ?? "",
         emergencyRelation: ec.relation ?? "",
         emergencyPhone: ec.phone ?? "",
-        // Never repopulated — API never returns the stored value. Blank = unchanged.
+        // Never repopulated - API never returns the stored value. Blank = unchanged.
         gmailAppPassword: "",
       })
     }
@@ -443,7 +443,7 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
     // Format validation runs via Zod. "Required on create" is enforced manually
     // in goNext() below so edit mode can leave the field blank to mean "unchanged".
     2: ["gmailAppPassword"],
-    3: [], // Documents step — no schema fields to validate (files only)
+    3: [], // Documents step - no schema fields to validate (files only)
     4: [],
     5: [],
   }
@@ -798,14 +798,14 @@ export function EmployeeForm({ mode, employeeId }: EmployeeFormProps) {
               </FormField>
             )}
 
-            {/* Gmail App Password — encrypted at rest, used to send emails as this employee. */}
+            {/* Gmail App Password - encrypted at rest, used to send emails as this employee. */}
             <div className="sm:col-span-2">
               <FormField
                 label={
                   mode === "create"
                     ? "Gmail App Password"
                     : employeeData?.data?.hasGmailAppPassword
-                      ? "Gmail App Password (currently set — leave blank to keep)"
+                      ? "Gmail App Password (currently set - leave blank to keep)"
                       : "Gmail App Password (not set)"
                 }
                 required={mode === "create"}

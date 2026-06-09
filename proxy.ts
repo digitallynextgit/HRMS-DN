@@ -36,10 +36,11 @@ const PUBLIC_PREFIXES = [
 ]
 
 // Static assets in /public are served at the root (e.g. /logo_dark_bg.webp), so
-// any request for a file with an asset extension must be allowed through — these
-// are needed on public pages (the login page logo) and by the image optimiser.
+// any request for a file with an asset extension must be allowed through - these
+// are needed on public pages (the login page logo, the render-blocking
+// /theme-boot.js that prevents the theme flash) and by the image optimiser.
 const PUBLIC_FILE =
-  /\.(?:webp|png|jpe?g|gif|svg|ico|bmp|avif|webmanifest|woff2?|ttf|otf|mp4|webm)$/i
+  /\.(?:webp|png|jpe?g|gif|svg|ico|bmp|avif|webmanifest|woff2?|ttf|otf|mp4|webm|js|mjs)$/i
 
 function isPublic(pathname: string): boolean {
   if (!pathname.startsWith("/api/") && PUBLIC_FILE.test(pathname)) return true

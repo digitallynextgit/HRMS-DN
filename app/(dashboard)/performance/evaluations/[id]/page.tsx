@@ -226,7 +226,7 @@ export default function EvaluationDetailPage({ params }: { params: Promise<{ id:
 
       <div id="print-area" className="space-y-6">
         <PageHeader
-          title={`${ev.employee.firstName} ${ev.employee.lastName} — ${ev.periodLabel}`}
+          title={`${ev.employee.firstName} ${ev.employee.lastName} - ${ev.periodLabel}`}
           description={`Performance evaluation${ev.dueDate ? ` · due ${new Date(ev.dueDate).toLocaleDateString("en-IN")}` : ""}`}
         />
 

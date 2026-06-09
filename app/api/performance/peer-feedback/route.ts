@@ -6,7 +6,7 @@ import type { Session } from "next-auth"
 
 const reviewerSelect = { select: { id: true, firstName: true, lastName: true, profilePhoto: true } }
 
-// GET ?reviewId= — peer feedback for a review (reviewee, the peers, or HR).
+// GET ?reviewId= - peer feedback for a review (reviewee, the peers, or HR).
 export const GET = withSession(
   async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {
     try {
@@ -38,7 +38,7 @@ export const GET = withSession(
   },
 )
 
-// POST { reviewId, rating, comment } — current user leaves/updates peer feedback.
+// POST { reviewId, rating, comment } - current user leaves/updates peer feedback.
 export const POST = withSession(
   async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {
     try {

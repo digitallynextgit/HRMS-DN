@@ -45,8 +45,9 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           <Image
             src="/logo_dark_bg.webp"
             alt="Digitally Next"
-            width={1512}
-            height={321}
+            width={4500}
+            height={1167}
+            priority
             className="h-12 w-auto"
           />
         </div>
@@ -94,17 +95,19 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           {/* logo - mobile only (swaps with theme) */}
           <div className="mb-8 flex justify-center lg:hidden">
             <Image
-              src="/logo_white_bg.webp"
+              src="/logo_white_bg.png"
               alt="Digitally Next"
-              width={1056}
-              height={224}
+              width={4500}
+              height={1167}
+              priority
               className="h-9 w-auto dark:hidden"
             />
             <Image
               src="/logo_dark_bg.webp"
               alt="Digitally Next"
-              width={1512}
-              height={321}
+              width={4500}
+              height={1167}
+              priority
               className="hidden h-9 w-auto dark:block"
             />
           </div>

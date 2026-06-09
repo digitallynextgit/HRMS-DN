@@ -78,7 +78,7 @@ export function decrypt(payload: string): string {
   return dec.toString("utf8")
 }
 
-/** Safe wrapper — returns null if input is null/empty or decryption fails. */
+/** Safe wrapper - returns null if input is null/empty or decryption fails. */
 export function tryDecrypt(payload: string | null | undefined): string | null {
   if (!payload) return null
   try {

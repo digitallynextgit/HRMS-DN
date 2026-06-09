@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 // Year-end leave rollover. Run on Jan 1 (or with ?year=YYYY for the target year).
 //   - Only types with carryForward=true carry their remaining balance, capped at
 //     maxCarryDays (e.g. EL → max 22). Everything else lapses.
-//   - New-year allocation = maxDaysPerYear, except EL (allocated 0 — it accrues
+//   - New-year allocation = maxDaysPerYear, except EL (allocated 0 - it accrues
 //     monthly via /api/cron/el-accrual).
 // Auth: Authorization: Bearer <CRON_SECRET>
 

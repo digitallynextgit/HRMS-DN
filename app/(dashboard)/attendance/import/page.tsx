@@ -83,7 +83,7 @@ export default function AttendanceImportPage() {
     onSuccess: (data) => {
       setRows(data.rows)
       if (data.rows.length === 0) {
-        toast.error("No rows detected — make sure the file has employee, date and time columns")
+        toast.error("No rows detected - make sure the file has employee, date and time columns")
       }
     },
     onError: (e: Error) => toast.error(e.message),
@@ -134,12 +134,12 @@ export default function AttendanceImportPage() {
           <p className="text-muted-foreground mb-2 text-xs">
             Upload a <strong>.csv</strong>, <strong>.xlsx</strong> or <strong>.xls</strong> file.
             The <strong>Hikvision monthly &ldquo;Attendance Record&rdquo;</strong> export (employees
-            as rows, days 1&ndash;31 as columns) is detected automatically — the month is read from
+            as rows, days 1&ndash;31 as columns) is detected automatically - the month is read from
             its <em>Made Date</em> line and each day&rsquo;s earliest punch becomes check-in, the
             latest check-out.
           </p>
           <p className="text-muted-foreground mb-2 text-xs">
-            A simple flat list also works — columns are matched by name (any of these):
+            A simple flat list also works - columns are matched by name (any of these):
           </p>
           <div className="bg-muted rounded p-3 font-mono text-[11px] leading-5">
             employee no / employee id / person id&nbsp;&nbsp;→ employee

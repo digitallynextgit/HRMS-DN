@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
   const [confirm, setConfirm] = useState("")
   const [show, setShow] = useState(false)
 
-  // Step 1 — request the code (server confirms the active employee first).
+  // Step 1 - request the code (server confirms the active employee first).
   const requestOtp = useMutation({
     mutationFn: async () => {
       const res = await requestPasswordOtp(email)
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
     onError: (e: Error) => toast.error(e.message),
   })
 
-  // Step 2 — verify the code, receive the reset token.
+  // Step 2 - verify the code, receive the reset token.
   const verifyOtp = useMutation({
     mutationFn: async () => {
       const res = await verifyPasswordOtp(email, otp)
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
     onError: (e: Error) => toast.error(e.message),
   })
 
-  // Step 3 — set the new password, then send them to login.
+  // Step 3 - set the new password, then send them to login.
   const resetPassword = useMutation({
     mutationFn: async () => {
       const res = await resetPasswordWithToken(token, password)

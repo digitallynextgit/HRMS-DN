@@ -45,8 +45,8 @@ async function getUserWithPermissions(employeeId: string) {
 export const authOptions: NextAuthConfig = {
   // No database adapter: sessions are JWT-based and OAuth sign-ins are gated to
   // pre-existing employees in the `signIn` callback below (we never auto-create
-  // users). The Prisma schema has no `User` model — Account/Session map to
-  // Employee — so the PrismaAdapter, which calls `db.user`, cannot be used.
+  // users). The Prisma schema has no `User` model - Account/Session map to
+  // Employee - so the PrismaAdapter, which calls `db.user`, cannot be used.
   session: { strategy: "jwt" },
 
   secret: process.env.AUTH_SECRET,

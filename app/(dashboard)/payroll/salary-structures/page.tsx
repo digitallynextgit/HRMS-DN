@@ -138,7 +138,7 @@ export default function SalaryStructuresPage() {
                   structure.medicalAllowance +
                   structure.telephoneAllowance +
                   structure.otherAllowances
-                // No statutory deductions — net is the full gross, paid in hand.
+                // No statutory deductions - net is the full gross, paid in hand.
                 const net = gross
 
                 return (

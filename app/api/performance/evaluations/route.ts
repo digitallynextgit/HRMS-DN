@@ -15,7 +15,7 @@ const employeeSelect = {
   select: { id: true, firstName: true, lastName: true, employeeNo: true, profilePhoto: true },
 }
 
-// GET — list evaluations. HR (performance:review) sees all; everyone else sees
+// GET - list evaluations. HR (performance:review) sees all; everyone else sees
 // the ones they must act on: their own self-evaluations + ones they manage.
 export const GET = withSession(
   async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {
@@ -48,7 +48,7 @@ export const GET = withSession(
   },
 )
 
-// POST — create an evaluation for an employee (HR). Snapshots the active
+// POST - create an evaluation for an employee (HR). Snapshots the active
 // template's criteria, then notifies the employee + manager to fill it.
 export const POST = withSession(
   async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {

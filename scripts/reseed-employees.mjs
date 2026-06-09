@@ -293,7 +293,7 @@ const DEPARTMENTS_TO_ENSURE = [
   { name: "MSG", code: "MSG" },
 ]
 
-// Job titles from the sheet — created as Designation rows so they show in the UI.
+// Job titles from the sheet - created as Designation rows so they show in the UI.
 // Level is a neutral IC default; no salary cap.
 const DESIGNATIONS_TO_ENSURE = [
   "Web Developer",
@@ -315,7 +315,7 @@ async function main() {
   })
   if (!admin) {
     throw new Error(
-      "admin@hrms.dev not found — aborting so the platform isn't left without an admin.",
+      "admin@hrms.dev not found - aborting so the platform isn't left without an admin.",
     )
   }
 

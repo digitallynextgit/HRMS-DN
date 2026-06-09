@@ -446,7 +446,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Gmail App Password — used to send emails from this employee's address. */}
+          {/* Gmail App Password - used to send emails from this employee's address. */}
           <Card className="max-w-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -455,7 +455,7 @@ export default function ProfilePage() {
               </CardTitle>
               <p className="text-muted-foreground text-xs">
                 Lets HRMS send emails from your <span className="font-medium">{emp.email}</span>{" "}
-                address. Stored encrypted (AES-256-GCM) — never shown back to you after save.
+                address. Stored encrypted (AES-256-GCM) - never shown back to you after save.
               </p>
             </CardHeader>
             <CardContent className="space-y-4">

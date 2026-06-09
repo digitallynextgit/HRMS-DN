@@ -1,6 +1,6 @@
 /* Runs before paint (render-blocking <script src> in <head>) to apply the saved
    theme palette and prevent a flash of the wrong colours. Kept as a static file
-   so it's a plain external script — React 19 only warns about INLINE scripts. */
+   so it's a plain external script - React 19 only warns about INLINE scripts. */
 (function () {
   try {
     var raw = localStorage.getItem("dnms-theme-palette")

@@ -100,7 +100,7 @@ export const PATCH = withAuth(
             telephoneAllowance: Number(telephoneAllowance),
           }),
           ...(otherAllowances !== undefined && { otherAllowances: Number(otherAllowances) }),
-          // No statutory deductions for this company — always zero.
+          // No statutory deductions for this company - always zero.
           pfEmployee: 0,
           pfEmployer: 0,
           esi: 0,

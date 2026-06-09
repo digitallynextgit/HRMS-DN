@@ -6,7 +6,7 @@ import { sendEmailAs } from "@/lib/mailer"
 import type { Session } from "next-auth"
 
 // POST /api/recruitment/applicants/[id]/offer
-// Body: { designation, ctc, joiningDate, location? } — emails a formatted offer
+// Body: { designation, ctc, joiningDate, location? } - emails a formatted offer
 // letter to the applicant (sent FROM the acting HR user via sendEmailAs) and
 // moves them to the OFFER stage.
 export const POST = withAuth(
@@ -33,7 +33,7 @@ export const POST = withAuth(
 
       await sendEmailAs(session.user.id, {
         to: applicant.email,
-        subject: `Offer of Employment — ${designation} at ${company}`,
+        subject: `Offer of Employment - ${designation} at ${company}`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#111;">
             <h2 style="color:#1d4ed8;">Offer of Employment</h2>
@@ -46,7 +46,7 @@ export const POST = withAuth(
               ${location ? `<tr><td style="padding:4px 0;color:#555;">Location</td><td style="text-align:right;">${location}</td></tr>` : ""}
             </table>
             <p>Please reply to this email to confirm your acceptance. We look forward to welcoming you to the team.</p>
-            <p style="color:#666;font-size:13px;">Warm regards,<br/>${company} — People Team</p>
+            <p style="color:#666;font-size:13px;">Warm regards,<br/>${company} - People Team</p>
           </div>`,
         text: `Dear ${fullName}, we are pleased to offer you the role of ${designation} at ${company}. Annual CTC ₹${Number(ctc).toLocaleString("en-IN")}, joining ${dateLine}. Please reply to confirm.`,
       })

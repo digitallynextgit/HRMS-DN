@@ -1,10 +1,10 @@
 // =============================================================================
-// Password-reset OTP email — company-branded, email-client-safe HTML.
+// Password-reset OTP email - company-branded, email-client-safe HTML.
 // =============================================================================
 // Uses table-based layout + inline styles (the only thing Outlook/Gmail render
 // reliably). The logo sits on a dark header bar, so we use the white "dark
 // background" logo variant. Point EMAIL_LOGO_URL at a hosted PNG for the widest
-// client support — many clients (notably Outlook) do NOT render .webp.
+// client support - many clients (notably Outlook) do NOT render .webp.
 // =============================================================================
 
 interface OtpEmailInput {
@@ -66,7 +66,7 @@ export function renderPasswordResetOtpEmail({ firstName, otp }: OtpEmailInput): 
               </table>
 
               <p style="margin:24px 0 0; font-size:13px; line-height:1.6; color:#6b7280;">
-                If you didn't request a password reset, you can safely ignore this email — your
+                If you didn't request a password reset, you can safely ignore this email - your
                 password will stay the same.
               </p>
             </td>
@@ -77,7 +77,7 @@ export function renderPasswordResetOtpEmail({ firstName, otp }: OtpEmailInput): 
             <td style="padding:20px 36px 32px;">
               <div style="border-top:1px solid #f0f0f0; padding-top:18px;">
                 <p style="margin:0; font-size:12px; line-height:1.6; color:#9ca3af;">
-                  For your security, never share this code with anyone — including ${BRAND_NAME} staff.
+                  For your security, never share this code with anyone - including ${BRAND_NAME} staff.
                 </p>
               </div>
             </td>
@@ -108,7 +108,7 @@ Your DNMS password reset code is: ${otp}
 This code expires in 10 minutes. If you didn't request a reset, ignore this email.
 
 For your security, never share this code with anyone.
-— ${BRAND_NAME}`
+- ${BRAND_NAME}`
 
   return { subject, html, text }
 }

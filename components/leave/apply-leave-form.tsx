@@ -153,7 +153,7 @@ export function ApplyLeaveForm() {
       selectedBalance.pending
     : null
   // No-quota types (e.g. Leave Without Pay, maxDaysPerYear === 0) aren't balance-
-  // limited — mirror the server, which only enforces balance when maxDaysPerYear > 0.
+  // limited - mirror the server, which only enforces balance when maxDaysPerYear > 0.
   const isQuotaType = (selectedType?.maxDaysPerYear ?? 0) > 0
   const hasInsufficientBalance =
     isQuotaType && available !== null && totalDays > 0 && available < totalDays

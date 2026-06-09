@@ -12,7 +12,7 @@ import {
 } from "@/lib/evaluation"
 import type { Session } from "next-auth"
 
-// GET — list evaluation templates (HR). Also returns the built-in defaults so the
+// GET - list evaluation templates (HR). Also returns the built-in defaults so the
 // editor can seed the first template from the standard BFG scorecard.
 export const GET = withAuth(PERMISSIONS.PERFORMANCE_REVIEW, async () => {
   const templates = await db.evaluationTemplate.findMany({
@@ -28,7 +28,7 @@ export const GET = withAuth(PERMISSIONS.PERFORMANCE_REVIEW, async () => {
   })
 })
 
-// POST — create a template (HR). New template becomes the active one.
+// POST - create a template (HR). New template becomes the active one.
 export const POST = withAuth(
   PERMISSIONS.PERFORMANCE_REVIEW,
   async (req: NextRequest, _ctx: { params: Record<string, string> }, session: Session) => {

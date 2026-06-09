@@ -10,10 +10,10 @@
 //
 // During probation an employee LOSES (per BFG/DN policy):
 //   - Leave: all leave types are blocked (no CL/SL/EL/PL/ML/Short).
-//   - WFH:   Tier 1 — blocked except emergencies needing Manager + HR approval.
+//   - WFH:   Tier 1 - blocked except emergencies needing Manager + HR approval.
 // Earned Leave additionally unlocks only 6 months AFTER probation ends.
 //
-// Pure functions — safe to import in both server and client components.
+// Pure functions - safe to import in both server and client components.
 // =============================================================================
 
 export const PROBATION_MONTHS_OPTIONS = [3, 6] as const

@@ -9,7 +9,7 @@ import {
 import { HIDDEN_ROLES } from "@/lib/constants"
 
 // Auto-create the current period's performance evaluations for every active
-// employee. Built to run TWICE A MONTH (≈ every 15 days) — schedule it on
+// employee. Built to run TWICE A MONTH (≈ every 15 days) - schedule it on
 // cron-job.org for the 1st and 16th. Idempotent: skips anyone who already has an
 // evaluation for the computed period, so re-running is safe.
 // Auth: Authorization: Bearer <CRON_SECRET>

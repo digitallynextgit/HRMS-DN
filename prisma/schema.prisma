@@ -393,7 +393,7 @@ model Employee {
 
   // Outbound email: encrypted Gmail App Password (AES-256-GCM, format: iv:tag:ct).
   // Used by sendEmailAs() to send mail from this employee's @digitallynext.com address.
-  // Never return in API responses — strip in every GET handler.
+  // Never return in API responses - strip in every GET handler.
   gmailAppPassword String? @map("gmail_app_password")
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -1339,7 +1339,7 @@ model Evaluation {
   selfSubmittedAt    DateTime? @map("self_submitted_at")
   managerSubmittedAt DateTime? @map("manager_submitted_at")
 
-  // Optional 3rd reviewer (Project Controller) — recorded alongside; does not
+  // Optional 3rd reviewer (Project Controller) - recorded alongside; does not
   // change the final score (which is the manager's weighted score).
   controllerId          String?   @map("controller_id")
   controllerRatings     Json?     @map("controller_ratings")

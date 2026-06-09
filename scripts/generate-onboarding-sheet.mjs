@@ -1,11 +1,11 @@
 /**
- * Generates `docs/Employee_Onboarding_Template.xlsx` — the sheet HR circulates
+ * Generates `docs/Employee_Onboarding_Template.xlsx` - the sheet HR circulates
  * to employees for them to fill in their own details. Output is then used by
  * admin to bulk-create employees in HRMS.
  *
  * Run:  node scripts/generate-onboarding-sheet.mjs
  *
- * Re-run any time after column or dropdown changes — overwrites the file.
+ * Re-run any time after column or dropdown changes - overwrites the file.
  */
 
 import ExcelJS from "exceljs"
@@ -18,7 +18,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const OUTPUT = resolve(__dirname, "..", "docs", "Employee_Onboarding_Template.xlsx")
 const ENV_PATH = resolve(__dirname, "..", ".env")
 
-// Fallback list — used only if the DB is unreachable. The live list comes from
+// Fallback list - used only if the DB is unreachable. The live list comes from
 // the departments table (managed via Admin → Project Settings → Departments).
 const FALLBACK_DEPARTMENTS = [
   "Video",
@@ -52,7 +52,7 @@ async function loadEnv() {
       if (!(m[1] in process.env)) process.env[m[1]] = val
     }
   } catch {
-    // .env missing — DATABASE_URL may already be in process.env via Vercel/etc.
+    // .env missing - DATABASE_URL may already be in process.env via Vercel/etc.
   }
 }
 
@@ -60,7 +60,7 @@ async function loadEnv() {
 // the DB can't be reached (offline / no creds) so the script still produces a sheet.
 async function fetchDepartmentsFromDb() {
   if (!process.env.DATABASE_URL) {
-    console.warn("[onboarding-sheet] DATABASE_URL not set — using fallback department list")
+    console.warn("[onboarding-sheet] DATABASE_URL not set - using fallback department list")
     return FALLBACK_DEPARTMENTS
   }
   const pool = new pg.Pool({
@@ -74,7 +74,7 @@ async function fetchDepartmentsFromDb() {
       "SELECT name FROM departments WHERE is_active = true ORDER BY name ASC",
     )
     if (rows.length === 0) {
-      console.warn("[onboarding-sheet] DB returned 0 active departments — using fallback list")
+      console.warn("[onboarding-sheet] DB returned 0 active departments - using fallback list")
       return FALLBACK_DEPARTMENTS
     }
     return rows.map((r) => r.name)
@@ -172,22 +172,22 @@ function buildColumns(departmentList) {
       note: "e.g. Delhi HQ, Remote",
     },
 
-    // Address — Current
-    { key: "caLine1", header: "Current Addr — Line 1", width: 24, required: false },
-    { key: "caLine2", header: "Current Addr — Line 2", width: 18, required: false },
+    // Address - Current
+    { key: "caLine1", header: "Current Addr - Line 1", width: 24, required: false },
+    { key: "caLine2", header: "Current Addr - Line 2", width: 18, required: false },
     { key: "caCity", header: "Current City", width: 14, required: false },
     { key: "caState", header: "Current State", width: 14, required: false },
     { key: "caZip", header: "Current ZIP", width: 10, required: false },
 
-    // Address — Permanent
+    // Address - Permanent
     {
       key: "paLine1",
-      header: "Permanent Addr — Line 1",
+      header: "Permanent Addr - Line 1",
       width: 24,
       required: false,
       note: "Leave blank if same as current",
     },
-    { key: "paLine2", header: "Permanent Addr — Line 2", width: 18, required: false },
+    { key: "paLine2", header: "Permanent Addr - Line 2", width: 18, required: false },
     { key: "paCity", header: "Permanent City", width: 14, required: false },
     { key: "paState", header: "Permanent State", width: 14, required: false },
     { key: "paZip", header: "Permanent ZIP", width: 10, required: false },
@@ -293,7 +293,7 @@ function buildInstructionsSheet(wb) {
   sheet.getColumn(1).width = 110
 
   const lines = [
-    { text: "Employee Onboarding — Information Collection", style: "h1" },
+    { text: "Employee Onboarding - Information Collection", style: "h1" },
     { text: "", style: "blank" },
     { text: "How to fill this sheet", style: "h2" },
     { text: '1. Open the "Employee Details" tab.', style: "p" },
@@ -303,11 +303,11 @@ function buildInstructionsSheet(wb) {
       style: "p",
     },
     {
-      text: "4. Cells with a small red corner have a tooltip — hover for format hints.",
+      text: "4. Cells with a small red corner have a tooltip - hover for format hints.",
       style: "p",
     },
     {
-      text: "5. Dropdown columns (Gender, Blood Group, Department, Employment Type) restrict input — pick from the list.",
+      text: "5. Dropdown columns (Gender, Blood Group, Department, Employment Type) restrict input - pick from the list.",
       style: "p",
     },
     { text: "6. Dates must be in DD-MM-YYYY format (e.g. 14-08-1998).", style: "p" },
@@ -316,14 +316,14 @@ function buildInstructionsSheet(wb) {
       style: "p",
     },
     { text: "", style: "blank" },
-    { text: "Gmail App Password — DO NOT put it here", style: "h2_warn" },
+    { text: "Gmail App Password - DO NOT put it here", style: "h2_warn" },
     {
       text: "Your Gmail App Password must NEVER be written into this sheet. Once admin creates your HRMS account, log in and set it via:",
       style: "p",
     },
     { text: "      Profile → Security → Gmail App Password → Save", style: "p_mono" },
     {
-      text: "It is stored encrypted on the server and is never shown back to anyone — including admins.",
+      text: "It is stored encrypted on the server and is never shown back to anyone - including admins.",
       style: "p",
     },
     { text: "", style: "blank" },

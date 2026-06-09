@@ -23,7 +23,7 @@ import {
 
 // Only honour internal, relative callback paths. Anything else (an absolute
 // URL, a protocol-relative `//evil.com`, or a missing param) falls back to the
-// dashboard — this prevents open-redirect attacks via a crafted ?callbackUrl=.
+// dashboard - this prevents open-redirect attacks via a crafted ?callbackUrl=.
 function safeCallbackUrl(raw: string | null): string {
   if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw
   return "/dashboard"

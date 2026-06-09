@@ -113,7 +113,7 @@ function NewEvaluationDialog() {
               <SelectContent>
                 {employees.map((e) => (
                   <SelectItem key={e.id} value={e.id}>
-                    {e.firstName} {e.lastName} — {e.employeeNo}
+                    {e.firstName} {e.lastName} - {e.employeeNo}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -130,7 +130,7 @@ function NewEvaluationDialog() {
                   .filter((e) => e.id !== employeeId)
                   .map((e) => (
                     <SelectItem key={e.id} value={e.id}>
-                      {e.firstName} {e.lastName} — {e.employeeNo}
+                      {e.firstName} {e.lastName} - {e.employeeNo}
                     </SelectItem>
                   ))}
               </SelectContent>
@@ -150,7 +150,7 @@ function NewEvaluationDialog() {
                   .filter((e) => e.id !== employeeId)
                   .map((e) => (
                     <SelectItem key={e.id} value={e.id}>
-                      {e.firstName} {e.lastName} — {e.employeeNo}
+                      {e.firstName} {e.lastName} - {e.employeeNo}
                     </SelectItem>
                   ))}
               </SelectContent>

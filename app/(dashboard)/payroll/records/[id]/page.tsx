@@ -80,7 +80,7 @@ export default function PayrollRecordPage({ params }: { params: Promise<{ id: st
   return (
     <div className="space-y-6">
       <PageHeader
-        title={`Payslip — ${monthName} ${r.year}`}
+        title={`Payslip - ${monthName} ${r.year}`}
         description={`${r.employee.firstName} ${r.employee.lastName} · ${r.employee.employeeNo}`}
         actions={
           <div className="flex items-center gap-2">
@@ -147,7 +147,7 @@ export default function PayrollRecordPage({ params }: { params: Promise<{ id: st
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground py-2 text-sm italic">
-              No deductions — full salary paid in hand.
+              No deductions - full salary paid in hand.
             </p>
             {r.otherDeductions > 0 && (
               <Row label="Other deductions" value={inr(r.otherDeductions)} />

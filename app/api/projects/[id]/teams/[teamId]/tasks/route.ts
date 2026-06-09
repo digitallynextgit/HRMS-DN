@@ -8,7 +8,7 @@ import { sendEmail } from "@/lib/mailer"
 import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
-// GET /api/projects/[id]/teams/[teamId]/tasks — list tasks for team (all project members can view)
+// GET /api/projects/[id]/teams/[teamId]/tasks - list tasks for team (all project members can view)
 export const GET = withSession(
   async (_req: NextRequest, ctx: { params: Record<string, string> }, _session: Session) => {
     try {
@@ -29,7 +29,7 @@ export const GET = withSession(
   },
 )
 
-// POST /api/projects/[id]/teams/[teamId]/tasks — create task
+// POST /api/projects/[id]/teams/[teamId]/tasks - create task
 // Manager-created (assigneeId !== caller) → APPROVED + isManagerCreated=true
 // Self-task (assigneeId === caller OR not set) → PENDING_APPROVAL (unless caller IS the manager)
 export const POST = withSession(
@@ -74,7 +74,7 @@ export const POST = withSession(
         )
       }
 
-      // Assignee must be a team member (unless admin is creating — they may assign to manager who must be in team)
+      // Assignee must be a team member (unless admin is creating - they may assign to manager who must be in team)
       if (!memberIds.includes(finalAssigneeId)) {
         return NextResponse.json(
           { error: "Assignee must be a member of this team" },
@@ -127,7 +127,7 @@ export const POST = withSession(
             text: `New task assigned: ${task.title}`,
           })
         } else if (!isManager && team.managerId) {
-          // Member self-created task — notify manager for approval
+          // Member self-created task - notify manager for approval
           await createNotification({
             employeeId: team.managerId,
             title: "Task pending approval",
