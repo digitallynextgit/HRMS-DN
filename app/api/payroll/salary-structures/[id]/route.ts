@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { totalMonthlyEarnings } from "@/lib/payroll"
 import type { Session } from "next-auth"
 
 export const GET = withAuth(
@@ -55,13 +56,38 @@ export const PATCH = withAuth(
         hra,
         conveyance,
         medicalAllowance,
+        telephoneAllowance,
         otherAllowances,
-        pfEmployee,
-        pfEmployer,
-        esi,
-        tds,
         effectiveFrom,
       } = body
+
+      // ── Slab cap check against the designation's max monthly salary ──
+      const emp = await db.employee.findUnique({
+        where: { id: existing.employeeId },
+        include: { designation: { select: { title: true, maxMonthlySalary: true } } },
+      })
+      const total = totalMonthlyEarnings({
+        basicSalary: basicSalary !== undefined ? Number(basicSalary) : existing.basicSalary,
+        hra: hra !== undefined ? Number(hra) : existing.hra,
+        conveyance: conveyance !== undefined ? Number(conveyance) : existing.conveyance,
+        medicalAllowance:
+          medicalAllowance !== undefined ? Number(medicalAllowance) : existing.medicalAllowance,
+        telephoneAllowance:
+          telephoneAllowance !== undefined
+            ? Number(telephoneAllowance)
+            : existing.telephoneAllowance,
+        otherAllowances:
+          otherAllowances !== undefined ? Number(otherAllowances) : existing.otherAllowances,
+      })
+      const cap = emp?.designation?.maxMonthlySalary
+      if (cap != null && total > cap) {
+        return NextResponse.json(
+          {
+            error: `Total monthly salary ₹${total.toLocaleString("en-IN")} exceeds the ${emp?.designation?.title} cap of ₹${cap.toLocaleString("en-IN")}.`,
+          },
+          { status: 422 },
+        )
+      }
 
       const updated = await db.salaryStructure.update({
         where: { id },
@@ -70,11 +96,15 @@ export const PATCH = withAuth(
           ...(hra !== undefined && { hra: Number(hra) }),
           ...(conveyance !== undefined && { conveyance: Number(conveyance) }),
           ...(medicalAllowance !== undefined && { medicalAllowance: Number(medicalAllowance) }),
+          ...(telephoneAllowance !== undefined && {
+            telephoneAllowance: Number(telephoneAllowance),
+          }),
           ...(otherAllowances !== undefined && { otherAllowances: Number(otherAllowances) }),
-          ...(pfEmployee !== undefined && { pfEmployee: Number(pfEmployee) }),
-          ...(pfEmployer !== undefined && { pfEmployer: Number(pfEmployer) }),
-          ...(esi !== undefined && { esi: Number(esi) }),
-          ...(tds !== undefined && { tds: Number(tds) }),
+          // No statutory deductions for this company - always zero.
+          pfEmployee: 0,
+          pfEmployer: 0,
+          esi: 0,
+          tds: 0,
           ...(effectiveFrom !== undefined && { effectiveFrom: new Date(effectiveFrom) }),
         },
         include: {

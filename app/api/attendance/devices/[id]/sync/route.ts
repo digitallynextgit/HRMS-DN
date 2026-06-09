@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { fetchAttendanceEvents } from "@/lib/hikvision"
+import { computeAttendanceStatus } from "@/lib/attendance"
 import { $Enums } from "@prisma/client"
 import type { Session } from "next-auth"
 
@@ -42,7 +43,7 @@ async function syncFromDevice(
   lateGraceMins: number,
   datesToSync: Date[],
 ): Promise<{ synced: number; errors: string[]; usedSimulation: false }> {
-  const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins
+  // const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins // late-mark (DISABLED - do not delete)
 
   // Fetch events for the entire range in one batch
   const rangeStart = new Date(datesToSync[datesToSync.length - 1]) // oldest date
@@ -59,9 +60,14 @@ async function syncFromDevice(
   // Resolve employee IDs - Hikvision stores employee numbers (e.g. "EMP-001")
   const employees = await db.employee.findMany({
     where: { isActive: true, status: "ACTIVE" },
-    select: { id: true, employeeNo: true },
+    select: { id: true, employeeNo: true, deviceId: true },
   })
-  const employeeByNo = new Map(employees.map((e) => [e.employeeNo, e.id]))
+  // Resolve a device person-ID to an employee via deviceId first, then the code.
+  const employeeByNo = new Map<string, string>()
+  for (const e of employees) {
+    employeeByNo.set(e.employeeNo, e.id)
+    if (e.deviceId) employeeByNo.set(e.deviceId, e.id)
+  }
 
   // Group events by employee + date
   type DayKey = string // "employeeId|YYYY-MM-DD"
@@ -138,14 +144,19 @@ async function syncFromDevice(
               Math.round(((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)) * 100) / 100
           }
 
-          let status: $Enums.AttendanceStatus = $Enums.AttendanceStatus.ABSENT
-          if (checkIn) {
-            const checkInMins = checkIn.getUTCHours() * 60 + checkIn.getUTCMinutes()
-            status =
-              checkInMins > lateThresholdMins
-                ? $Enums.AttendanceStatus.LATE
-                : $Enums.AttendanceStatus.PRESENT
-          }
+          // Derive status from hours worked (half-day / absent rules).
+          const status = computeAttendanceStatus({ checkIn, workHours })
+
+          // ── Late-mark logic (DISABLED for now - do not delete) ──────────────
+          // Re-enable when late-mark policy (>9:45 grace, 3 marks/month) ships.
+          // let status: $Enums.AttendanceStatus = $Enums.AttendanceStatus.ABSENT
+          // if (checkIn) {
+          //   const checkInMins = checkIn.getUTCHours() * 60 + checkIn.getUTCMinutes()
+          //   status =
+          //     checkInMins > lateThresholdMins
+          //       ? $Enums.AttendanceStatus.LATE
+          //       : $Enums.AttendanceStatus.PRESENT
+          // }
 
           payload = {
             employeeId: empId,
@@ -195,7 +206,7 @@ async function syncSimulated(
   lateGraceMins: number,
   datesToSync: Date[],
 ): Promise<{ synced: number; errors: string[]; usedSimulation: true }> {
-  const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins
+  // const lateThresholdMins = policyHour * 60 + policyMin + lateGraceMins // late-mark (DISABLED - do not delete)
 
   const employees = await db.employee.findMany({
     where: { isActive: true, status: "ACTIVE" },
@@ -265,11 +276,15 @@ async function syncSimulated(
         const workHours =
           Math.round(((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60)) * 100) / 100
 
-        const checkInTotalMins = checkInHour * 60 + checkInMin
-        const status: $Enums.AttendanceStatus =
-          checkInTotalMins > lateThresholdMins
-            ? $Enums.AttendanceStatus.LATE
-            : $Enums.AttendanceStatus.PRESENT
+        // Derive status from hours worked (half-day / absent rules).
+        const status = computeAttendanceStatus({ checkIn, workHours })
+
+        // ── Late-mark logic (DISABLED for now - do not delete) ────────────────
+        // const checkInTotalMins = checkInHour * 60 + checkInMin
+        // const status: $Enums.AttendanceStatus =
+        //   checkInTotalMins > lateThresholdMins
+        //     ? $Enums.AttendanceStatus.LATE
+        //     : $Enums.AttendanceStatus.PRESENT
 
         await db.attendanceLog.upsert({
           where: { employeeId_date: { employeeId: emp.id, date } },

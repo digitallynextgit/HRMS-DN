@@ -156,7 +156,7 @@ export default function TeamWfhPage() {
                               variant="ghost"
                               size="sm"
                               className="text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/30"
-                              onClick={() => approve.mutate({ id: r.id })}
+                              onClick={() => approve.mutate(r.id)}
                               disabled={approve.isPending}
                             >
                               <Check className="mr-1 h-3.5 w-3.5" />

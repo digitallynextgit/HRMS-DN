@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth, withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // GET /api/projects/[id]/teams - list teams in a project
@@ -88,15 +89,12 @@ export const POST = withAuth(
         },
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "CREATE",
-          module: "project",
-          entityType: "ProjectTeam",
-          entityId: team.id,
-          changes: { projectId, name: team.name, description: team.description },
-        },
+      await createAuditLog(session, {
+        action: "CREATE",
+        module: "project",
+        entityType: "ProjectTeam",
+        entityId: team.id,
+        changes: { projectId, name: team.name, description: team.description },
       })
 
       return NextResponse.json({ data: team }, { status: 201 })

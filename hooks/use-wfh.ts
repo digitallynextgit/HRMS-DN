@@ -156,8 +156,7 @@ export function useCancelWfh() {
 export function useApproveWfh() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, approverRole }: { id: string; approverRole?: "MANAGER" | "HR" }) =>
-      patchWfh({ id, action: "APPROVE", approverRole }),
+    mutationFn: (id: string) => patchWfh({ id, action: "APPROVE" }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["wfh-requests"] })
       toast.success("WFH request approved")
@@ -169,15 +168,8 @@ export function useApproveWfh() {
 export function useRejectWfh() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      id,
-      rejectionReason,
-      approverRole,
-    }: {
-      id: string
-      rejectionReason: string
-      approverRole?: "MANAGER" | "HR"
-    }) => patchWfh({ id, action: "REJECT", rejectionReason, approverRole }),
+    mutationFn: ({ id, rejectionReason }: { id: string; rejectionReason: string }) =>
+      patchWfh({ id, action: "REJECT", rejectionReason }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["wfh-requests"] })
       toast.success("WFH request rejected")

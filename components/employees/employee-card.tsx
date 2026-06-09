@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils"
 import { EMPLOYEE_STATUS_LABELS } from "@/lib/constants"
+import { isOnProbation } from "@/lib/probation"
 
 export interface EmployeeCardProps {
   employee: {
@@ -27,6 +28,9 @@ export interface EmployeeCardProps {
     department?: { name: string } | null
     status: string
     profilePhoto?: string | null
+    onProbation?: boolean
+    probationMonths?: number
+    dateOfJoining?: string | null
   }
   onDelete?: (id: string) => void
   canEdit?: boolean
@@ -37,6 +41,7 @@ export function EmployeeCard({ employee, onDelete, canEdit, canDelete }: Employe
   const fullName = `${employee.firstName} ${employee.lastName}`
   const initials = getInitials(employee.firstName, employee.lastName)
   const statusLabel = EMPLOYEE_STATUS_LABELS[employee.status] ?? employee.status
+  const onProbation = isOnProbation(employee)
 
   return (
     <Card className="group border-border bg-card relative overflow-hidden rounded-[var(--radius)] border">
@@ -125,9 +130,16 @@ export function EmployeeCard({ employee, onDelete, canEdit, canDelete }: Employe
         <p className="text-muted-foreground mt-2 truncate text-xs">{employee.email}</p>
 
         <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="border-border text-muted-foreground inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium">
-            {statusLabel}
-          </span>
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <span className="border-border text-muted-foreground inline-flex items-center rounded border px-1.5 py-0.5 text-xs font-medium">
+              {statusLabel}
+            </span>
+            {onProbation && (
+              <span className="inline-flex items-center rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-400">
+                Probation
+              </span>
+            )}
+          </div>
           <Button variant="outline" size="sm" className="h-7 px-2 text-xs" asChild>
             <Link href={`/employees/${employee.id}`}>View</Link>
           </Button>

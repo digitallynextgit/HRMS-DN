@@ -22,104 +22,126 @@ import {
   Star,
   Briefcase,
   BarChart3,
-  Home,
+  Laptop,
   Network,
+  ListChecks,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useSidebarStore } from "@/stores/sidebar-store"
 import { PERMISSIONS } from "@/lib/constants"
 
+interface NavChild {
+  label: string
+  href: string
+  permission?: string
+}
+
 interface NavItem {
   label: string
   href?: string
   icon: React.ElementType
   permission?: string
-  children?: { label: string; href: string }[]
+  children?: NavChild[]
 }
 
-const NAV_ITEMS: NavItem[] = [
+// ── Employee: personal self-service. No permission gate — every signed-in
+//    user sees the same set, each a flat link to their own view. ────────────
+const EMPLOYEE_ITEMS: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "My Attendance", href: "/attendance/me", icon: Clock },
+  { label: "My Leaves", href: "/leave", icon: CalendarDays },
+  { label: "My Payslips", href: "/payroll/me", icon: DollarSign },
+  { label: "My Performance", href: "/performance/me", icon: Star },
+  { label: "Work From Home", href: "/wfh", icon: Laptop },
+  { label: "Notifications", href: "/notifications", icon: Bell },
+]
+
+// ── Company: shared, company-wide. Visible to everyone. ─────────────────────
+const COMPANY_ITEMS: NavItem[] = [
+  { label: "Documents", href: "/documents", icon: FileText },
+  { label: "Organisation Chart", href: "/employees/org-chart", icon: Network },
+  { label: "Help & Guide", href: "/docs", icon: HelpCircle },
+]
+
+// ── Project: personal project workspace. Shown to anyone with project access. ─
+const PROJECT_ITEMS: NavItem[] = [
   {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    permission: PERMISSIONS.DASHBOARD_READ,
+    label: "My Projects",
+    href: "/projects",
+    icon: FolderKanban,
+    permission: PERMISSIONS.PROJECT_READ,
   },
   {
-    label: "Employee",
+    label: "My Tasks",
+    href: "/projects/my-tasks",
+    icon: ListChecks,
+    permission: PERMISSIONS.PROJECT_READ,
+  },
+]
+
+// ── Management: only privileged roles. Gated by manage-level permissions
+//    (WRITE/APPROVE/REVIEW) so regular employees never see these groups; they
+//    use the flat Employee links above instead. ──────────────────────────────
+const MANAGEMENT_ITEMS: NavItem[] = [
+  {
+    label: "Employees",
     icon: Users,
     permission: PERMISSIONS.EMPLOYEE_READ,
     children: [
       { label: "Employee Directory", href: "/employees" },
+      { label: "Bulk Import", href: "/employees/import", permission: PERMISSIONS.EMPLOYEE_WRITE },
       { label: "Departments", href: "/employees/departments" },
       { label: "Designations", href: "/employees/designations" },
     ],
   },
-  // Org Chart is visible to ALL employees (no permission gate).
-  { label: "Organisation Chart", href: "/employees/org-chart", icon: Network },
-  { label: "Documents", href: "/documents", icon: FileText, permission: PERMISSIONS.DOCUMENT_READ },
   {
     label: "Attendance",
     icon: Clock,
-    permission: PERMISSIONS.ATTENDANCE_READ,
+    permission: PERMISSIONS.ATTENDANCE_WRITE,
     children: [
       { label: "Overview", href: "/attendance" },
-      { label: "My Attendance", href: "/attendance/me" },
-      { label: "GPS Check-In", href: "/attendance/checkin" },
-      { label: "QR Kiosk", href: "/attendance/kiosk" },
-      { label: "CSV Import", href: "/attendance/import" },
+      { label: "Imports", href: "/attendance/import" },
       { label: "Devices", href: "/attendance/devices" },
       { label: "Holidays", href: "/attendance/holidays" },
+      { label: "Floating Holidays", href: "/attendance/floating-holidays" },
+      { label: "Regularization", href: "/attendance/regularizations" },
     ],
   },
   {
     label: "Leave",
     icon: CalendarDays,
-    permission: PERMISSIONS.LEAVE_READ,
+    permission: PERMISSIONS.LEAVE_APPROVE,
     children: [
-      { label: "My Leaves", href: "/leave" },
-      { label: "Apply Leave", href: "/leave/apply" },
       { label: "Team Leaves", href: "/leave/team" },
+      { label: "Leave Calendar", href: "/leave/calendar" },
       { label: "Leave Types", href: "/leave/types" },
     ],
   },
   {
     label: "Work From Home",
-    icon: Home,
-    permission: PERMISSIONS.WFH_READ,
-    children: [
-      { label: "My WFH", href: "/wfh" },
-      { label: "Apply WFH", href: "/wfh/apply" },
-      { label: "Team WFH", href: "/wfh/team" },
-    ],
+    icon: Laptop,
+    permission: PERMISSIONS.WFH_APPROVE,
+    children: [{ label: "Team WFH", href: "/wfh/team" }],
   },
   {
     label: "Payroll",
     icon: DollarSign,
-    permission: PERMISSIONS.PAYROLL_READ,
+    permission: PERMISSIONS.PAYROLL_WRITE,
     children: [
       { label: "Overview", href: "/payroll" },
-      { label: "My Payslips", href: "/payroll/me" },
       { label: "Salary Structures", href: "/payroll/salary-structures" },
-    ],
-  },
-  {
-    label: "Projects",
-    icon: FolderKanban,
-    permission: PERMISSIONS.PROJECT_READ,
-    children: [
-      { label: "All Projects", href: "/projects" },
-      { label: "My Tasks", href: "/projects/my-tasks" },
     ],
   },
   {
     label: "Performance",
     icon: Star,
-    permission: PERMISSIONS.PERFORMANCE_READ,
+    permission: PERMISSIONS.PERFORMANCE_REVIEW,
     children: [
       { label: "Reviews", href: "/performance" },
-      { label: "My Review", href: "/performance/me" },
+      { label: "Evaluations", href: "/performance/evaluations" },
       { label: "Goals", href: "/performance/goals" },
+      { label: "KPIs", href: "/performance/kpis" },
     ],
   },
   {
@@ -134,8 +156,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: BarChart3,
     permission: PERMISSIONS.ANALYTICS_READ,
   },
-  { label: "Help & Guide", href: "/docs", icon: HelpCircle },
-  { label: "Notifications", href: "/notifications", icon: Bell },
 ]
 
 const ADMIN_ITEMS: NavItem[] = [
@@ -165,10 +185,18 @@ const ADMIN_ITEMS: NavItem[] = [
   },
 ]
 
-function canAccess(item: NavItem, permissions: string[], roles: string[]): boolean {
+function canAccess(item: { permission?: string }, permissions: string[], roles: string[]): boolean {
   if (roles.includes("super_admin")) return true
   if (!item.permission) return true
   return permissions.includes(item.permission)
+}
+
+// A nav item is visible if the user can access it AND (for groups) at least one
+// child is accessible — otherwise the row would render nothing.
+function isItemVisible(item: NavItem, permissions: string[], roles: string[]): boolean {
+  if (!canAccess(item, permissions, roles)) return false
+  if (item.children) return item.children.some((c) => canAccess(c, permissions, roles))
+  return true
 }
 
 interface SidebarNavItemProps {
@@ -187,7 +215,11 @@ function SidebarNavItem({ item, isCollapsed, permissions, roles }: SidebarNavIte
   if (!canAccess(item, permissions, roles)) return null
 
   if (item.children) {
-    const isActive = item.children.some((c) => pathname.startsWith(c.href))
+    // Hide individual sub-items the user lacks permission for; hide the whole
+    // group if nothing is left visible.
+    const visibleChildren = item.children.filter((c) => canAccess(c, permissions, roles))
+    if (visibleChildren.length === 0) return null
+    const isActive = visibleChildren.some((c) => pathname.startsWith(c.href))
 
     if (isCollapsed) {
       return (
@@ -234,8 +266,8 @@ function SidebarNavItem({ item, isCollapsed, permissions, roles }: SidebarNavIte
           />
         </button>
         {open && (
-          <div className="border-border mt-0.5 ml-[26px] space-y-0.5 border-l pl-3">
-            {item.children.map((child) => {
+          <div className="border-border mt-0.5 ml-6.5 space-y-0.5 border-l pl-3">
+            {visibleChildren.map((child) => {
               const childActive = pathname === child.href || pathname.startsWith(child.href + "/")
               return (
                 <Link
@@ -303,6 +335,51 @@ function SidebarNavItem({ item, isCollapsed, permissions, roles }: SidebarNavIte
   )
 }
 
+interface SidebarSectionProps {
+  label: string
+  items: NavItem[]
+  isCollapsed: boolean
+  permissions: string[]
+  roles: string[]
+  first?: boolean
+}
+
+// Renders a labelled group of nav items. Hidden entirely if the user can't see
+// any item in it. When collapsed, the label is replaced by a thin divider
+// (except for the first section, which sits flush under the logo).
+function SidebarSection({
+  label,
+  items,
+  isCollapsed,
+  permissions,
+  roles,
+  first,
+}: SidebarSectionProps) {
+  if (!items.some((item) => isItemVisible(item, permissions, roles))) return null
+
+  return (
+    <>
+      {isCollapsed
+        ? !first && <div className="border-border mx-1 my-2 border-t" />
+        : !first && <div aria-hidden className="h-2" />}
+      {!isCollapsed && (
+        <p className="text-muted-foreground px-2.5 pb-1 text-[10px] font-medium tracking-widest uppercase">
+          {label}
+        </p>
+      )}
+      {items.map((item) => (
+        <SidebarNavItem
+          key={item.label}
+          item={item}
+          isCollapsed={isCollapsed}
+          permissions={permissions}
+          roles={roles}
+        />
+      ))}
+    </>
+  )
+}
+
 export function Sidebar({ session }: { session: Session }) {
   const { isCollapsed, toggle } = useSidebarStore()
   const permissions = session.user.permissions
@@ -332,61 +409,75 @@ export function Sidebar({ session }: { session: Session }) {
         isCollapsed ? "w-14" : "w-56",
       )}
     >
-      {/* Logo */}
+      {/* Logo — theme-aware wordmark. Light mode shows the black-text logo,
+          dark / custom themes show the white-text one. On the collapsed rail the
+          row is clipped so only the left X mark shows. */}
       <div
         className={cn(
-          "border-border flex h-[57px] shrink-0 items-center border-b px-3",
-          isCollapsed ? "justify-center" : "gap-2.5",
+          "border-border flex h-14.25 shrink-0 items-center overflow-hidden border-b",
+          isCollapsed ? "justify-center px-2" : "px-4",
         )}
       >
-        <Image
-          src="/brand-mark.png"
-          alt="DNMS"
-          width={2505}
-          height={2200}
-          className="h-7 w-7 shrink-0 object-contain"
-        />
-        {!isCollapsed && (
-          <div>
-            <p className="text-foreground text-sm font-semibold tracking-tight">DNMS</p>
-            <p className="text-muted-foreground text-[10px]">Management System</p>
-          </div>
-        )}
+        <div className={cn("flex items-center overflow-hidden", isCollapsed ? "w-9" : "w-auto")}>
+          {/* Light mode → black-text logo */}
+          <Image
+            src="/logo_white_bg.png"
+            alt="Digitally Next"
+            width={4500}
+            height={1167}
+            priority
+            className="h-10 w-auto max-w-none dark:hidden"
+          />
+          {/* Dark / custom themes → white-text logo */}
+          <Image
+            src="/logo_dark_bg.webp"
+            alt="Digitally Next"
+            width={4500}
+            height={1167}
+            priority
+            className="hidden h-10 w-auto max-w-none dark:block"
+          />
+        </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
-        {NAV_ITEMS.map((item) => (
-          <SidebarNavItem
-            key={item.label}
-            item={item}
-            isCollapsed={isCollapsed}
-            permissions={permissions}
-            roles={roles}
-          />
-        ))}
-
-        {/* Admin section */}
-        {ADMIN_ITEMS.some((item) => canAccess(item, permissions, roles)) && (
-          <>
-            {!isCollapsed ? (
-              <p className="text-muted-foreground px-2.5 pt-4 pb-1 text-[10px] font-medium tracking-widest uppercase">
-                Admin
-              </p>
-            ) : (
-              <div className="border-border mx-1 my-2 border-t" />
-            )}
-            {ADMIN_ITEMS.map((item) => (
-              <SidebarNavItem
-                key={item.label}
-                item={item}
-                isCollapsed={isCollapsed}
-                permissions={permissions}
-                roles={roles}
-              />
-            ))}
-          </>
-        )}
+        <SidebarSection
+          label="Employee"
+          items={EMPLOYEE_ITEMS}
+          isCollapsed={isCollapsed}
+          permissions={permissions}
+          roles={roles}
+          first
+        />
+        <SidebarSection
+          label="Project"
+          items={PROJECT_ITEMS}
+          isCollapsed={isCollapsed}
+          permissions={permissions}
+          roles={roles}
+        />
+        <SidebarSection
+          label="Company"
+          items={COMPANY_ITEMS}
+          isCollapsed={isCollapsed}
+          permissions={permissions}
+          roles={roles}
+        />
+        <SidebarSection
+          label="Management"
+          items={MANAGEMENT_ITEMS}
+          isCollapsed={isCollapsed}
+          permissions={permissions}
+          roles={roles}
+        />
+        <SidebarSection
+          label="Admin"
+          items={ADMIN_ITEMS}
+          isCollapsed={isCollapsed}
+          permissions={permissions}
+          roles={roles}
+        />
       </nav>
     </aside>
   )

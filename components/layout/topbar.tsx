@@ -2,6 +2,7 @@
 
 import { Session } from "next-auth"
 import { signOut } from "next-auth/react"
+import { useTheme } from "next-themes"
 import { Bell, LogOut, User, ChevronDown, PanelLeft, PanelLeftClose } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -16,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Button } from "@/components/ui/button"
 import { getInitials } from "@/lib/utils"
 import { useSidebarStore } from "@/stores/sidebar-store"
+import { useThemeStore } from "@/stores/theme-store"
 import { ThemePicker } from "./theme-picker"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
@@ -30,6 +32,16 @@ async function fetchUnreadCount() {
 export function Topbar({ session }: { session: Session }) {
   const { firstName, lastName, email, profilePhoto } = session.user
   const { isCollapsed, toggle } = useSidebarStore()
+  const clearPalette = useThemeStore((s) => s.clearPalette)
+  const { setTheme } = useTheme()
+
+  // On logout, drop any custom palette and fall back to the default (system)
+  // theme so the next user / the login page starts from the default colors.
+  function handleSignOut() {
+    clearPalette()
+    setTheme("system")
+    signOut({ callbackUrl: "/login" })
+  }
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ["notifications", "unread-count"],
@@ -38,7 +50,7 @@ export function Topbar({ session }: { session: Session }) {
   })
 
   return (
-    <header className="bg-background border-border flex h-[57px] shrink-0 items-center justify-between border-b px-4">
+    <header className="bg-background border-border flex h-14.25 shrink-0 items-center justify-between border-b px-4">
       <div className="flex flex-1 items-center">
         <TooltipProvider delayDuration={300}>
           <Tooltip>
@@ -119,7 +131,7 @@ export function Topbar({ session }: { session: Session }) {
                   <p className="text-sm leading-tight font-medium">
                     {firstName} {lastName}
                   </p>
-                  <p className="text-muted-foreground max-w-[150px] truncate text-xs">{email}</p>
+                  <p className="text-muted-foreground max-w-37.5 truncate text-xs">{email}</p>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -132,7 +144,7 @@ export function Topbar({ session }: { session: Session }) {
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive cursor-pointer gap-2 text-sm"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={handleSignOut}
             >
               <LogOut className="h-3.5 w-3.5" /> Sign out
             </DropdownMenuItem>

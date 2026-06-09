@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { FileUpload } from "@/components/shared/file-upload"
-import { useUploadDocument } from "@/hooks/use-documents"
+import { useUploadDocument, useUploadEmployeeDocument } from "@/hooks/use-documents"
 import { DOCUMENT_CATEGORY_LABELS, ALLOWED_FILE_TYPES, MAX_FILE_SIZE } from "@/lib/constants"
 
 interface DocumentUploadDialogProps {
@@ -38,7 +38,11 @@ export function DocumentUploadDialog({
   onOpenChange,
   employeeId,
 }: DocumentUploadDialogProps) {
-  const uploadMutation = useUploadDocument()
+  // Locker uploads (employeeId set) go to the EmployeeDocument table; company
+  // uploads go to the Document table. Both hooks run; we pick by employeeId.
+  const companyUpload = useUploadDocument()
+  const employeeUpload = useUploadEmployeeDocument(employeeId ?? "")
+  const uploadMutation = employeeId ? employeeUpload : companyUpload
 
   const [file, setFile] = React.useState<File | null>(null)
   const [title, setTitle] = React.useState("")

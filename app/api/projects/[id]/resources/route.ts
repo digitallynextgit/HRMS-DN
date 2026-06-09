@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { randomUUID } from "node:crypto"
 import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
+import { createAuditLog } from "@/lib/audit"
 import { PERMISSIONS } from "@/lib/constants"
 import { uploadFile, getObjectKey, ensureBucket } from "@/lib/storage"
 import type { Session } from "next-auth"
@@ -195,15 +196,12 @@ export const POST = withSession(
       })
 
       // 13. Audit log
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "UPLOAD",
-          module: "project",
-          entityType: "ProjectResource",
-          entityId: resource.id,
-          changes: { fileName, fileSize: file.size, category, teamId } as object,
-        },
+      await createAuditLog(session, {
+        action: "UPLOAD",
+        module: "project",
+        entityType: "ProjectResource",
+        entityId: resource.id,
+        changes: { fileName, fileSize: file.size, category, teamId } as object,
       })
 
       return NextResponse.json({ data: resource }, { status: 201 })

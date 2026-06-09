@@ -17,16 +17,19 @@ import {
   Eye,
   EyeOff,
   Shield,
+  Send,
+  CheckCircle2,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PageHeader } from "@/components/shared/page-header"
+import { DocumentList } from "@/components/documents/document-list"
 import { useSession } from "next-auth/react"
 import { useEmployee } from "@/hooks/use-employees"
 import { cn, getInitials, getAvatarColor, formatDate } from "@/lib/utils"
@@ -37,6 +40,17 @@ import {
 } from "@/lib/constants"
 
 async function changePassword(body: { currentPassword: string; newPassword: string }) {
+  const res = await fetch("/api/profile", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? "Failed")
+  return data
+}
+
+async function saveGmailAppPassword(body: { gmailAppPassword: string }) {
   const res = await fetch("/api/profile", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -76,7 +90,7 @@ export default function ProfilePage() {
   const { data: session, status: sessionStatus } = useSession()
   const userId = session?.user?.id ?? null
 
-  const { data, isLoading, error } = useEmployee(userId)
+  const { data, isLoading, error, refetch } = useEmployee(userId)
 
   const [pwForm, setPwForm] = useState({
     currentPassword: "",
@@ -84,6 +98,9 @@ export default function ProfilePage() {
     confirmPassword: "",
   })
   const [showPw, setShowPw] = useState(false)
+
+  const [gmailPw, setGmailPw] = useState("")
+  const [showGmailPw, setShowGmailPw] = useState(false)
 
   const pwMut = useMutation({
     mutationFn: () =>
@@ -94,6 +111,19 @@ export default function ProfilePage() {
     },
     onError: (err: Error) => toast.error(err.message),
   })
+
+  const gmailMut = useMutation({
+    mutationFn: () => saveGmailAppPassword({ gmailAppPassword: gmailPw.replace(/\s+/g, "") }),
+    onSuccess: () => {
+      toast.success("Gmail App Password saved")
+      setGmailPw("")
+      refetch()
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  const gmailPwStripped = gmailPw.replace(/\s+/g, "")
+  const gmailPwValid = gmailPwStripped.length === 16
 
   if (sessionStatus === "loading" || isLoading) {
     return (
@@ -142,15 +172,10 @@ export default function ProfilePage() {
         <CardContent className="pt-6 pb-6">
           <div className="flex flex-col items-start gap-6 sm:flex-row">
             <Avatar className="h-24 w-24 shrink-0">
-              {emp.profilePhoto ? (
-                <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
-                  {initials}
-                </AvatarFallback>
-              ) : (
-                <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
-                  {initials}
-                </AvatarFallback>
-              )}
+              {emp.profilePhoto && <AvatarImage src={emp.profilePhoto} alt={fullName} />}
+              <AvatarFallback className={cn("text-2xl font-bold text-white", avatarBg)}>
+                {initials}
+              </AvatarFallback>
             </Avatar>
 
             <div className="min-w-0 flex-1">
@@ -327,9 +352,7 @@ export default function ProfilePage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Documents will load here once the Documents module is available.
-              </p>
+              <DocumentList employeeId={emp.id} canUpload={false} canDelete={false} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -360,7 +383,7 @@ export default function ProfilePage() {
         </TabsContent>
 
         {/* Security tab */}
-        <TabsContent value="security">
+        <TabsContent value="security" className="space-y-6">
           <Card className="max-w-md">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
@@ -419,6 +442,80 @@ export default function ProfilePage() {
               >
                 {pwMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Change Password
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Gmail App Password - used to send emails from this employee's address. */}
+          <Card className="max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Send className="h-4 w-4" />
+                Gmail App Password
+              </CardTitle>
+              <p className="text-muted-foreground text-xs">
+                Lets HRMS send emails from your <span className="font-medium">{emp.email}</span>{" "}
+                address. Stored encrypted (AES-256-GCM) - never shown back to you after save.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Currently-set indicator */}
+              {(emp as { hasGmailAppPassword?: boolean }).hasGmailAppPassword && (
+                <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-400">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>App Password is set. Enter a new one below to replace it.</span>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label>
+                  {(emp as { hasGmailAppPassword?: boolean }).hasGmailAppPassword
+                    ? "New App Password"
+                    : "App Password"}
+                </Label>
+                <div className="relative">
+                  <Input
+                    type={showGmailPw ? "text" : "password"}
+                    value={gmailPw}
+                    onChange={(e) => setGmailPw(e.target.value)}
+                    placeholder="abcd efgh ijkl mnop"
+                    autoComplete="off"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGmailPw((s) => !s)}
+                    className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
+                  >
+                    {showGmailPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                {gmailPw && !gmailPwValid && (
+                  <p className="text-destructive text-xs">
+                    Must be 16 characters (currently {gmailPwStripped.length})
+                  </p>
+                )}
+                <p className="text-muted-foreground text-xs">
+                  Generate at{" "}
+                  <a
+                    href="https://myaccount.google.com/apppasswords"
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="underline"
+                  >
+                    myaccount.google.com → Security → App Passwords
+                  </a>
+                  . Requires 2FA on your Google account.
+                </p>
+              </div>
+
+              <Button
+                onClick={() => gmailMut.mutate()}
+                disabled={gmailMut.isPending || !gmailPwValid}
+              >
+                {gmailMut.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {(emp as { hasGmailAppPassword?: boolean }).hasGmailAppPassword
+                  ? "Update App Password"
+                  : "Save App Password"}
               </Button>
             </CardContent>
           </Card>

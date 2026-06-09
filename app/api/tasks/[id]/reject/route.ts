@@ -4,6 +4,7 @@ import { withSession, hasPermission } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
 import { createNotification } from "@/lib/notifications"
 import { sendEmail } from "@/lib/mailer"
+import { createAuditLog } from "@/lib/audit"
 import type { Session } from "next-auth"
 
 // PATCH /api/tasks/[id]/reject - Manager rejects a PENDING_APPROVAL task
@@ -61,15 +62,12 @@ export const PATCH = withSession(
         /* non-blocking */
       }
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "REJECT",
-          module: "project",
-          entityType: "ProjectTask",
-          entityId: id,
-          changes: { from: "PENDING_APPROVAL", to: "REJECTED", reason: reason.trim() },
-        },
+      await createAuditLog(session, {
+        action: "REJECT",
+        module: "project",
+        entityType: "ProjectTask",
+        entityId: id,
+        changes: { from: "PENDING_APPROVAL", to: "REJECTED", reason: reason.trim() },
       })
 
       return NextResponse.json({ data: updated })

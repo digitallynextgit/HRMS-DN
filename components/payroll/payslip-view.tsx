@@ -25,11 +25,12 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
   const statusColor = PAYROLL_STATUS_COLORS[record.status] ?? "bg-gray-100 text-gray-700"
 
   const earnings = [
-    { label: "Basic Salary", amount: record.basicSalary },
-    { label: "House Rent Allowance (HRA)", amount: record.hra },
-    { label: "Conveyance Allowance", amount: record.conveyance },
+    { label: "Basic", amount: record.basicSalary },
+    { label: "HRA", amount: record.hra },
+    { label: "Transport Allowance", amount: record.conveyance },
     { label: "Medical Allowance", amount: record.medicalAllowance },
-    { label: "Other Allowances", amount: record.otherAllowances },
+    { label: "Telephone / Mobile Bill", amount: record.telephoneAllowance },
+    { label: "Special Allowance", amount: record.otherAllowances },
     ...(record.overtime > 0 ? [{ label: "Overtime", amount: record.overtime }] : []),
   ].filter((e) => e.amount > 0)
 
@@ -113,15 +114,19 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
             <div className="grid grid-cols-3 gap-3 text-sm">
               <div className="text-center">
                 <p className="text-foreground text-2xl font-bold">{record.workingDays}</p>
-                <p className="text-muted-foreground mt-1">Working Days</p>
+                <p className="text-muted-foreground mt-1">Days in Month</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-green-600">{record.presentDays}</p>
-                <p className="text-muted-foreground mt-1">Present Days</p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {record.presentDays}
+                </p>
+                <p className="text-muted-foreground mt-1">Paid Days</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-red-600">{record.lopDays}</p>
-                <p className="text-muted-foreground mt-1">LOP Days</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+                  {record.lopDays}
+                </p>
+                <p className="text-muted-foreground mt-1">Unpaid Days</p>
               </div>
             </div>
           </div>
@@ -168,7 +173,7 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
                   deductions.map((d) => (
                     <tr key={d.label}>
                       <td className="text-muted-foreground px-4 py-2.5">{d.label}</td>
-                      <td className="px-4 py-2.5 text-right font-medium text-red-600">
+                      <td className="px-4 py-2.5 text-right font-medium text-red-600 dark:text-red-400">
                         {fmt(d.amount)}
                       </td>
                     </tr>
@@ -178,7 +183,7 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
               <tfoot className="bg-muted/20 border-t">
                 <tr>
                   <td className="text-foreground px-4 py-2.5 font-semibold">Total Deductions</td>
-                  <td className="px-4 py-2.5 text-right font-bold text-red-600">
+                  <td className="px-4 py-2.5 text-right font-bold text-red-600 dark:text-red-400">
                     {fmt(record.totalDeductions)}
                   </td>
                 </tr>
@@ -187,9 +192,11 @@ export function PayslipView({ open, onOpenChange, record }: PayslipViewProps) {
           </div>
 
           {/* Net salary highlight */}
-          <div className="flex items-center justify-between rounded border-2 border-emerald-500 bg-emerald-50 px-4 py-4">
-            <p className="text-foreground text-base font-bold">Net Salary</p>
-            <p className="text-2xl font-extrabold text-emerald-600">{fmt(record.netSalary)}</p>
+          <div className="flex items-center justify-between rounded border-2 border-emerald-500 bg-emerald-50 px-4 py-4 dark:border-emerald-600 dark:bg-emerald-950/40">
+            <p className="text-base font-bold text-emerald-900 dark:text-emerald-100">Net Salary</p>
+            <p className="text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
+              {fmt(record.netSalary)}
+            </p>
           </div>
 
           {record.notes && (

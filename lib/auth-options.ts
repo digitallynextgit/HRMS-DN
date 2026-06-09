@@ -1,5 +1,4 @@
 import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
 import Credentials from "next-auth/providers/credentials"
 import Google from "next-auth/providers/google"
 import bcrypt from "bcryptjs"
@@ -44,10 +43,10 @@ async function getUserWithPermissions(employeeId: string) {
 // NextAuth v5 configuration object
 // ---------------------------------------------------------------------------
 export const authOptions: NextAuthConfig = {
-  // PrismaAdapter maps the Employee model to the NextAuth User model.
-  // The adapter uses `userId` on Account/Session which maps to Employee.id.
-  adapter: PrismaAdapter(db) as NextAuthConfig["adapter"],
-
+  // No database adapter: sessions are JWT-based and OAuth sign-ins are gated to
+  // pre-existing employees in the `signIn` callback below (we never auto-create
+  // users). The Prisma schema has no `User` model - Account/Session map to
+  // Employee - so the PrismaAdapter, which calls `db.user`, cannot be used.
   session: { strategy: "jwt" },
 
   secret: process.env.AUTH_SECRET,

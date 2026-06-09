@@ -5,7 +5,7 @@ import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
 export const GET = withAuth(
-  PERMISSIONS.ATTENDANCE_READ,
+  PERMISSIONS.ATTENDANCE_WRITE,
   async (req: NextRequest, _ctx: { params: Record<string, string> }, _session: Session) => {
     try {
       const { searchParams } = new URL(req.url)

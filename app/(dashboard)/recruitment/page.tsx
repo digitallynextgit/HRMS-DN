@@ -134,6 +134,35 @@ export default function RecruitmentPage() {
     onError: () => toast.error("Failed to create job posting"),
   })
 
+  const jobActionMut = useMutation({
+    mutationFn: async ({
+      id,
+      action,
+      status,
+    }: {
+      id: string
+      action: "toggle" | "delete"
+      status?: string
+    }) => {
+      if (action === "delete") {
+        const res = await fetch(`/api/recruitment/jobs/${id}`, { method: "DELETE" })
+        if (!res.ok) throw new Error("Failed to delete")
+      } else {
+        const res = await fetch(`/api/recruitment/jobs/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: status === "OPEN" ? "CLOSED" : "OPEN" }),
+        })
+        if (!res.ok) throw new Error("Failed to update")
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["jobs"] })
+      toast.success("Job posting updated")
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
   const selectedDept = depts.find((d) => d.id === form.departmentId)
   const [deptTone, setDeptTone] = useState<"red" | "teal" | "">("")
   const [deptJobsLabel, setDeptJobsLabel] = useState("")
@@ -351,6 +380,33 @@ export default function RecruitmentPage() {
                     <ExternalLink className="h-3.5 w-3.5" /> View Pipeline
                   </Button>
                 </Link>
+                {canWrite && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 flex-1 text-xs"
+                      disabled={jobActionMut.isPending}
+                      onClick={() =>
+                        jobActionMut.mutate({ id: job.id, action: "toggle", status: job.status })
+                      }
+                    >
+                      {job.status === "OPEN" ? "Close" : "Reopen"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive hover:bg-destructive/10 h-7 px-2 text-xs"
+                      disabled={jobActionMut.isPending}
+                      onClick={() => {
+                        if (confirm(`Delete job "${job.title}"? This removes its applicants too.`))
+                          jobActionMut.mutate({ id: job.id, action: "delete" })
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}

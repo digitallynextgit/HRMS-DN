@@ -1,17 +1,9 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import {
-  Users,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Play,
-  Trash2,
-  Eye,
-  ChevronDown,
-} from "lucide-react"
+import { useSession } from "next-auth/react"
+import { Users, TrendingUp, DollarSign, Play, Trash2, Eye, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -54,6 +46,15 @@ function fmt(amount: number): string {
 export default function PayrollPage() {
   const router = useRouter()
   const { can } = usePermissions()
+  const { status: sessionStatus } = useSession()
+  const canWrite = can(PERMISSIONS.PAYROLL_WRITE)
+
+  // Overview is the HR payroll-run console; employees use My Payslips.
+  useEffect(() => {
+    if (sessionStatus === "authenticated" && !canWrite) {
+      router.replace("/payroll/me")
+    }
+  }, [sessionStatus, canWrite, router])
 
   const now = new Date()
   const [month, setMonth] = useState(String(now.getMonth() + 1))
@@ -179,9 +180,9 @@ export default function PayrollPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {summaryLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 rounded" />)
+          Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28 rounded" />)
         ) : (
           <>
             <Card>
@@ -191,8 +192,8 @@ export default function PayrollPage() {
                     <p className="text-muted-foreground text-sm">Total Employees</p>
                     <p className="mt-1 text-3xl font-bold">{summary?.employeeCount ?? 0}</p>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded bg-blue-50">
-                    <Users className="h-5 w-5 text-blue-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded bg-blue-50 dark:bg-blue-950/40">
+                    <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
               </CardContent>
@@ -202,11 +203,11 @@ export default function PayrollPage() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-muted-foreground text-sm">Total Gross</p>
+                    <p className="text-muted-foreground text-sm">Total Payroll</p>
                     <p className="mt-1 text-2xl font-bold">{fmt(summary?.totalGross ?? 0)}</p>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded bg-emerald-50">
-                    <TrendingUp className="h-5 w-5 text-emerald-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded bg-emerald-50 dark:bg-emerald-950/40">
+                    <TrendingUp className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 </div>
               </CardContent>
@@ -216,25 +217,13 @@ export default function PayrollPage() {
               <CardContent className="p-5">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-muted-foreground text-sm">Total Deductions</p>
-                    <p className="mt-1 text-2xl font-bold">{fmt(summary?.totalDeductions ?? 0)}</p>
+                    <p className="text-muted-foreground text-sm">Net Payable (in hand)</p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                      {fmt(summary?.totalNet ?? 0)}
+                    </p>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded bg-red-50">
-                    <TrendingDown className="h-5 w-5 text-red-600" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-muted-foreground text-sm">Total Net</p>
-                    <p className="mt-1 text-2xl font-bold">{fmt(summary?.totalNet ?? 0)}</p>
-                  </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded bg-violet-50">
-                    <DollarSign className="h-5 w-5 text-violet-600" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded bg-violet-50 dark:bg-violet-950/40">
+                    <DollarSign className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                   </div>
                 </div>
               </CardContent>

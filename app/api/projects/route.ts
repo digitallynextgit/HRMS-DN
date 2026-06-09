@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withAuth, withSession } from "@/lib/permissions"
+import { withAuth, withSession, hasPermission } from "@/lib/permissions"
+import { createAuditLog } from "@/lib/audit"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
@@ -15,7 +16,11 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
 
     const where: Record<string, unknown> = { isArchived: false }
     if (status) where.status = status
-    if (mine) {
+    // Admins/PMs (project:write) can see all projects; everyone else is always
+    // restricted to projects they own or are a team member of (the `mine`
+    // filter can further narrow it for admins, but never widens it for others).
+    const canViewAll = hasPermission(session, PERMISSIONS.PROJECT_WRITE)
+    if (!canViewAll || mine) {
       where.OR = [
         { ownerId: session.user.id },
         { teams: { some: { members: { some: { employeeId: session.user.id } } } } },
@@ -130,15 +135,12 @@ export const POST = withAuth(
         },
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "CREATE",
-          module: "project",
-          entityType: "Project",
-          entityId: project.id,
-          changes: { name, code: project.code, status: project.status },
-        },
+      await createAuditLog(session, {
+        action: "CREATE",
+        module: "project",
+        entityType: "Project",
+        entityId: project.id,
+        changes: { name, code: project.code, status: project.status },
       })
 
       return NextResponse.json({ data: project }, { status: 201 })

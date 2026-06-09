@@ -73,6 +73,7 @@
     "eslint": "^10.4.0",
     "eslint-config-next": "^16.2.6",
     "eslint-config-prettier": "^10.1.8",
+    "exceljs": "^4.4.0",
     "postcss": "^8.5.15",
     "prettier": "^3.8.3",
     "prettier-plugin-tailwindcss": "^0.8.0",

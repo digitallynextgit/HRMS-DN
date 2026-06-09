@@ -5,7 +5,12 @@ import { FolderOpen } from "lucide-react"
 import { EmptyState } from "@/components/shared/empty-state"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DocumentCard } from "@/components/documents/document-card"
-import { useEmployeeDocuments, useCompanyDocuments, useDeleteDocument } from "@/hooks/use-documents"
+import {
+  useEmployeeDocuments,
+  useCompanyDocuments,
+  useDeleteDocument,
+  useDeleteEmployeeDocument,
+} from "@/hooks/use-documents"
 
 interface DocumentListProps {
   employeeId?: string
@@ -48,7 +53,7 @@ function EmployeeDocumentListInner({
   onUploadClick?: () => void
 }) {
   const { data: documents, isLoading } = useEmployeeDocuments(employeeId)
-  const deleteMutation = useDeleteDocument()
+  const deleteMutation = useDeleteEmployeeDocument(employeeId)
 
   if (isLoading) return <DocumentListSkeleton />
 

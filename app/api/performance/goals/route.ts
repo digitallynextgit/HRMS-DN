@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withSession } from "@/lib/permissions"
+import { withSession, hasPermission } from "@/lib/permissions"
+import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
 export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: Session) => {
   try {
-    const employeeId = req.nextUrl.searchParams.get("employeeId") ?? session.user.id
+    // Only HR / reviewers may look up another employee's goals; everyone else is
+    // forced to their own regardless of the employeeId param.
+    const requestedId = req.nextUrl.searchParams.get("employeeId")
+    const employeeId =
+      requestedId && hasPermission(session, PERMISSIONS.PERFORMANCE_REVIEW)
+        ? requestedId
+        : session.user.id
     const year = parseInt(req.nextUrl.searchParams.get("year") ?? String(new Date().getFullYear()))
 
     const goals = await db.goal.findMany({

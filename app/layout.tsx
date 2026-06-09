@@ -10,36 +10,14 @@ export const metadata: Metadata = {
   description: "Modern DNMS for managing your workforce",
 }
 
-const themeBootScript = `
-(function() {
-  try {
-    var raw = localStorage.getItem('dnms-theme-palette');
-    if (!raw) return;
-    var parsed = JSON.parse(raw);
-    var state = parsed && parsed.state;
-    if (!state || !state.cssVars) return;
-    var root = document.documentElement;
-    if (state.mode === 'dark' || state.mode === 'light') {
-      root.classList.remove(state.mode === 'dark' ? 'light' : 'dark');
-      root.classList.add(state.mode);
-      root.style.colorScheme = state.mode;
-      try { localStorage.setItem('theme', state.mode); } catch (e) {}
-    }
-    var vars = state.cssVars;
-    for (var k in vars) {
-      if (Object.prototype.hasOwnProperty.call(vars, k)) {
-        root.style.setProperty('--' + k, vars[k]);
-      }
-    }
-  } catch (e) {}
-})();
-`
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        {/* Theme-boot applies the saved palette before paint (no flash). Loaded as
+            an external script (public/theme-boot.js) and render-blocking in <head>;
+            React 19 only warns about INLINE scripts, not src ones. */}
+        <script src="/theme-boot.js" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

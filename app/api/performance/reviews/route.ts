@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withSession } from "@/lib/permissions"
+import { withSession, hasPermission } from "@/lib/permissions"
+import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
 export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: Session) => {
@@ -12,8 +13,15 @@ export const GET = withSession(async (req: NextRequest, _ctx: unknown, session: 
 
     const where: Record<string, unknown> = {}
     if (cycleId) where.cycleId = cycleId
-    if (mine) where.revieweeId = session.user.id
-    if (asReviewer) where.reviewerId = session.user.id
+
+    if (hasPermission(session, PERMISSIONS.PERFORMANCE_REVIEW)) {
+      // HR / reviewers can list across employees (optionally filtered).
+      if (mine) where.revieweeId = session.user.id
+      if (asReviewer) where.reviewerId = session.user.id
+    } else {
+      // Everyone else: only reviews where they are the reviewee or the reviewer.
+      where.OR = [{ revieweeId: session.user.id }, { reviewerId: session.user.id }]
+    }
 
     const reviews = await db.performanceReview.findMany({
       where,

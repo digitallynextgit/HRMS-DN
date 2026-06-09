@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -153,7 +152,11 @@ export function ApplyLeaveForm() {
       selectedBalance.used -
       selectedBalance.pending
     : null
-  const hasInsufficientBalance = available !== null && totalDays > 0 && available < totalDays
+  // No-quota types (e.g. Leave Without Pay, maxDaysPerYear === 0) aren't balance-
+  // limited - mirror the server, which only enforces balance when maxDaysPerYear > 0.
+  const isQuotaType = (selectedType?.maxDaysPerYear ?? 0) > 0
+  const hasInsufficientBalance =
+    isQuotaType && available !== null && totalDays > 0 && available < totalDays
 
   // Notice warnings
   const advanceDays = startDate ? daysFromToday(startDate) : 999

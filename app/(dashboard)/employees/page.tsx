@@ -33,6 +33,7 @@ import {
 import { usePermissions } from "@/hooks/use-permissions"
 import { useDebounce } from "@/hooks/use-debounce"
 import { cn, getInitials, getAvatarColor, formatDate } from "@/lib/utils"
+import { isOnProbation } from "@/lib/probation"
 import { EMPLOYEE_STATUS_LABELS, PERMISSIONS } from "@/lib/constants"
 
 type ViewMode = "card" | "table"
@@ -438,16 +439,23 @@ export default function EmployeesPage() {
                       {emp.designation?.title ?? "-"}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={cn(
-                          "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                          isActive
-                            ? "bg-green-500/15 text-green-600 dark:text-green-400"
-                            : "bg-muted text-muted-foreground",
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={cn(
+                            "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                            isActive
+                              ? "bg-green-500/15 text-green-600 dark:text-green-400"
+                              : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {isActive ? "Active" : "Inactive"}
+                        </span>
+                        {isOnProbation(emp) && (
+                          <span className="inline-flex items-center rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                            Probation
+                          </span>
                         )}
-                      >
-                        {isActive ? "Active" : "Inactive"}
-                      </span>
+                      </div>
                     </td>
                     <td className="text-muted-foreground px-4 py-3">
                       {formatDate(emp.dateOfJoining)}

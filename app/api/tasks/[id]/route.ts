@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
+import { createAuditLog } from "@/lib/audit"
 import { logActivity } from "@/lib/activity"
 import { createNotification } from "@/lib/notifications"
 import { PERMISSIONS } from "@/lib/constants"
@@ -95,15 +96,12 @@ export const PATCH = withSession(
         },
       })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "UPDATE",
-          module: "project",
-          entityType: "ProjectTask",
-          entityId: ctx.params.id,
-          changes: data as object,
-        },
+      await createAuditLog(session, {
+        action: "UPDATE",
+        module: "project",
+        entityType: "ProjectTask",
+        entityId: ctx.params.id,
+        changes: data as object,
       })
 
       const projectId = auth.task.team?.projectId ?? auth.task.projectId
@@ -169,15 +167,12 @@ export const DELETE = withSession(
 
       await db.projectTask.delete({ where: { id: ctx.params.id } })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "DELETE",
-          module: "project",
-          entityType: "ProjectTask",
-          entityId: ctx.params.id,
-          changes: { title: auth.task.title },
-        },
+      await createAuditLog(session, {
+        action: "DELETE",
+        module: "project",
+        entityType: "ProjectTask",
+        entityId: ctx.params.id,
+        changes: { title: auth.task.title },
       })
 
       return NextResponse.json({ message: "Task deleted" })

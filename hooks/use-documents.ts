@@ -124,6 +124,54 @@ export function useDeleteDocument() {
 }
 
 /**
+ * Upload a PERSONAL (employee locker) document → /api/employees/[id]/documents.
+ * Separate from useUploadDocument because the locker uses the EmployeeDocument
+ * table, not the company Document table.
+ */
+export function useUploadEmployeeDocument(employeeId: string) {
+  const qc = useQueryClient()
+  return useMutation<unknown, Error, FormData>({
+    mutationFn: async (formData: FormData) => {
+      const res = await fetch(`/api/employees/${employeeId}/documents`, {
+        method: "POST",
+        body: formData,
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.error ?? "Upload failed")
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      toast.success("Document uploaded successfully")
+      qc.invalidateQueries({ queryKey: documentKeys.employee(employeeId) })
+    },
+    onError: (error) => toast.error(error.message ?? "Failed to upload document"),
+  })
+}
+
+/** Delete a personal (employee locker) document. */
+export function useDeleteEmployeeDocument(employeeId: string) {
+  const qc = useQueryClient()
+  return useMutation<void, Error, string>({
+    mutationFn: async (docId: string) => {
+      const res = await fetch(`/api/employees/${employeeId}/documents/${docId}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        throw new Error(json.error ?? "Delete failed")
+      }
+    },
+    onSuccess: () => {
+      toast.success("Document deleted")
+      qc.invalidateQueries({ queryKey: documentKeys.employee(employeeId) })
+    },
+    onError: (error) => toast.error(error.message ?? "Failed to delete document"),
+  })
+}
+
+/**
  * Fetch a pre-signed download URL for a document.
  * Disabled by default; enable by passing a valid id.
  */

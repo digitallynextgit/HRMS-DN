@@ -87,7 +87,7 @@
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 9%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 7 100% 50%; /* #ff1e00 - vivid red for high visibility */
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -120,8 +120,8 @@
     --accent: 0 0% 13%;
     --accent-foreground: 0 0% 93%;
 
-    --destructive: 0 63% 40%;
-    --destructive-foreground: 0 0% 93%;
+    --destructive: 7 100% 50%; /* #ff1e00 - vivid red for high visibility */
+    --destructive-foreground: 0 0% 100%;
     --success: 142 60% 35%;
     --success-foreground: 0 0% 93%;
     --warning: 38 80% 40%;
@@ -242,9 +242,36 @@
   letter-spacing: 0.05em;
 }
 
+/* Print / Save-as-PDF: show only the #print-area, drop app chrome, keep colors. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #print-area,
+  #print-area * {
+    visibility: visible;
+  }
+  #print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    color: #000 !important;
+    background: #fff !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
 /* ── Auth / login animations ──────────────────────────────────────────── */
 
-/* Logo "walk" — a gentle stepping bob that pivots from the feet (the red mark
+/* Logo "walk" - a gentle stepping bob that pivots from the feet (the red mark
    sits bottom-left of the wordmark, so the sway reads as legs stepping). */
 @keyframes dnms-walk {
   0%,

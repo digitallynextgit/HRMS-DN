@@ -12,8 +12,10 @@ const DEPT_SELECT = {
   code: true,
   description: true,
   headId: true,
+  isActive: true,
   careersTone: true,
   careersJobsLabel: true,
+  _count: { select: { employees: true, jobPostings: true } },
 } as const
 
 const createSchema = z.object({
@@ -28,15 +30,19 @@ type DepartmentRow = {
   code: string
   description: string | null
   headId: string | null
+  isActive: boolean
   careersTone: string | null
   careersJobsLabel: string | null
+  _count: { employees: number; jobPostings: number }
 }
 
-export async function getDepartments(): Promise<ActionResult<DepartmentRow[]>> {
+export async function getDepartments(opts?: {
+  includeInactive?: boolean
+}): Promise<ActionResult<DepartmentRow[]>> {
   return runAction(async () => {
     await requireSession()
     const data = await db.department.findMany({
-      where: { isActive: true },
+      where: opts?.includeInactive ? {} : { isActive: true },
       orderBy: { name: "asc" },
       select: DEPT_SELECT,
     })
@@ -87,17 +93,19 @@ export async function updateDepartment(
     code?: string
     description?: string | null
     headId?: string | null
+    isActive?: boolean
     careersTone?: string | null
     careersJobsLabel?: string | null
   },
 ): Promise<ActionResult<DepartmentRow>> {
   return runAction(async () => {
     await requirePermission(PERMISSIONS.EMPLOYEE_WRITE)
-    const data: Record<string, string | null> = {}
+    const data: Record<string, string | null | boolean> = {}
     if (input.name !== undefined) data.name = String(input.name)
     if (input.code !== undefined) data.code = String(input.code).toUpperCase()
     if (input.description !== undefined) data.description = input.description || null
     if (input.headId !== undefined) data.headId = input.headId || null
+    if (input.isActive !== undefined) data.isActive = !!input.isActive
     if (input.careersTone !== undefined) {
       const tone = input.careersTone
       data.careersTone = tone === "red" || tone === "teal" ? tone : null
@@ -114,5 +122,37 @@ export async function updateDepartment(
         return fail("Department name or code already exists")
       throw e
     }
+  })
+}
+
+/**
+ * Soft-deactivate (isActive=false) by default, or hard-delete with permanent=true
+ * (only when no employees / job postings reference the department).
+ */
+export async function deleteDepartment(
+  id: string,
+  permanent = false,
+): Promise<ActionResult<{ message: string }>> {
+  return runAction(async () => {
+    await requirePermission(PERMISSIONS.EMPLOYEE_WRITE)
+    const dept = await db.department.findUnique({
+      where: { id },
+      include: { _count: { select: { employees: true, jobPostings: true } } },
+    })
+    if (!dept) return fail("Department not found")
+
+    if (permanent) {
+      if (dept._count.employees > 0 || dept._count.jobPostings > 0)
+        return fail(
+          `Cannot permanently delete: ${dept._count.employees} employee(s) and ${dept._count.jobPostings} job posting(s) reference this department. Deactivate instead.`,
+        )
+      await db.department.delete({ where: { id } })
+      return ok({ message: "Department deleted permanently" })
+    }
+
+    await db.department.update({ where: { id }, data: { isActive: false } })
+    return ok({
+      message: `Department deactivated. ${dept._count.employees} employee(s) still assigned.`,
+    })
   })
 }

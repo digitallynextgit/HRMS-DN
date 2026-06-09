@@ -1,6 +1,6 @@
 # Server Actions Migration Plan
 
-**Goal:** Replace the internal REST API (`app/api/**`) with Next.js **Server Actions**, then delete the converted routes. The data layer keeps using React Query — hooks call actions instead of `fetch()`.
+**Goal:** Replace the internal REST API (`app/api/**`) with Next.js **Server Actions**, then delete the converted routes. The data layer keeps using React Query - hooks call actions instead of `fetch()`.
 
 **Status:** Plan for approval. No code changes yet.
 
@@ -20,21 +20,21 @@
 
 ## 2. What STAYS as a route (do **not** convert)
 
-These are not called by our own UI — they are HTTP endpoints by nature:
+These are not called by our own UI - they are HTTP endpoints by nature:
 
 | Route                                 | Why it must stay                                                                                                                     |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `app/api/auth/[...nextauth]/route.ts` | NextAuth's required handler. Removing it breaks all login.                                                                           |
 | `app/api/public/careers/route.ts`     | Public API the marketing site calls server-to-server (API key, custom cache headers). External callers can't invoke a server action. |
 | `app/api/cron/birthdays/route.ts`     | Hit by a scheduler with `CRON_SECRET` bearer. Cron can't call an action.                                                             |
-| `app/api/cron/el-accrual/route.ts`    | Same — scheduled job.                                                                                                                |
+| `app/api/cron/el-accrual/route.ts`    | Same - scheduled job.                                                                                                                |
 
 After migration, `app/api/` contains **only** `auth/`, `public/careers/`, and `cron/`.
 
 ### ⚠️ Verify before converting (possible machine endpoints)
 
-- `app/api/attendance/devices/[id]/events/route.ts` — if a **Hikvision device or worker posts events here**, it's a machine webhook and must stay. **Action item: confirm who calls it.**
-- `app/api/attendance/qr/scan/route.ts` — confirm it's only called from our authenticated UI (not a public scanner page).
+- `app/api/attendance/devices/[id]/events/route.ts` - if a **Hikvision device or worker posts events here**, it's a machine webhook and must stay. **Action item: confirm who calls it.**
+- `app/api/attendance/qr/scan/route.ts` - confirm it's only called from our authenticated UI (not a public scanner page).
 
 ---
 
@@ -47,17 +47,17 @@ lib/
   actions/
     _guard.ts          # auth/permission helpers (NOT "use server")
     _result.ts         # ActionResult type + helpers
-    departments.ts     # "use server" — one file per module
+    departments.ts     # "use server" - one file per module
     employees.ts
     leave.ts
     ...
 ```
 
-Each `lib/actions/<module>.ts` starts with `"use server"` and **exports only async functions** (a `"use server"` file can't export schemas/consts — those live in `lib/schemas/**`).
+Each `lib/actions/<module>.ts` starts with `"use server"` and **exports only async functions** (a `"use server"` file can't export schemas/consts - those live in `lib/schemas/**`).
 
 ### 3.2 Auth & permissions
 
-The existing primitives in `lib/permissions.ts` (`getSession`, `hasPermission`, `isSuperAdmin`) are framework-agnostic and reused as-is. New thin guards (in `lib/actions/_guard.ts`, plain module — callable only from server code):
+The existing primitives in `lib/permissions.ts` (`getSession`, `hasPermission`, `isSuperAdmin`) are framework-agnostic and reused as-is. New thin guards (in `lib/actions/_guard.ts`, plain module - callable only from server code):
 
 ```ts
 export async function requireSession(): Promise<Session> {
@@ -74,7 +74,7 @@ export async function requirePermission(perm: string | string[]): Promise<Sessio
 }
 ```
 
-### 3.3 Return shape — **return errors, don't throw them**
+### 3.3 Return shape - **return errors, don't throw them**
 
 > **Critical:** In production, Next.js **redacts error messages thrown from server actions** (security). So user-facing errors (validation, "code already exists") must be **returned**, not thrown.
 
@@ -117,7 +117,7 @@ The 26 routes that read `searchParams` become actions with a typed `filters` arg
 
 ### 3.7 Files
 
-- **Upload** (`documents/upload`, `attendance/import`): action accepts a `FormData` arg — `export async function uploadDocument(form: FormData)`. The client already builds `FormData`, so the call site barely changes.
+- **Upload** (`documents/upload`, `attendance/import`): action accepts a `FormData` arg - `export async function uploadDocument(form: FormData)`. The client already builds `FormData`, so the call site barely changes.
 - **"Download"** (`documents/[id]`, `projects/[id]/resources/[fileId]`): these already return a **signed URL as JSON**, not a binary stream → convert normally; the browser still downloads from the signed URL.
 
 ### 3.8 Cache revalidation
@@ -128,9 +128,9 @@ React Query invalidation in the hooks already refreshes client data, so it keeps
 
 ## 4. Before / after (pilot: Departments)
 
-**Before** — `app/api/departments/route.ts` + `[id]/route.ts` (4 handlers).
+**Before** - `app/api/departments/route.ts` + `[id]/route.ts` (4 handlers).
 
-**After** — `lib/actions/departments.ts`:
+**After** - `lib/actions/departments.ts`:
 
 ```ts
 "use server"
@@ -172,7 +172,7 @@ export async function createDepartment(input: unknown): Promise<ActionResult<Dep
 // updateDepartment(id, input), deleteDepartment(id) …
 ```
 
-**Client** — `hooks/use-employees.ts`, swap the fetch helpers:
+**Client** - `hooks/use-employees.ts`, swap the fetch helpers:
 
 ```ts
 // before: const res = await fetch("/api/departments"); …
@@ -201,7 +201,7 @@ Order is dependency- and risk-based: a small self-contained module first (pilot)
 | 4         | **Leave**                              | leave/balances, requests(+[id]), team, types(+[id])                                                                                                          | `use-leave.ts`                                                   | email side-effects on approve/reject                                                 |
 | 5         | **WFH**                                | wfh/eligibility, requests(+[id])                                                                                                                             | `use-wfh.ts`                                                     | email side-effects                                                                   |
 | 6         | **Attendance**                         | attendance(+[id]), me, summary, import, holidays(+[id]), gps-checkin, qr/generate, qr/scan, devices(+[id] sync/test/events)                                  | `use-attendance.ts`                                              | **Verify `devices/[id]/events` & `qr/scan` aren't machine/public** before converting |
-| 7         | **Payroll**                            | payroll/me(+[id]), records(+[id]), salary-structures(+[id]), summary                                                                                         | `use-payroll.ts`                                                 | money — verify totals parity                                                         |
+| 7         | **Payroll**                            | payroll/me(+[id]), records(+[id]), salary-structures(+[id]), summary                                                                                         | `use-payroll.ts`                                                 | money - verify totals parity                                                         |
 | 8         | **Projects**                           | projects(+[id]), activity, messages(+[messageId]), passwords(+[entryId]), resources(+[fileId]), tasks, teams(+ nested members/promote/tasks), project-phases | `use-projects.ts` + project components                           | Largest module; FormData resources, encrypted passwords                              |
 | 9         | **Tasks**                              | tasks(+[id]), approve, reject, checklist(+[itemId]), comments(+[commentId])                                                                                  | `use-projects.ts` / task components                              |                                                                                      |
 | 10        | **Performance**                        | performance/cycles, goals(+[id]), reviews(+[id])                                                                                                             | inline component fetches                                         |                                                                                      |

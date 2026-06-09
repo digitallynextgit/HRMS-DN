@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession, hasPermission } from "@/lib/permissions"
+import { createAuditLog } from "@/lib/audit"
 import { PERMISSIONS } from "@/lib/constants"
 import { getSignedUrl, deleteFile } from "@/lib/storage"
 import type { Session } from "next-auth"
@@ -61,15 +62,12 @@ export const DELETE = withSession(
       }
       await db.projectResource.delete({ where: { id: fileId } })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "DELETE",
-          module: "project",
-          entityType: "ProjectResource",
-          entityId: fileId,
-          changes: { fileName: resource.fileName, objectKey: resource.objectKey },
-        },
+      await createAuditLog(session, {
+        action: "DELETE",
+        module: "project",
+        entityType: "ProjectResource",
+        entityId: fileId,
+        changes: { fileName: resource.fileName, objectKey: resource.objectKey },
       })
 
       return NextResponse.json({ success: true })

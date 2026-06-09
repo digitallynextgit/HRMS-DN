@@ -270,11 +270,16 @@ export const EMPLOYEE_STATUS_LABELS: Record<string, string> = {
 }
 
 export const EMPLOYEE_STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "bg-green-100 text-green-700",
-  ON_LEAVE: "bg-amber-100 text-amber-700",
-  SUSPENDED: "bg-red-100 text-red-700",
-  RESIGNED: "bg-gray-100 text-gray-700",
-  TERMINATED: "bg-red-100 text-red-700",
+  ACTIVE:
+    "border border-green-200 bg-green-100 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300",
+  ON_LEAVE:
+    "border border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300",
+  SUSPENDED:
+    "border border-red-200 bg-red-100 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300",
+  RESIGNED:
+    "border border-gray-200 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
+  TERMINATED:
+    "border border-red-200 bg-red-100 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300",
 }
 
 export const DOCUMENT_CATEGORY_LABELS: Record<string, string> = {
@@ -311,13 +316,19 @@ export const ATTENDANCE_STATUS_LABELS: Record<string, string> = {
 }
 
 export const ATTENDANCE_STATUS_COLORS: Record<string, string> = {
-  PRESENT: "bg-green-100 text-green-700",
-  ABSENT: "bg-red-100 text-red-700",
-  HALF_DAY: "bg-amber-100 text-amber-700",
-  LATE: "bg-orange-100 text-orange-700",
-  ON_LEAVE: "bg-blue-100 text-blue-700",
-  HOLIDAY: "bg-purple-100 text-purple-700",
-  WEEKEND: "bg-gray-100 text-gray-700",
+  PRESENT:
+    "border border-green-200 bg-green-100 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300",
+  ABSENT:
+    "border border-red-200 bg-red-100 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300",
+  HALF_DAY:
+    "border border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300",
+  LATE: "border border-orange-200 bg-orange-100 text-orange-700 dark:border-orange-900 dark:bg-orange-950/50 dark:text-orange-300",
+  ON_LEAVE:
+    "border border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300",
+  HOLIDAY:
+    "border border-purple-200 bg-purple-100 text-purple-700 dark:border-purple-900 dark:bg-purple-950/50 dark:text-purple-300",
+  WEEKEND:
+    "border border-gray-200 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
 }
 
 export const LEAVE_STATUS_LABELS: Record<string, string> = {
@@ -328,10 +339,14 @@ export const LEAVE_STATUS_LABELS: Record<string, string> = {
 }
 
 export const LEAVE_STATUS_COLORS: Record<string, string> = {
-  PENDING: "bg-amber-100 text-amber-700",
-  APPROVED: "bg-green-100 text-green-700",
-  REJECTED: "bg-red-100 text-red-700",
-  CANCELLED: "bg-gray-100 text-gray-700",
+  PENDING:
+    "border border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-300",
+  APPROVED:
+    "border border-green-200 bg-green-100 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300",
+  REJECTED:
+    "border border-red-200 bg-red-100 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300",
+  CANCELLED:
+    "border border-gray-200 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
 }
 
 export const PAYROLL_STATUS_LABELS: Record<string, string> = {
@@ -342,10 +357,13 @@ export const PAYROLL_STATUS_LABELS: Record<string, string> = {
 }
 
 export const PAYROLL_STATUS_COLORS: Record<string, string> = {
-  DRAFT: "bg-gray-100 text-gray-700",
-  PROCESSING: "bg-blue-100 text-blue-700",
-  APPROVED: "bg-green-100 text-green-700",
-  PAID: "bg-emerald-100 text-emerald-700",
+  DRAFT:
+    "border border-gray-200 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200",
+  PROCESSING:
+    "border border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-900 dark:bg-blue-950/50 dark:text-blue-300",
+  APPROVED:
+    "border border-green-200 bg-green-100 text-green-700 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300",
+  PAID: "border border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-300",
 }
 
 export const MONTHS = [

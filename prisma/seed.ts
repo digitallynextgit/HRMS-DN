@@ -50,8 +50,6 @@ async function main() {
   await prisma.projectPhase.deleteMany()
   await prisma.projectMember.deleteMany()
   await prisma.project.deleteMany()
-  await prisma.gpsCheckIn.deleteMany()
-  await prisma.qrSession.deleteMany()
   await prisma.passwordReset.deleteMany()
 
   await prisma.payrollRecord.deleteMany()
@@ -2820,23 +2818,7 @@ async function main() {
   console.log("  ✓ Created 3 job postings, 7 applicants, 1 interview")
 
   // ===========================================================================
-  // STEP 16 - Update attendance policy with geofence (demo GPS)
-  // ===========================================================================
-  console.log("Step 16: Updating attendance policy with geofence...")
-
-  await prisma.attendancePolicy.updateMany({
-    where: { name: "Standard Policy" },
-    data: {
-      officeLatitude: 19.076,
-      officeLongitude: 72.8777,
-      geoFenceRadius: 300,
-    },
-  })
-
-  console.log("  ✓ Geofence set to Mumbai HQ (19.0760°N, 72.8777°E, 300m radius)")
-
-  // ===========================================================================
-  // STEP 17 - Seed demo notifications
+  // STEP 16 - Seed demo notifications
   // ===========================================================================
   console.log("Step 17: Creating demo notifications...")
 

@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth } from "@/lib/permissions"
 import { PERMISSIONS } from "@/lib/constants"
+import { createAuditLog } from "@/lib/audit"
 
 type RouteContext = { params: { id: string } }
 
@@ -115,15 +116,12 @@ export const PATCH = withAuth(
         ),
       ])
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "role:update",
-          module: "role",
-          entityType: "Role",
-          entityId: id,
-          changes: { ...updateData, permissionIds } as object,
-        },
+      await createAuditLog(session, {
+        action: "role:update",
+        module: "role",
+        entityType: "Role",
+        entityId: id,
+        changes: { ...updateData, permissionIds } as object,
       })
 
       // Re-fetch to get the updated rolePermissions after transaction
@@ -148,15 +146,12 @@ export const PATCH = withAuth(
       },
     })
 
-    await db.auditLog.create({
-      data: {
-        actorId: session.user.id,
-        action: "role:update",
-        module: "role",
-        entityType: "Role",
-        entityId: id,
-        changes: updateData as object,
-      },
+    await createAuditLog(session, {
+      action: "role:update",
+      module: "role",
+      entityType: "Role",
+      entityId: id,
+      changes: updateData as object,
     })
 
     return NextResponse.json({ data: updatedRole })
@@ -193,15 +188,12 @@ export const DELETE = withAuth(
 
     await db.role.delete({ where: { id } })
 
-    await db.auditLog.create({
-      data: {
-        actorId: session.user.id,
-        action: "role:delete",
-        module: "role",
-        entityType: "Role",
-        entityId: id,
-        changes: { name: role.name, displayName: role.displayName } as object,
-      },
+    await createAuditLog(session, {
+      action: "role:delete",
+      module: "role",
+      entityType: "Role",
+      entityId: id,
+      changes: { name: role.name, displayName: role.displayName } as object,
     })
 
     return NextResponse.json({ data: { id } })

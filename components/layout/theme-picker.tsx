@@ -1,8 +1,8 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { memo, useEffect, useMemo, useState } from "react"
 import { useTheme } from "next-themes"
-import { Check, Palette, Search, Sun, Moon, Monitor, RotateCcw } from "lucide-react"
+import { Check, Palette, Search, Sun, Moon, Monitor, RotateCcw, Loader2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -27,21 +27,27 @@ import {
 
 const CATEGORIES: ThemeCategory[] = ["purple", "blue", "black", "teal", "green", "red", "amber"]
 
-function ThemeCard({
+// Memoized so selecting a theme only re-renders the two cards whose `selected`
+// flips, not all 111. `onSelect` takes the id so a single stable callback can be
+// shared across every card (keeping memo effective).
+const ThemeCard = memo(function ThemeCard({
   theme,
   selected,
   onSelect,
 }: {
   theme: Theme
   selected: boolean
-  onSelect: () => void
+  onSelect: (id: string) => void
 }) {
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onClick={() => onSelect(theme.id)}
       className={cn(
-        "group relative flex flex-col gap-2 rounded-md border p-3 text-left transition-all hover:shadow-md focus-visible:ring-2 focus-visible:outline-none",
+        // content-visibility lets the browser skip layout/paint for off-screen
+        // cards; contain-intrinsic-size reserves their space so the scrollbar
+        // stays correct. This is what keeps 107 cards cheap to mount.
+        "group relative flex flex-col gap-2 rounded-md border p-3 text-left transition-shadow [contain-intrinsic-size:auto_8.5rem] [content-visibility:auto] hover:shadow-md focus-visible:ring-2 focus-visible:outline-none",
         selected
           ? "border-primary ring-primary/30 ring-2"
           : "border-border hover:border-foreground/30",
@@ -73,14 +79,29 @@ function ThemeCard({
       </div>
     </button>
   )
-}
+})
 
 export function ThemePicker() {
   const [open, setOpen] = useState(false)
+  // The grid of 111 cards is heavy to mount; defer it until the open animation
+  // has settled (and unmount it immediately on close) so the dialog
+  // open/close transition stays smooth.
+  const [showGrid, setShowGrid] = useState(false)
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState<ThemeCategory | "all">("all")
   const { theme, setTheme } = useTheme()
   const { paletteId, setPalette, clearPalette } = useThemeStore()
+
+  useEffect(() => {
+    if (!open) return
+    const id = setTimeout(() => setShowGrid(true), 160)
+    return () => clearTimeout(id)
+  }, [open])
+
+  function handleOpenChange(next: boolean) {
+    if (!next) setShowGrid(false) // drop the grid before the close animation
+    setOpen(next)
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -91,7 +112,7 @@ export function ThemePicker() {
 
   return (
     <TooltipProvider delayDuration={300}>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
         <Tooltip>
           <TooltipTrigger asChild>
             <DialogTrigger asChild>
@@ -216,7 +237,11 @@ export function ThemePicker() {
 
             <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4">
               <TabsContent value={activeTab} className="mt-0 outline-none">
-                {filtered.length === 0 ? (
+                {!showGrid ? (
+                  <div className="flex h-64 items-center justify-center">
+                    <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
+                  </div>
+                ) : filtered.length === 0 ? (
                   <div className="text-muted-foreground py-12 text-center text-sm">
                     No themes match &ldquo;{search}&rdquo;.
                   </div>
@@ -227,7 +252,7 @@ export function ThemePicker() {
                         key={t.id}
                         theme={t}
                         selected={paletteId === t.id}
-                        onSelect={() => setPalette(t.id)}
+                        onSelect={setPalette}
                       />
                     ))}
                   </div>

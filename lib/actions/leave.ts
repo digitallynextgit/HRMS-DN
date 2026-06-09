@@ -16,7 +16,7 @@ const REQUEST_INCLUDE = {
   approver: { select: { id: true, firstName: true, lastName: true } },
 } as const
 
-// Calendar days inclusive — sandwich rule (weekends between leave days are counted)
+// Calendar days inclusive - sandwich rule (weekends between leave days are counted)
 function countCalendarDays(start: Date, end: Date): number {
   const s = new Date(start)
   s.setHours(0, 0, 0, 0)
@@ -690,7 +690,7 @@ export async function updateLeaveRequest(
         })
       }
     } catch {
-      // Non-blocking — don't fail the request if email fails
+      // Non-blocking - don't fail the request if email fails
     }
 
     return ok(serialize({ data: updatedRequest }))

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withSession } from "@/lib/permissions"
+import { createAuditLog } from "@/lib/audit"
 import { slugifyCareer } from "@/lib/careers-types"
 import type { Session } from "next-auth"
 
@@ -84,14 +85,11 @@ export const POST = withSession(async (req: NextRequest, _ctx: unknown, session:
       },
     })
 
-    await db.auditLog.create({
-      data: {
-        actorId: session.user.id,
-        action: "CREATE",
-        module: "recruitment",
-        entityType: "JobPosting",
-        entityId: job.id,
-      },
+    await createAuditLog(session, {
+      action: "CREATE",
+      module: "recruitment",
+      entityType: "JobPosting",
+      entityId: job.id,
     })
 
     return NextResponse.json({ data: job }, { status: 201 })

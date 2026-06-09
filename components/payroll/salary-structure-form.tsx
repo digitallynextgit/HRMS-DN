@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useForm } from "react-hook-form"
+import { useEffect, useMemo, useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -26,20 +25,25 @@ import {
   type SalaryStructure,
 } from "@/hooks/use-payroll"
 import { useEmployees } from "@/hooks/use-employees"
+import { cn } from "@/lib/utils"
 
-interface SalaryStructureFormValues {
-  employeeId: string
-  basicSalary: string
-  hra: string
-  conveyance: string
-  medicalAllowance: string
-  otherAllowances: string
-  pfEmployee: string
-  pfEmployer: string
-  esi: string
-  tds: string
-  effectiveFrom: string
-}
+// The six salary brackets (matching the company payslip) with sensible default
+// percentages of the monthly gross. HR can edit any percentage; they must total 100%.
+const COMPONENTS = [
+  { key: "basic", label: "Basic", defaultPct: 50 },
+  { key: "hra", label: "HRA", defaultPct: 25 },
+  { key: "transport", label: "Transport Allowance", defaultPct: 17.77 },
+  { key: "medical", label: "Medical Allowance", defaultPct: 2.23 },
+  { key: "telephone", label: "Telephone / Mobile Bill", defaultPct: 3.57 },
+  { key: "special", label: "Special Allowance", defaultPct: 1.43 },
+] as const
+
+type CompKey = (typeof COMPONENTS)[number]["key"]
+
+const DEFAULT_PCT = Object.fromEntries(COMPONENTS.map((c) => [c.key, c.defaultPct])) as Record<
+  CompKey,
+  number
+>
 
 interface SalaryStructureFormProps {
   open: boolean
@@ -53,102 +57,90 @@ function n(val: string): number {
 }
 
 function fmt(amount: number): string {
-  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `₹${amount.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
 }
 
 export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStructureFormProps) {
   const isEdit = !!editData
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<SalaryStructureFormValues>({
-    defaultValues: {
-      employeeId: "",
-      basicSalary: "",
-      hra: "",
-      conveyance: "",
-      medicalAllowance: "",
-      otherAllowances: "",
-      pfEmployee: "",
-      pfEmployer: "",
-      esi: "",
-      tds: "",
-      effectiveFrom: new Date().toISOString().split("T")[0],
-    },
-  })
-
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>("")
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("")
+  const [gross, setGross] = useState("")
+  const [pct, setPct] = useState<Record<CompKey, number>>(DEFAULT_PCT)
 
   const createMutation = useCreateSalaryStructure()
   const updateMutation = useUpdateSalaryStructure()
 
-  const { data: employeesData } = useEmployees({ limit: 200, status: "ACTIVE" })
+  // limit ≤ 100 - the employees API rejects larger and returns an empty list.
+  const { data: employeesData } = useEmployees({ limit: 100, status: "ACTIVE" })
   const employees = employeesData?.data ?? []
 
-  // Populate form when editing
+  // Populate when opening (edit → derive gross + percentages from stored amounts).
   useEffect(() => {
+    if (!open) return
     if (editData) {
-      reset({
-        employeeId: editData.employeeId,
-        basicSalary: String(editData.basicSalary),
-        hra: String(editData.hra),
-        conveyance: String(editData.conveyance),
-        medicalAllowance: String(editData.medicalAllowance),
-        otherAllowances: String(editData.otherAllowances),
-        pfEmployee: String(editData.pfEmployee),
-        pfEmployer: String(editData.pfEmployer),
-        esi: String(editData.esi),
-        tds: String(editData.tds),
-        effectiveFrom: new Date(editData.effectiveFrom).toISOString().split("T")[0],
-      })
+      const amounts: Record<CompKey, number> = {
+        basic: editData.basicSalary,
+        hra: editData.hra,
+        transport: editData.conveyance,
+        medical: editData.medicalAllowance,
+        telephone: editData.telephoneAllowance,
+        special: editData.otherAllowances,
+      }
+      const g = COMPONENTS.reduce((s, c) => s + (amounts[c.key] || 0), 0)
+      setGross(g ? String(g) : "")
+      setPct(
+        g > 0
+          ? (Object.fromEntries(
+              COMPONENTS.map((c) => [c.key, Math.round((amounts[c.key] / g) * 1000) / 10]),
+            ) as Record<CompKey, number>)
+          : DEFAULT_PCT,
+      )
       setSelectedEmployeeId(editData.employeeId)
     } else {
-      reset({
-        employeeId: "",
-        basicSalary: "",
-        hra: "",
-        conveyance: "",
-        medicalAllowance: "",
-        otherAllowances: "",
-        pfEmployee: "",
-        pfEmployer: "",
-        esi: "",
-        tds: "",
-        effectiveFrom: new Date().toISOString().split("T")[0],
-      })
+      setGross("")
+      setPct(DEFAULT_PCT)
       setSelectedEmployeeId("")
     }
-  }, [editData, reset, open])
+  }, [editData, open])
 
-  // Live preview calculations
-  const values = watch()
-  const grossEarnings =
-    n(values.basicSalary) +
-    n(values.hra) +
-    n(values.conveyance) +
-    n(values.medicalAllowance) +
-    n(values.otherAllowances)
-  const totalDeductions = n(values.pfEmployee) + n(values.esi) + n(values.tds)
-  const netSalary = grossEarnings - totalDeductions
+  const grossNum = n(gross)
 
-  async function onSubmit(data: SalaryStructureFormValues) {
+  // Each amount = round(gross × pct%). Rounding residual is absorbed into Special
+  // so the six components always sum to exactly the gross.
+  const amounts = useMemo(() => {
+    const a = {} as Record<CompKey, number>
+    let allocated = 0
+    for (const c of COMPONENTS) {
+      if (c.key === "special") continue
+      a[c.key] = Math.round((grossNum * (pct[c.key] || 0)) / 100)
+      allocated += a[c.key]
+    }
+    a.special = Math.max(0, grossNum - allocated)
+    return a
+  }, [grossNum, pct])
+
+  const totalPct = COMPONENTS.reduce((s, c) => s + (Number(pct[c.key]) || 0), 0)
+  const pctValid = Math.abs(totalPct - 100) < 0.05
+  const netSalary = COMPONENTS.reduce((s, c) => s + (amounts[c.key] || 0), 0)
+
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const canSubmit = !!selectedEmployeeId && grossNum > 0 && pctValid && !isPending
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!canSubmit) return
+
     const payload = {
       employeeId: selectedEmployeeId,
-      basicSalary: n(data.basicSalary),
-      hra: n(data.hra),
-      conveyance: n(data.conveyance),
-      medicalAllowance: n(data.medicalAllowance),
-      otherAllowances: n(data.otherAllowances),
-      pfEmployee: n(data.pfEmployee),
-      pfEmployer: n(data.pfEmployer),
-      esi: n(data.esi),
-      tds: n(data.tds),
-      effectiveFrom: data.effectiveFrom,
+      basicSalary: amounts.basic,
+      hra: amounts.hra,
+      conveyance: amounts.transport,
+      medicalAllowance: amounts.medical,
+      telephoneAllowance: amounts.telephone,
+      otherAllowances: amounts.special,
+      // No user-facing "effective from" - default to today on create, leave
+      // the existing date untouched on edit.
+      ...(isEdit ? {} : { effectiveFrom: new Date().toISOString().split("T")[0] }),
     }
 
     if (isEdit && editData) {
@@ -156,32 +148,22 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
     } else {
       await createMutation.mutateAsync(payload)
     }
-
     onOpenChange(false)
   }
 
-  const isPending = createMutation.isPending || updateMutation.isPending
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-x-hidden overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Salary Structure" : "Add Salary Structure"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Employee select */}
-          {!isEdit && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Employee */}
+          {!isEdit ? (
             <div className="space-y-1.5">
               <Label htmlFor="employeeId">Employee *</Label>
-              <Select
-                value={selectedEmployeeId}
-                onValueChange={(v) => {
-                  setSelectedEmployeeId(v)
-                  setValue("employeeId", v)
-                }}
-                disabled={isEdit}
-              >
+              <Select value={selectedEmployeeId} onValueChange={setSelectedEmployeeId}>
                 <SelectTrigger id="employeeId">
                   <SelectValue placeholder="Select employee..." />
                 </SelectTrigger>
@@ -193,13 +175,8 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
                   ))}
                 </SelectContent>
               </Select>
-              {errors.employeeId && (
-                <p className="text-destructive text-xs">Employee is required</p>
-              )}
             </div>
-          )}
-
-          {isEdit && (
+          ) : (
             <div className="bg-muted/50 rounded px-3 py-2 text-sm">
               <span className="font-medium">
                 {editData?.employee.firstName} {editData?.employee.lastName}
@@ -208,162 +185,96 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
             </div>
           )}
 
-          {/* Earnings */}
-          <div>
-            <h3 className="text-foreground mb-3 text-sm font-semibold">Earnings</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="basicSalary">Basic Salary *</Label>
-                <Input
-                  id="basicSalary"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("basicSalary", { required: true })}
-                />
-                {errors.basicSalary && (
-                  <p className="text-destructive text-xs">Basic salary is required</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="hra">HRA</Label>
-                <Input
-                  id="hra"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("hra")}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="conveyance">Conveyance Allowance</Label>
-                <Input
-                  id="conveyance"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("conveyance")}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="medicalAllowance">Medical Allowance</Label>
-                <Input
-                  id="medicalAllowance"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("medicalAllowance")}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="otherAllowances">Other Allowances</Label>
-                <Input
-                  id="otherAllowances"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("otherAllowances")}
-                />
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Deductions */}
-          <div>
-            <h3 className="text-foreground mb-3 text-sm font-semibold">Deductions</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="pfEmployee">PF (Employee)</Label>
-                <Input
-                  id="pfEmployee"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("pfEmployee")}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="pfEmployer">PF (Employer)</Label>
-                <Input
-                  id="pfEmployer"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("pfEmployer")}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="esi">ESI</Label>
-                <Input
-                  id="esi"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("esi")}
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="tds">TDS</Label>
-                <Input
-                  id="tds"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  {...register("tds")}
-                />
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Effective From */}
+          {/* Gross */}
           <div className="space-y-1.5">
-            <Label htmlFor="effectiveFrom">Effective From *</Label>
+            <Label htmlFor="gross">Monthly Gross Salary (in-hand) *</Label>
             <Input
-              id="effectiveFrom"
-              type="date"
-              {...register("effectiveFrom", { required: true })}
+              id="gross"
+              type="number"
+              min="0"
+              max="10000000"
+              step="1"
+              placeholder="e.g. 50000"
+              value={gross}
+              onChange={(e) => {
+                // Clamp to a sane monthly ceiling (₹1 crore) so a fat-fingered
+                // value can't produce absurd amounts.
+                const v = e.target.value
+                if (v === "") return setGross("")
+                setGross(String(Math.min(Math.max(0, Number(v)), 10000000)))
+              }}
             />
-            {errors.effectiveFrom && (
-              <p className="text-destructive text-xs">Effective from date is required</p>
-            )}
+            <p className="text-muted-foreground text-xs">
+              No deductions - the full amount is paid in hand. It&apos;s split across the brackets
+              below by the percentages.
+            </p>
           </div>
 
-          {/* Live Preview */}
-          <div className="bg-muted/30 space-y-2 rounded border p-4">
-            <h3 className="text-foreground text-sm font-semibold">Salary Preview</h3>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Gross Earnings</p>
-                <p className="text-foreground font-semibold">{fmt(grossEarnings)}</p>
+          <Separator />
+
+          {/* Bracket split */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-foreground text-sm font-semibold">Salary Split</h3>
+              <span
+                className={cn(
+                  "text-xs font-medium",
+                  pctValid ? "text-emerald-600" : "text-destructive",
+                )}
+              >
+                Total: {totalPct.toFixed(2)}%{pctValid ? "" : " (must equal 100%)"}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-muted-foreground grid grid-cols-[1fr_90px_120px] gap-3 px-1 text-xs">
+                <span>Component</span>
+                <span className="text-right">%</span>
+                <span className="text-right">Amount</span>
               </div>
-              <div>
-                <p className="text-muted-foreground">Total Deductions</p>
-                <p className="text-destructive font-semibold">{fmt(totalDeductions)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Net Salary</p>
-                <p className="text-base font-bold text-emerald-600">{fmt(netSalary)}</p>
-              </div>
+              {COMPONENTS.map((c) => (
+                <div
+                  key={c.key}
+                  className="grid min-w-0 grid-cols-[1fr_80px_110px] items-center gap-3"
+                >
+                  <Label htmlFor={`pct-${c.key}`} className="min-w-0 truncate text-sm font-normal">
+                    {c.label}
+                  </Label>
+                  <Input
+                    id={`pct-${c.key}`}
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    className="h-8 text-right"
+                    value={pct[c.key]}
+                    onChange={(e) => setPct((p) => ({ ...p, [c.key]: n(e.target.value) }))}
+                  />
+                  {/* min-w-0 + overflow keeps a large amount scrolling inside the cell
+                      instead of stretching the whole dialog wider. */}
+                  <div className="min-w-0 overflow-x-auto">
+                    <span className="text-foreground block text-right text-sm font-medium whitespace-nowrap tabular-nums">
+                      {fmt(amounts[c.key] || 0)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Preview - gross == net, no deductions */}
+          <div className="bg-muted/30 grid grid-cols-2 gap-4 rounded border p-4 text-sm">
+            <div className="min-w-0">
+              <p className="text-muted-foreground">Gross (= Net, no deductions)</p>
+              <p className="overflow-x-auto text-base font-bold whitespace-nowrap text-emerald-600">
+                {fmt(netSalary)}
+              </p>
+            </div>
+            <div className="min-w-0">
+              <p className="text-muted-foreground">Deductions</p>
+              <p className="text-foreground font-semibold">₹0</p>
             </div>
           </div>
 
@@ -371,7 +282,7 @@ export function SalaryStructureForm({ open, onOpenChange, editData }: SalaryStru
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || (!isEdit && !selectedEmployeeId)}>
+            <Button type="submit" disabled={!canSubmit}>
               {isPending ? "Saving..." : isEdit ? "Update" : "Create"}
             </Button>
           </DialogFooter>

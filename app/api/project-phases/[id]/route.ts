@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withAuth } from "@/lib/permissions"
+import { createAuditLog } from "@/lib/audit"
 import { PERMISSIONS } from "@/lib/constants"
 import type { Session } from "next-auth"
 
@@ -37,15 +38,12 @@ export const PATCH = withAuth(
 
       const phase = await db.projectPhase.update({ where: { id }, data })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "UPDATE",
-          module: "project",
-          entityType: "ProjectPhase",
-          entityId: id,
-          changes: data as object,
-        },
+      await createAuditLog(session, {
+        action: "UPDATE",
+        module: "project",
+        entityType: "ProjectPhase",
+        entityId: id,
+        changes: data as object,
       })
 
       return NextResponse.json({ data: phase })
@@ -80,18 +78,15 @@ export const DELETE = withAuth(
       }
       await db.projectPhase.delete({ where: { id } })
 
-      await db.auditLog.create({
-        data: {
-          actorId: session.user.id,
-          action: "DELETE",
-          module: "project",
-          entityType: "ProjectPhase",
-          entityId: id,
-          changes: {
-            name: phase.name,
-            deletedSubPhases: childIds.length,
-            displacedFromProjects: inUseCount,
-          },
+      await createAuditLog(session, {
+        action: "DELETE",
+        module: "project",
+        entityType: "ProjectPhase",
+        entityId: id,
+        changes: {
+          name: phase.name,
+          deletedSubPhases: childIds.length,
+          displacedFromProjects: inUseCount,
         },
       })
 
