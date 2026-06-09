@@ -1463,6 +1463,12 @@ model PasswordReset {
   id         String    @id @default(uuid()) @map("id")
   employeeId String    @map("employee_id")
   token      String    @unique @map("token")
+  // bcrypt hash of the 6-digit OTP emailed to the employee. The plaintext OTP
+  // is never stored. `token` is only handed to the client AFTER the OTP is
+  // verified, so it doubles as the authorization for the final reset step.
+  otpHash    String?   @map("otp_hash")
+  // Number of failed OTP verification attempts; the row is invalidated after 5.
+  attempts   Int       @default(0) @map("attempts")
   expiresAt  DateTime  @map("expires_at")
   usedAt     DateTime? @map("used_at")
   createdAt  DateTime  @default(now()) @map("created_at")

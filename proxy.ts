@@ -9,6 +9,7 @@
  *
  * Public paths:
  *   /login                – sign-in page
+ *   /forgot-password      – request OTP, verify, and set a new password
  *   /api/auth/*           – NextAuth internal endpoints
  *   /api/cron/*           – cron jobs (self-protected by CRON_SECRET bearer token)
  *   /api/public/*         – headless public APIs (self-protected by X-API-Key)
@@ -25,6 +26,7 @@ import type { NextRequest } from "next/server"
 // through (otherwise cron-job.org / the careers site get 401 before the handler).
 const PUBLIC_PREFIXES = [
   "/login",
+  "/forgot-password",
   "/api/auth",
   "/api/cron",
   "/api/public",
@@ -67,7 +69,11 @@ export default auth((req: NextRequest & { auth: unknown }) => {
     // Page routes: redirect to the login page, preserving the original URL as
     // a `callbackUrl` query parameter so the user is sent back after login.
     const loginUrl = new URL("/login", req.url)
-    loginUrl.searchParams.set("callbackUrl", req.nextUrl.pathname)
+    // Assign `.search` directly so the callback stays human-readable
+    // (?callbackUrl=/dashboard) instead of percent-encoding the slash the way
+    // searchParams.set would (?callbackUrl=%2Fdashboard). pathname is already a
+    // safe, server-derived relative path, so it needs no extra encoding.
+    loginUrl.search = `callbackUrl=${req.nextUrl.pathname}`
     return NextResponse.redirect(loginUrl)
   }
 

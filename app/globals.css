@@ -87,7 +87,7 @@
     --accent: 0 0% 96%;
     --accent-foreground: 0 0% 9%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 7 100% 50%; /* #ff1e00 — vivid red for high visibility */
     --destructive-foreground: 0 0% 100%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -120,8 +120,8 @@
     --accent: 0 0% 13%;
     --accent-foreground: 0 0% 93%;
 
-    --destructive: 0 63% 40%;
-    --destructive-foreground: 0 0% 93%;
+    --destructive: 7 100% 50%; /* #ff1e00 — vivid red for high visibility */
+    --destructive-foreground: 0 0% 100%;
     --success: 142 60% 35%;
     --success-foreground: 0 0% 93%;
     --warning: 38 80% 40%;

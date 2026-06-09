@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { signIn } from "next-auth/react"
@@ -21,8 +21,18 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 
+// Only honour internal, relative callback paths. Anything else (an absolute
+// URL, a protocol-relative `//evil.com`, or a missing param) falls back to the
+// dashboard — this prevents open-redirect attacks via a crafted ?callbackUrl=.
+function safeCallbackUrl(raw: string | null): string {
+  if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw
+  return "/dashboard"
+}
+
 export function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = safeCallbackUrl(searchParams.get("callbackUrl"))
   const [showPassword, setShowPassword] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
@@ -30,7 +40,7 @@ export function LoginForm() {
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
+      email: searchParams.get("email") ?? "",
       password: "",
     },
   })
@@ -48,12 +58,13 @@ export function LoginForm() {
 
     if (result?.error) {
       setAuthError("Invalid email or password")
+      toast.error("Invalid email or password")
       return
     }
 
     if (result?.ok) {
       toast.success("Signed in successfully")
-      router.push("/dashboard")
+      router.push(callbackUrl)
       router.refresh()
     }
   }
@@ -61,7 +72,7 @@ export function LoginForm() {
   async function handleGoogleSignIn() {
     setIsGoogleLoading(true)
     try {
-      await signIn("google", { callbackUrl: "/dashboard" })
+      await signIn("google", { callbackUrl })
     } catch {
       toast.error("Google sign-in failed. Please try again.")
       setIsGoogleLoading(false)
@@ -76,8 +87,8 @@ export function LoginForm() {
             control={form.control}
             name="email"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Email address</FormLabel>
+              <FormItem className="space-y-2.5">
+                <FormLabel className="mb-2 block text-sm font-medium">Email address</FormLabel>
                 <FormControl>
                   <Input
                     type="email"
@@ -97,8 +108,8 @@ export function LoginForm() {
             control={form.control}
             name="password"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-sm font-medium">Password</FormLabel>
+              <FormItem className="space-y-2.5">
+                <FormLabel className="mb-2 block text-sm font-medium">Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
